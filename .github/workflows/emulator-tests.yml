@@ -1,0 +1,104 @@
+# SZABLON: testy instrumentacyjne na emulatorze (reactivecircus/android-emulator-runner).
+#
+# Na razie uruchamiany tylko ręcznie (workflow_dispatch). Po forku i dodaniu testów instrumentacyjnych
+# (Espresso, plan sekcja 3) dodać wyzwalacz pull_request i ewentualnie wymagany check.
+# Wersja akcji: v2.38.0 (https://github.com/ReactiveCircus/android-emulator-runner/releases, sprawdzone 7.11.2026).
+# Akceleracja KVM na runnerach Linux GitHub wymaga reguły udev (krok poniżej).
+#
+# DO ZWERYFIKOWANIA: dostępność obrazów systemu dla API 36/37 (target "google_apis" vs "default")
+# oraz czy F-Droid-friendly testy wymagają obrazu bez GMS ("default").
+
+name: emulator-tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      api-level:
+        description: "Poziom API emulatora"
+        required: false
+        default: "34"
+
+permissions:
+  contents: read
+
+env:
+  GRADLE_VERSION: "9.7.1"
+
+jobs:
+  instrumented:
+    name: instrumented (API ${{ matrix.api-level }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        # 26 = minSdk Thumbcast (plan sekcja 3), 34 = współczesny, 36 = targetSdk.
+        api-level: [26, 34, 36]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      - name: Wybór polecenia Gradle
+        run: |
+          if [ -x ./gradlew ]; then echo "GW=./gradlew" >> "$GITHUB_ENV"; else echo "GW=gradle" >> "$GITHUB_ENV"; fi
+
+      - name: Włączenie KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # DO ZWERYFIKOWANIA: najnowsza główna wersja actions/cache (nie sprawdzono w sieci).
+      - name: Cache AVD
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.api-level }}
+
+      - name: Utworzenie snapshotu AVD
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2.38.0
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          target: default
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Snapshot AVD gotowy"
+
+      - name: Testy instrumentacyjne
+        uses: reactivecircus/android-emulator-runner@v2.38.0
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          target: default
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          # Po forku dodać :app:connectedNonRootDebugAndroidTest (DO ZWERYFIKOWANIA nazwa wariantu).
+          script: $GW --stacktrace :control-android:connectedDebugAndroidTest
+
+      - name: Raporty
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: emulator-reports-api-${{ matrix.api-level }}
+          path: |
+            **/build/reports/androidTests/
+            **/build/outputs/androidTest-results/
+          if-no-files-found: ignore
+          retention-days: 14

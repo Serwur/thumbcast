@@ -1,0 +1,79 @@
+# Katalog wersji projektu Thumbcast (Gradle version catalog).
+#
+# Źródła wersji:
+#   - plan, sekcja 3: Kotlin 2.4.21 [Z:22], AGP 9.4.0 (jak upstream) [Z:7][Z:23], Compose BOM 2026.09.00 [Z:24]
+#   - pozostałe sprawdzone 7.11.2026 przez WebFetch na stronach wydań (linki przy wpisach).
+# Wpisy z komentarzem "DO ZWERYFIKOWANIA" trzeba potwierdzić przy pierwszym buildzie z siecią.
+#
+# Uwaga o AGP 9: moduły Androida używają "built-in Kotlin" (AGP 9 włącza go domyślnie),
+# więc NIE ma tu aliasu dla org.jetbrains.kotlin.android
+# (https://developer.android.com/build/migrate-to-built-in-kotlin).
+
+[versions]
+# Plan, sekcja 3 [Z:22]
+kotlin = "2.4.21"
+# Plan, sekcja 3: jak upstream moonlight-android (root build.gradle: com.android.tools.build:gradle:9.4.0) [Z:7].
+# Przejście na 9.5.0 dopiero razem z rebase upstreamu (9.5 wymaga Gradle >= 9.6.0) [Z:23].
+agp = "9.4.0"
+# https://github.com/Kotlin/kotlinx.serialization/releases : 1.12.0 (19.10, zbudowane z Kotlin 2.4.10).
+# DO ZWERYFIKOWANIA: zgodność 1.12.0 z Kotlin 2.4.21 (plan sekcja 3 oznacza to jako [?]).
+kotlinx-serialization = "1.12.0"
+# https://github.com/kotest/kotest/releases : v6.2.5 (10.09, oznaczone "Latest").
+# DO ZWERYFIKOWANIA: czy 6.2.5 jest zgodne z Kotlin 2.4.21 (plan nie podaje wersji Kotest).
+kotest = "6.2.5"
+# https://github.com/junit-team/junit-framework/releases : JUnit 6.1.3 (07.08); JUnit 6 wymaga Java 17 i Kotlin >= 2.1 (https://junit.org/).
+# W JUnit 6 Platform i Jupiter mają wspólny numer wersji.
+# DO ZWERYFIKOWANIA: plan mówi "JUnit 5"; wybrano aktualne 6.x, w razie problemów zejść na 5.x.
+junit = "6.1.3"
+# JUnit 4 jest potrzebny tylko dla testów Robolectric w :control-android (runner JUnit 4).
+# 4.13.2 to ostatnie znane wydanie linii 4.x. DO ZWERYFIKOWANIA: czy nie wyszło nowsze.
+junit4 = "4.13.2"
+# https://developer.android.com/jetpack/androidx/releases/core : 1.19.1 (23.09.2026).
+# Od 1.19.0 core-ktx jest pustym artefaktem zgodności, API są w "core".
+androidx-core = "1.19.1"
+# https://developer.android.com/jetpack/androidx/releases/annotation : 1.11.0 (23.09.2026).
+androidx-annotation = "1.11.0"
+# https://github.com/robolectric/robolectric/releases : 4.17 (10.09), wspiera SDK 37.
+robolectric = "4.17"
+# Wpis na przyszłość (moduł :control-editor, etap E2). Plan sekcja 3 [Z:24]: foundation 1.12.1, material3 1.4.0.
+compose-bom = "2026.09.00"
+
+[libraries]
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+
+# Testy (czysty JVM)
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+# Gradle 9 nie dokłada już launchera automatycznie; trzeba go dodać jako testRuntimeOnly.
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit" }
+junit4 = { module = "junit:junit", version.ref = "junit4" }
+
+# Android
+androidx-core = { module = "androidx.core:core", version.ref = "androidx-core" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidx-annotation" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+
+# Compose: na przyszłość (E2, :control-editor). Używać przez platform(libs.androidx.compose.bom).
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
+androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
+androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+
+# Brak wersji w planie, więc niezdefiniowane (dodać po sprawdzeniu):
+#   ktlint / detekt (plan sekcja 3, "Jakość"), LeakCanary (debug), androidx.test (core, ext-junit, espresso),
+#   kotlinx-coroutines (kotest-property dociąga je przechodnio; jawny wpis do decyzji), ZXing (QR, E5).
+
+[bundles]
+jvm-test = ["kotlin-test", "kotlin-test-junit5", "kotest-property", "junit-jupiter"]
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+# Na przyszłość (Compose w :control-editor). Wersja = wersja Kotlina.
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+android-application = { id = "com.android.application", version.ref = "agp" }

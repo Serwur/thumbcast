@@ -1,0 +1,175 @@
+# CI Thumbcast: testy JVM, lint, testy właściwości polityki (wymagany check "policy-tests").
+#
+# Wymagane checki w ochronie gałęzi main (Settings > Branches): "jvm-tests", "policy-tests".
+# Nazwy jobów poniżej są nazwami checków; nie zmieniać ich bez aktualizacji ochrony gałęzi.
+#
+# Wersje akcji sprawdzone 7.11.2026 na stronach wydań:
+#   actions/checkout v7, actions/setup-java v6, gradle/actions/setup-gradle v6 (v6.4.1), actions/upload-artifact v7.
+#
+# Do czasu forka w repo nie ma ./gradlew (patrz gradle/wrapper/gradle-wrapper.properties).
+# Krok "Wybór polecenia Gradle" używa wtedy Gradle 9.7.1 zainstalowanego przez setup-gradle.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_VERSION: "9.7.1"
+
+jobs:
+  jvm-tests:
+    name: jvm-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout (z submodułami upstreamu)
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Gradle (cache)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      - name: Wybór polecenia Gradle
+        run: |
+          if [ -x ./gradlew ]; then echo "GW=./gradlew" >> "$GITHUB_ENV"; else echo "GW=gradle" >> "$GITHUB_ENV"; fi
+
+      - name: Testy JVM (model i silnik)
+        run: $GW --stacktrace :control-model:test :control-engine:test
+
+      - name: Raporty testów
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-jvm
+          path: |
+            **/build/reports/tests/
+            **/build/test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+  policy-tests:
+    # Zasada nadrzędna: 1 dotyk = 1 wejście (FAIR_PLAY.md, plan sekcja 6.2 pkt 7).
+    # Job uruchamia testy właściwości ActionPolicy z 100 000 iteracji.
+    # Konwencja (CONTRACT-NOTES.md, sekcja SCAFFOLD): klasy testów polityki mają w nazwie "Policy"
+    # i leżą w :control-engine. Jeśli filtr nie znajdzie żadnego testu, Gradle kończy się błędem,
+    # więc usunięcie testów polityki też zablokuje merge.
+    name: policy-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      - name: Wybór polecenia Gradle
+        run: |
+          if [ -x ./gradlew ]; then echo "GW=./gradlew" >> "$GITHUB_ENV"; else echo "GW=gradle" >> "$GITHUB_ENV"; fi
+
+      - name: Testy właściwości polityki (10^5 iteracji)
+        run: >
+          $GW --stacktrace :control-engine:test
+          --tests '*Policy*'
+          -Pthumbcast.policy.iterations=100000
+
+      - name: Sprawdzenie, że testy polityki faktycznie się wykonały
+        run: |
+          set -euo pipefail
+          dir=control-engine/build/test-results/test
+          if [ ! -d "$dir" ]; then echo "Brak wyników testów polityki w $dir"; exit 1; fi
+          sum() { grep -ho "$1=\"[0-9]*\"" "$dir"/*.xml | grep -o '[0-9]*' | awk '{s+=$1} END {print s+0}'; }
+          count=$(sum tests)
+          failures=$(sum failures)
+          errors=$(sum errors)
+          echo "Testy polityki: $count, porażki: $failures, błędy: $errors"
+          if [ "$count" -eq 0 ]; then echo "Żaden test polityki się nie wykonał"; exit 1; fi
+          if [ "$failures" -ne 0 ] || [ "$errors" -ne 0 ]; then echo "Naruszenie zasady 1 dotyk = 1 wejście"; exit 1; fi
+
+      - name: Raporty testów polityki
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-policy
+          path: |
+            control-engine/build/reports/tests/
+            control-engine/build/test-results/
+          if-no-files-found: warn
+          retention-days: 30
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      - name: Wybór polecenia Gradle
+        run: |
+          if [ -x ./gradlew ]; then echo "GW=./gradlew" >> "$GITHUB_ENV"; else echo "GW=gradle" >> "$GITHUB_ENV"; fi
+
+      # Android Lint dla :control-android. Po forku dodać :app:lint<Wariant>.
+      # ktlint/detekt (plan sekcja 3) dodać po wpisaniu ich wersji do libs.versions.toml.
+      - name: Android Lint
+        run: $GW --stacktrace :control-android:lint
+
+      - name: Strażnik nazw i zakazanych zależności
+        run: |
+          set -euo pipefail
+          # Zakazane zależności (wymóg F-Droid, plan sekcja 3).
+          if grep -rniE 'firebase|crashlytics|play-services|com\.google\.android\.gms' \
+               --include='*.kts' --include='*.gradle' --include='*.toml' . ; then
+            echo "Wykryto zakazaną zależność (Firebase/Crashlytics/Play Services)"; exit 1
+          fi
+          # Zakazane typy wyjść w presetach (plan sekcja 5.3).
+          if [ -d presets ] && grep -rniE '"(sequence|macro|repeat|turbo|delay|toggle_auto)"' presets ; then
+            echo "Preset zawiera zakazany typ (makro/sekwencja/turbo)"; exit 1
+          fi
+
+      - name: Raporty lint
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lint-reports
+          path: "**/build/reports/lint-results*.*"
+          if-no-files-found: ignore
+          retention-days: 14

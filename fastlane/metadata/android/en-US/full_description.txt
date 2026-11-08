@@ -1,0 +1,22 @@
+Thumbcast streams games from your own computer to your Android phone, with configurable touch controls. It works with GameStream-compatible hosts such as Sunshine.
+
+<b>Controls</b>
+<ul>
+<li>Pad+ mode: a virtual Xbox controller (movement, camera, abilities) plus mouse gestures: tap to target, pinch to zoom, long-press for right click.</li>
+<li>Keyboard+Mouse mode: works with any host, including macOS and hosts without a gamepad driver.</li>
+<li>Up to 10 simultaneous fingers, floating joystick, dead zones and sensitivity curves.</li>
+<li>JSON profiles with import and export, left-handed layouts.</li>
+</ul>
+
+<b>One touch = one input</b>
+Every control sends exactly one input. The app has no macros, sequences, turbo, delays or image analysis. These rules are checked by automated tests on every code change.
+
+<b>Important</b>
+<ul>
+<li>Pre-alpha release.</li>
+<li>The app is not endorsed by any game publisher. Check the terms of the game you play.</li>
+<li>The game runs on your own computer; Thumbcast is not a cloud service.</li>
+<li>No ads, no telemetry, no data collection.</li>
+</ul>
+
+Thumbcast is based on Moonlight (GPLv3) and is free software under GPL-3.0-or-later. It is not an official Moonlight project.

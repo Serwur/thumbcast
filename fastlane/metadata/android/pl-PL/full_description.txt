@@ -1,0 +1,22 @@
+Thumbcast to klient streamingu gier z Twojego własnego komputera na telefon z Androidem, z konfigurowalnym sterowaniem dotykowym. Działa z hostami zgodnymi z GameStream, np. Sunshine.
+
+<b>Sterowanie</b>
+<ul>
+<li>Tryb Pad+: wirtualny pad Xbox (ruch, kamera, umiejętności) plus gesty myszy: stuknięcie w cel, szczypanie jako zoom, długie przytrzymanie jako prawy klik.</li>
+<li>Tryb Klawiatura+Mysz: działa na każdym hoście, także na macOS i bez sterownika pada.</li>
+<li>Do 10 palców jednocześnie, pływający joystick, martwe strefy i krzywe czułości.</li>
+<li>Profile w plikach JSON z importem i eksportem, układ dla leworęcznych.</li>
+</ul>
+
+<b>Zasada 1 dotyk = 1 wejście</b>
+Każda kontrolka wysyła dokładnie jedno wejście. Aplikacja nie ma makr, sekwencji, turbo, opóźnień ani analizy obrazu. Zasady są sprawdzane automatycznymi testami przy każdej zmianie kodu.
+
+<b>Ważne</b>
+<ul>
+<li>Wersja pre-alpha.</li>
+<li>Aplikacja nie jest zatwierdzona przez żadnego wydawcę gier. Sprawdź regulamin gry, w którą grasz.</li>
+<li>Gra działa na Twoim komputerze; Thumbcast nie jest usługą chmurową.</li>
+<li>Bez reklam, bez telemetrii, bez zbierania danych.</li>
+</ul>
+
+Thumbcast bazuje na Moonlight (GPLv3) i jest wolnym oprogramowaniem na licencji GPL-3.0-or-later. Nie jest oficjalnym projektem Moonlight.

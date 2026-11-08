@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "id": "0c6e5a3e-7d1b-4f0e-8a51-3f2b9d6c1a01",
+  "name": "MMO – Pad+",
+  "tags": { "game": "mmo-generic", "preset": "mmo-pad-plus" },
+  "mode": "pad_plus",
+  "reference": { "aspect": "20:9", "unit": "dp-normalized" },
+  "handedness": "right",
+  "global": {
+    "opacity": 0.55,
+    "haptics": { "enabled": true, "strength": 0.6, "onPress": "tick", "onRelease": "none" },
+    "slideToPress": false,
+    "autoHideOnGamepad": true,
+    "allowChords": false
+  },
+  "gestures": {
+    "cameraDrag": { "zone": "right_free", "output": "pad_right_stick",
+                    "sensitivity": 1.2, "curve": { "type": "power", "exponent": 1.6 },
+                    "deadzonePx": 4, "invertY": false, "maxDeflection": 1.0, "decayMs": 60 },
+    "tapTarget":  { "enabled": true, "output": "mouse_left_at_point", "maxMovePx": 12, "maxMs": 220 },
+    "longPress":  { "enabled": true, "output": "mouse_right_at_point", "minMs": 450 },
+    "pinchZoom":  { "enabled": true, "output": "mouse_wheel", "pxPerNotch": 40 },
+    "edgeSwipeTop": { "enabled": true, "output": "app_menu" }
+  },
+  "controls": [
+    { "id": "move", "type": "stick", "label": "Ruch", "output": { "pad": "left_stick" },
+      "rect": { "x": 0.0, "y": 0.40, "w": 0.35, "h": 0.60 }, "floating": true,
+      "deadzone": 0.12, "outerDeadzone": 0.04, "curve": { "type": "linear" },
+      "kbmThreshold": 0.35, "sprintLock": false },
+
+    { "id": "lt", "type": "modifier", "label": "LT", "output": { "pad": "LT" }, "behavior": "hold",
+      "rect": { "x": 0.03, "y": 0.25, "w": 0.10, "h": 0.12 } },
+    { "id": "lb", "type": "modifier", "label": "Cel przyjazny", "output": { "pad": "LB" }, "behavior": "hold",
+      "rect": { "x": 0.15, "y": 0.25, "w": 0.10, "h": 0.12 } },
+
+    { "id": "rb", "type": "modifier", "label": "Cel wrogi", "output": { "pad": "RB" }, "behavior": "hold",
+      "rect": { "x": 0.76, "y": 0.34, "w": 0.10, "h": 0.12 } },
+    { "id": "rt", "type": "modifier", "label": "RT", "output": { "pad": "RT" }, "behavior": "hold",
+      "rect": { "x": 0.87, "y": 0.34, "w": 0.10, "h": 0.12 } },
+
+    { "id": "y", "type": "button", "label": "Kontekst", "output": { "pad": "Y" },
+      "rect": { "x": 0.82, "y": 0.50, "w": 0.08, "h": 0.18 }, "shape": "circle" },
+    { "id": "x", "type": "button", "label": "Akcja", "output": { "pad": "X" },
+      "rect": { "x": 0.74, "y": 0.64, "w": 0.08, "h": 0.18 }, "shape": "circle" },
+    { "id": "b", "type": "button", "label": "Anuluj", "output": { "pad": "B" },
+      "rect": { "x": 0.90, "y": 0.64, "w": 0.08, "h": 0.18 }, "shape": "circle" },
+    { "id": "a", "type": "button", "label": "Skok", "icon": "jump", "output": { "pad": "A" },
+      "rect": { "x": 0.82, "y": 0.78, "w": 0.08, "h": 0.18 }, "shape": "circle" },
+
+    { "id": "dpad_up", "type": "button", "label": "Slot 1", "output": { "pad": "UP" },
+      "rect": { "x": 0.59, "y": 0.55, "w": 0.06, "h": 0.13 }, "shape": "rounded_rect" },
+    { "id": "dpad_left", "type": "button", "label": "Slot 2", "output": { "pad": "LEFT" },
+      "rect": { "x": 0.53, "y": 0.69, "w": 0.06, "h": 0.13 }, "shape": "rounded_rect" },
+    { "id": "dpad_right", "type": "button", "label": "Slot 3", "output": { "pad": "RIGHT" },
+      "rect": { "x": 0.65, "y": 0.69, "w": 0.06, "h": 0.13 }, "shape": "rounded_rect" },
+    { "id": "dpad_down", "type": "button", "label": "Slot 4", "output": { "pad": "DOWN" },
+      "rect": { "x": 0.59, "y": 0.83, "w": 0.06, "h": 0.13 }, "shape": "rounded_rect" },
+
+    { "id": "app_menu", "type": "system", "label": "☰", "output": { "app": "menu" },
+      "rect": { "x": 0.02, "y": 0.02, "w": 0.06, "h": 0.09 } },
+    { "id": "chat", "type": "system", "label": "⌨", "output": { "app": "soft_keyboard" },
+      "rect": { "x": 0.09, "y": 0.02, "w": 0.06, "h": 0.09 } },
+    { "id": "start", "type": "button", "label": "Menu gry", "output": { "pad": "START" },
+      "rect": { "x": 0.40, "y": 0.02, "w": 0.07, "h": 0.09 }, "shape": "rounded_rect" },
+    { "id": "back", "type": "button", "label": "Ramki", "output": { "pad": "BACK" },
+      "rect": { "x": 0.48, "y": 0.02, "w": 0.07, "h": 0.09 }, "shape": "rounded_rect" },
+    { "id": "l3", "type": "button", "label": "Centruj kamerę", "output": { "pad": "L3" },
+      "rect": { "x": 0.56, "y": 0.02, "w": 0.07, "h": 0.09 }, "shape": "rounded_rect" }
+  ]
+}

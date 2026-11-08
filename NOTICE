@@ -1,0 +1,53 @@
+Thumbcast
+Copyright (C) 2026 Autorzy projektu Thumbcast
+
+Licencja: GPL-3.0-or-later (patrz LICENSE).
+
+Thumbcast nie jest powiązany z Blizzard Entertainment, Inc., z projektem
+Moonlight, z LizardByte ani z Microsoft i nie jest przez nie zatwierdzony.
+
+------------------------------------------------------------------------
+Oprogramowanie, na którym bazuje projekt
+------------------------------------------------------------------------
+
+Moonlight for Android (moonlight-stream/moonlight-android)
+  https://github.com/moonlight-stream/moonlight-android
+  Licencja: GPL-3.0. Thumbcast jest forkiem tego projektu; kod upstreamu
+  (moduł app, w tym nvstream, binding, moonlight-core) zachowuje
+  oryginalne informacje o prawach autorskich.
+
+moonlight-common-c (moonlight-stream/moonlight-common-c)
+  https://github.com/moonlight-stream/moonlight-common-c
+  Licencja: GPL-3.0. Submoduł upstreamu.
+
+Artemis (ClassicOldSong/moonlight-android)
+  https://github.com/ClassicOldSong/moonlight-android
+  Licencja: GPL-3.0. Wykorzystane pomysły: [uzupełnić]. Wykorzystany kod:
+  [brak na dzień 2026-11-07; jeśli coś przejmiemy, wpisać pliki i commit].
+
+------------------------------------------------------------------------
+Biblioteki zewnętrzne (zależności upstreamu i nowych modułów)
+------------------------------------------------------------------------
+DO ZWERYFIKOWANIA po forku: dokładne wersje i licencje z app/build.gradle
+upstreamu oraz pełna lista zależności przechodnich.
+
+Bouncy Castle            licencja w stylu MIT (Bouncy Castle Licence)
+OkHttp                   Apache License 2.0
+JmDNS                    Apache License 2.0
+jcodec                   BSD 2-Clause (DO ZWERYFIKOWANIA)
+ShieldControllerExtensions  (DO ZWERYFIKOWANIA licencja)
+kotlinx.serialization    Apache License 2.0
+Kotlin standard library  Apache License 2.0
+AndroidX (core, annotation)  Apache License 2.0
+Kotest (tylko testy)     Apache License 2.0
+JUnit (tylko testy)      Eclipse Public License 2.0
+Robolectric (tylko testy)  MIT License
+
+------------------------------------------------------------------------
+Znaki towarowe
+------------------------------------------------------------------------
+World of Warcraft, Warcraft i Blizzard są znakami towarowymi lub
+zastrzeżonymi znakami towarowymi Blizzard Entertainment, Inc.
+Xbox jest znakiem towarowym Microsoft Corporation. Sunshine jest
+projektem LizardByte. Nazwy te są użyte wyłącznie w celu opisu
+zgodności (nominative use).

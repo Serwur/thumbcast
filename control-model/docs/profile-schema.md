@@ -1,0 +1,176 @@
+# Schemat profilu Thumbcast, wersja 1
+
+Plik profilu ma rozszerzenie `.thumbcast.json` i kodowanie UTF-8. Odczytuje go `ProfileCodec.decode`, który:
+
+1. odrzuca każde nieznane pole (`ignoreUnknownKeys = false`) i każdy nieznany typ,
+2. odrzuca w dowolnym miejscu pliku nazwy `sequence`, `macro`, `repeat`, `turbo`, `delay` i `toggle_auto`, zarówno jako wartość `type`, jak i jako klucz pola,
+3. migruje schemat do bieżącego (`ProfileMigrations`, na razie tylko v1),
+4. uruchamia `ProfileValidator.validate`. Jeśli walidator zwróci jakikolwiek błąd, wynikiem jest `Result.failure(ProfileValidationException)`.
+
+`ProfileCodec.encode` zapisuje czytelny JSON z wcięciem 2 spacji, z wartościami domyślnymi i bez pól równych `null`.
+
+Wszystkie współrzędne są znormalizowane do zakresu 0..1 względem bezpiecznego obszaru ekranu w orientacji poziomej. Punkt (0,0) to lewy górny róg.
+
+## Poziom główny
+
+| Pole | Typ | Wymagane | Opis |
+|---|---|---|---|
+| `schema` | int | tak | Wersja schematu. Obecnie musi wynosić `1`. Nowszy schemat jest odrzucany. |
+| `id` | string | tak | Identyfikator profilu, np. UUID. Nie może być pusty. |
+| `name` | string | tak | Nazwa widoczna dla użytkownika. Nie może być pusta. |
+| `tags` | obiekt string→string | nie (`{}`) | Dowolne tagi, np. `game`, `class`, `character`. |
+| `mode` | `"pad_plus"` \| `"keyboard_mouse"` | tak | Tryb profilu (plan, sekcja 4.2). |
+| `reference` | obiekt | nie | `aspect` (domyślnie `"20:9"`) i `unit` (domyślnie `"dp-normalized"`). Pole informacyjne, używane przy skalowaniu z kotwicami. |
+| `handedness` | `"right"` \| `"left"` | nie (`"right"`) | Orientacja układu. Lustro robi `HandednessTransform`. |
+| `global` | obiekt | nie | Ustawienia globalne, opisane niżej. |
+| `gestures` | obiekt | nie | Gesty na wolnej strefie ekranu, opisane niżej. |
+| `controls` | tablica | tak, co najmniej 1 | Kontrolki. Każda ma pole `type`. |
+
+## `global`
+
+| Pole | Typ | Domyślnie | Zakres / opis |
+|---|---|---|---|
+| `opacity` | float | 0.55 | 0.1..1 |
+| `haptics.enabled` | bool | true | |
+| `haptics.strength` | float | 0.6 | 0..1 |
+| `haptics.onPress` | `"none"` \| `"tick"` \| `"click"` | `"tick"` | |
+| `haptics.onRelease` | jw. | `"none"` | |
+| `slideToPress` | bool | false | Przesunięcie palca na inny przycisk najpierw zwalnia poprzedni, potem wciska nowy. Nigdy nie trzyma dwóch naraz. |
+| `autoHideOnGamepad` | bool | true | Po podłączeniu pada BT overlay chowa joystick i przyciski. |
+| `allowChords` | bool | **false** | Włącza pole `chord` w przyciskach (szara strefa, plan 6.2 pkt 4). |
+
+## `gestures`
+
+| Gest | Pola (domyślne) | Reguły |
+|---|---|---|
+| `cameraDrag` | `zone` (`"right_free"` / `"left_free"`), `output` (`"pad_right_stick"` / `"mouse_look"`), `sensitivity` (1.2), `curve` ({power, 1.6}), `deadzonePx` (4), `invertY` (false), `maxDeflection` (1.0), `decayMs` (60) | W trybie `keyboard_mouse` `output` musi mieć wartość `"mouse_look"` (RMB trzymany przez cały gest + ruch względny). `sensitivity` w (0..10], `deadzonePx` 0..64, `maxDeflection` w (0..1], `decayMs` 0..500. |
+| `tapTarget` | `enabled` (true), `output` (`"mouse_left_at_point"`), `maxMovePx` (12), `maxMs` (220) | |
+| `longPress` | `enabled` (true), `output` (`"mouse_right_at_point"`), `minMs` (450) | Gdy włączone są oba gesty, `minMs` musi być większe od `tapTarget.maxMs`. Long-press daje jedno wejście **zamiast** tapu. |
+| `pinchZoom` | `enabled` (true), `output` (`"mouse_wheel"`), `pxPerNotch` (40) | `pxPerNotch` > 0 |
+| `edgeSwipeTop` | `enabled` (true), `output` (`"app_menu"`) | Akcja lokalna, nic nie trafia do hosta. |
+
+`curve`: `{ "type": "linear" }` (wtedy `exponent` musi wynosić 1, co jest wartością domyślną) albo `{ "type": "power", "exponent": 1.0..3.0 }`.
+
+## Wyjście (`output`)
+
+Obiekt z **dokładnie jednym** kluczem, którego wartością jest pojedynczy napis. Tablice, obiekty, puste `{}` i dwa klucze naraz są odrzucane.
+
+| Klucz | Wartości | Typ w modelu |
+|---|---|---|
+| `pad` | `A B X Y UP DOWN LEFT RIGHT LB RB START BACK L3 R3 GUIDE` | `Output.Pad` |
+| `pad` | `LT RT` | `Output.Trigger` |
+| `pad` | `left_stick right_stick` | `Output.Stick` |
+| `trigger` | `LT RT` (alias przy odczycie, zapis jako `pad`) | `Output.Trigger` |
+| `stick` | `left right left_stick right_stick` (alias przy odczycie, zapis jako `pad`) | `Output.Stick` |
+| `key` | kod z `KeyCodes` | `Output.Key` |
+| `mouse` | `left right middle` | `Output.Mouse` |
+| `mouse` | `wheel`, `look` | `Output.MouseWheel`, `Output.MouseLook` (tylko gesty; walidator nie pozwala ich użyć w przyciskach) |
+| `app` | `menu soft_keyboard toggle_overlay` | `Output.App` |
+
+**Kody klawiszy (`KeyCodes`)**: `A`–`Z`, `0`–`9`, `F1`–`F12`, `SPACE`, `ESC`, `TAB`, `ENTER`, `SHIFT`, `CTRL`, `ALT`, `-`, `=`, `UP`, `DOWN`, `LEFT`, `RIGHT`. Wielkość liter ma znaczenie, więc `"a"` jest błędem.
+
+## Kontrolki (`controls[]`)
+
+Pola wspólne dla wszystkich typów:
+
+| Pole | Typ | Opis |
+|---|---|---|
+| `id` | string | Niepusty i unikalny w obrębie profilu. |
+| `type` | `"stick"` \| `"button"` \| `"modifier"` \| `"system"` | Każda inna wartość jest odrzucana. |
+| `rect` | `{x,y,w,h}` | x, y w 0..1; w, h w (0..1]; x+w ≤ 1 oraz y+h ≤ 1 (tolerancja 1e-4). Wartości muszą być skończone. |
+| `label` | string? | Etykieta: neutralna, po polsku. |
+| `icon` | string? | Nazwa ikony z neutralnego zestawu aplikacji. |
+
+### `stick`
+
+| Pole | Domyślnie | Reguły |
+|---|---|---|
+| `output` | `{ "pad": "left_stick" }` | Musi to być gałka (`Output.Stick`). |
+| `floating` | true | Środek joysticka wypada w miejscu, w którym kciuk dotknął strefy. |
+| `deadzone` | 0.12 | 0..0.5 |
+| `outerDeadzone` | 0.04 | 0..0.5; suma z `deadzone` ≤ 0.9 |
+| `curve` | `{ "type": "linear" }` | jak wyżej |
+| `kbmKeys` | brak | `{up,down,left,right}`: cztery różne kody z `KeyCodes`. **Wymagane w trybie `keyboard_mouse`.** |
+| `kbmThreshold` | 0.35 | 0.1..0.9: próg wychylenia dla klawiszy kierunków (8 kierunków). |
+| `sprintLock` | false | Przesunięcie palca poza obrys utrzymuje 100% wychylenia, dopóki palec dotyka ekranu. |
+
+### `button`
+
+| Pole | Domyślnie | Reguły |
+|---|---|---|
+| `output` | wymagane | Przycisk pada, trigger, klawisz albo `mouse` left/right/middle. W trybie `keyboard_mouse` wyjścia pada są zabronione. Gałka, `wheel`, `look` i `app` są zabronione. |
+| `behavior` | `"hold"` | Dozwolone tylko `"hold"`. Wartość `"latch"` jest błędem. |
+| `shape` | `"circle"` | `"circle"` \| `"rounded_rect"` \| `"rect"` |
+| `chord` | brak | **Opcjonalne, domyślnie wyłączone.** Pole jest dozwolone tylko wtedy, gdy `global.allowChords = true`. Zawiera jedno wyjście-modyfikator (`LB`, `RB`, `LT`, `RT` albo `SHIFT`, `CTRL`, `ALT`), które jest wciskane i zwalniane razem z `output`. Przykłady: `{ "output": {"key":"1"}, "chord": {"key":"SHIFT"} }` albo `{ "output": {"pad":"Y"}, "chord": {"pad":"LB"} }`. Modyfikator i przycisk muszą pochodzić z tego samego urządzenia, a `output` nie może sam być modyfikatorem. Akord ma zawsze najwyżej 1 modyfikator i 1 przycisk. |
+
+### `modifier`
+
+To samo co `button`, z dwiema różnicami: `behavior` może mieć wartość `"latch"` (pierwsze dotknięcie wciska, następne zwalnia), a `output` musi być modyfikatorem: `LT`, `RT`, `LB`, `RB` albo klawiszem `SHIFT`, `CTRL`, `ALT`. Domyślny `shape` to `"rounded_rect"`. Pole `chord` nie istnieje.
+
+### `system`
+
+`output` musi być postaci `{ "app": ... }`, z akcją `menu`, `soft_keyboard` albo `toggle_overlay`. Kontrolka nic nie wysyła do hosta. Domyślny `shape` to `"rounded_rect"`.
+
+## Tryby
+
+- `pad_plus`: dozwolone wyjścia `pad`/`trigger`/`stick`, a także `key` i `mouse` w przyciskach (np. „Mapa” → `M`).
+- `keyboard_mouse`: brak wyjść pada w przyciskach i modyfikatorach. Joystick musi mieć `kbmKeys`, a `cameraDrag.output` musi mieć wartość `mouse_look`.
+
+## Leworęczność
+
+`HandednessTransform.mirror` zamienia `x` na `1 - x - w` w każdym `rect` (wynik zaokrąglany do siatki 1e-4), zamienia `cameraDrag.zone` między `right_free` a `left_free` i przełącza `handedness`. Wyjścia zostają bez zmian. Dwukrotne lustro daje profil wyjściowy.
+
+## Migracje
+
+`ProfileMigrations.migrate(tree, from, to)` działa na drzewie JSON przed dekodowaniem typowanym. Każdy krok n → n+1 musi ustawić `"schema": n+1`. Schemat starszy niż 1 albo nowszy niż `CURRENT_SCHEMA` jest odrzucany.
+
+## Przykład (fragment `presets/mmo-pad-plus.thumbcast.json`)
+
+```json
+{
+  "schema": 1,
+  "id": "0c6e5a3e-7d1b-4f0e-8a51-3f2b9d6c1a01",
+  "name": "MMO – Pad+",
+  "tags": { "game": "mmo-generic" },
+  "mode": "pad_plus",
+  "reference": { "aspect": "20:9", "unit": "dp-normalized" },
+  "handedness": "right",
+  "global": {
+    "opacity": 0.55,
+    "haptics": { "enabled": true, "strength": 0.6, "onPress": "tick", "onRelease": "none" },
+    "slideToPress": false, "autoHideOnGamepad": true, "allowChords": false
+  },
+  "gestures": {
+    "cameraDrag": { "zone": "right_free", "output": "pad_right_stick", "sensitivity": 1.2,
+                    "curve": { "type": "power", "exponent": 1.6 }, "deadzonePx": 4,
+                    "invertY": false, "maxDeflection": 1.0, "decayMs": 60 },
+    "tapTarget":  { "enabled": true, "output": "mouse_left_at_point", "maxMovePx": 12, "maxMs": 220 },
+    "longPress":  { "enabled": true, "output": "mouse_right_at_point", "minMs": 450 },
+    "pinchZoom":  { "enabled": true, "output": "mouse_wheel", "pxPerNotch": 40 },
+    "edgeSwipeTop": { "enabled": true, "output": "app_menu" }
+  },
+  "controls": [
+    { "id": "move", "type": "stick", "label": "Ruch", "output": { "pad": "left_stick" },
+      "rect": { "x": 0.0, "y": 0.40, "w": 0.35, "h": 0.60 }, "floating": true,
+      "deadzone": 0.12, "outerDeadzone": 0.04, "curve": { "type": "linear" } },
+    { "id": "lt", "type": "modifier", "label": "LT", "output": { "pad": "LT" }, "behavior": "hold",
+      "rect": { "x": 0.03, "y": 0.25, "w": 0.10, "h": 0.12 } },
+    { "id": "a", "type": "button", "label": "Skok", "icon": "jump", "output": { "pad": "A" },
+      "rect": { "x": 0.82, "y": 0.78, "w": 0.08, "h": 0.18 }, "shape": "circle" },
+    { "id": "chat", "type": "system", "label": "⌨", "output": { "app": "soft_keyboard" },
+      "rect": { "x": 0.09, "y": 0.02, "w": 0.06, "h": 0.09 } }
+  ]
+}
+```
+
+## Przykłady odrzucane
+
+```json
+{ "id": "m", "type": "macro", ... }                          // zakazany typ
+{ "id": "a", "type": "button", "turbo": true, ... }          // zakazane i nieznane pole
+{ "output": { "pad": "A", "key": "M" } }                     // dwa wyjścia
+{ "output": { "pad": ["LB", "RB"] } }                        // tablica w wyjściu
+{ "type": "button", "behavior": "latch", ... }               // latch poza modyfikatorem
+{ "type": "button", "chord": { "pad": "LB" } }               // akord bez global.allowChords
+{ "type": "system", "output": { "app": "run_script" } }      // niedozwolona akcja aplikacji
+```

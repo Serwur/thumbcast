@@ -1,0 +1,62 @@
+name: Błąd
+description: Zgłoś błąd w działaniu aplikacji
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Podatności bezpieczeństwa zgłaszaj prywatnie (SECURITY.md), nie tutaj.
+  - type: textarea
+    id: what
+    attributes:
+      label: Co się stało?
+      description: Opis błędu i oczekiwane zachowanie.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Kroki odtworzenia
+      placeholder: |
+        1. Profil ...
+        2. Dotknij ...
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Tryb sterowania
+      options: ["Pad+", "Klawiatura+Mysz", "legacy (OSC upstreamu)", "nie dotyczy"]
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Telefon i wersja Androida
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Host (system, wersja Sunshine, gamepad_driver)
+      placeholder: "Windows 11, Sunshine v2026.914, vigembus"
+  - type: input
+    id: version
+    attributes:
+      label: Wersja Thumbcast (lub commit)
+    validations:
+      required: true
+  - type: checkboxes
+    id: input-issue
+    attributes:
+      label: Problem z wejściem
+      options:
+        - label: Wejście „zawieszone” po oderwaniu palca (stuck input)
+        - label: Wejście bez dotyku (ghost input) - to możliwe naruszenie zasady 1 dotyk = 1 wejście
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logi
+      description: Eksport logu z aplikacji lub `adb logcat`. Usuń adresy IP i nazwy hostów, jeśli chcesz.
+      render: text

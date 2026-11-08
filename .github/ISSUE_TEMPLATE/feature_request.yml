@@ -1,0 +1,41 @@
+name: Propozycja funkcji
+description: Zaproponuj nową funkcję lub zmianę
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Przeczytaj FAIR_PLAY.md i CONTRIBUTING.md. Propozycje makr, sekwencji, turbo, auto-repeat,
+        timerów generujących naciśnięcia, analizy obrazu i multiboxingu są zamykane.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Jaki problem rozwiązuje?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Propozycja
+      description: Jak ma działać z punktu widzenia gracza?
+    validations:
+      required: true
+  - type: textarea
+    id: inputs
+    attributes:
+      label: Jakie wejścia wysyła?
+      description: Dla każdego dotyku/gestu opisz, jakie dokładnie wejście (przycisk pada, klawisz, mysz) trafia do hosta.
+    validations:
+      required: true
+  - type: checkboxes
+    id: fairplay
+    attributes:
+      label: Checklista fair-play
+      options:
+        - label: Każdy dotyk daje co najwyżej jedno wejście.
+          required: true
+        - label: Funkcja nie generuje wejść bez dotyku (timery, opóźnienia, powtórzenia).
+          required: true
+        - label: Funkcja nie analizuje obrazu gry ani nie czyta jej pamięci/plików.
+          required: true
+        - label: Funkcja może być akordem (2 wejścia naraz) - wymaga ostrzeżenia, domyślnie wyłączona.
