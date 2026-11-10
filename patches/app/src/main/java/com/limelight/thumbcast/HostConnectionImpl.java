@@ -2,7 +2,8 @@ package com.limelight.thumbcast;
 
 // NOWY PLIK wstawiany do upstreamu moonlight-android (moduł :app).
 // Delegacja 1:1 fasady HostConnection (:control-android) do NvConnection.
-// Sygnatury NvConnection wg planu, sekcja 2.2 [Z:6i]; NIE sprawdzone na kodzie w tej sesji.
+// Sygnatury NvConnection zweryfikowane z upstreamem v12.2 (commit b48494cb96bf): wszystkie sześć
+// metod jest `public void`, bez `throws`, z dokładnie takimi parametrami (short/byte).
 
 import com.limelight.nvstream.NvConnection;
 

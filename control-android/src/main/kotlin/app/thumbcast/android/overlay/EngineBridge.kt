@@ -42,8 +42,11 @@ data class VideoRect(val left: Int, val top: Int, val right: Int, val bottom: In
  * Liczenie prostokąta wideo (letterbox / pillarbox) w czystym JVM.
  *
  * Używane, gdy `Game` nie poda prostokąta jawnie przez `setVideoRect(...)`: wtedy zakładamy, że
- * `StreamView` jest wycentrowany w rodzicu i zachowuje proporcje strumienia (upstream:
- * `setDesiredAspectRatio`, plan 2.3 pkt 5) [?].
+ * `StreamView` jest wycentrowany w rodzicu i zachowuje proporcje strumienia. Zweryfikowane
+ * na upstreamie v12.2: `activity_game.xml` daje `StreamView` `match_parent` + `layout_gravity=center`,
+ * a `StreamView.onMeasure` przy ustawionym `setDesiredAspectRatio` dopasowuje wysokość albo szerokość
+ * (letterbox/pillarbox przez rozmiar widoku, nie przez dekoder). Rozmiar `StreamView` po layoucie
+ * jest więc prostokątem wideo (preferowane: jawne `setVideoRect`).
  */
 object ViewportMath {
 

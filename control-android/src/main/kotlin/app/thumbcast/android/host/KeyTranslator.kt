@@ -14,8 +14,12 @@ fun interface KeyTranslator {
 }
 
 /**
- * Zapasowy translator: keycode Androida -> Windows Virtual-Key z prefiksem 0x80 w starszym bajcie
- * (tak, jak wg naszej wiedzy robi upstreamowy `KeyboardTranslator.translate`: `(KEY_PREFIX << 8) | vk`) [?].
+ * Zapasowy translator: keycode Androida -> Windows Virtual-Key z prefiksem 0x80 w starszym bajcie.
+ * Zweryfikowane z upstreamowym `KeyboardTranslator` (v12.2, b48494cb96bf):
+ * `return (short) ((KEY_PREFIX << 8) | translated)` z `KEY_PREFIX = (short) 0x80`; nieprzetłumaczalne
+ * klawisze dają 0. Wartości VK poniżej zgadzają się z `switch` upstreamu (litery 0x41+, cyfry 0x30+,
+ * F1 = 0x70+, SPACE 0x20, ESC 0x1B, TAB 0x09, ENTER 0x0D, MINUS 0xBD, EQUALS 0xBB, strzałki 0x25..0x28,
+ * lewe/prawe SHIFT 0xA0/0xA1, CTRL 0xA2/0xA3, ALT 0xA4/0xA5).
  *
  * Obejmuje tylko klawisze ze słownika `KeyCodes` modelu. Używany w testach JVM i jako domyślny
  * parametr fabryki, gdy aplikacja nie poda własnego translatora.

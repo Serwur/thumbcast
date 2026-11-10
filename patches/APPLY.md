@@ -1,10 +1,15 @@
 # Jak nałożyć patche Thumbcast na świeży fork moonlight-android v12.2
 
 Ten katalog zawiera **opis** zmian w upstreamie (`*.patch.md`) i **nowe pliki** do skopiowania
-(`app/src/main/java/com/limelight/thumbcast/*.java`). Nie ma tu kodu upstreamu: w sesji, w której
-to powstało, repozytorium moonlight-android nie było dostępne (brak sieci). Wszystkie odwołania do
-upstreamu pochodzą z planu (`plan-wow-forever-controller.md`, sekcje 2.1–2.3) i są oznaczone **[?]**
-tam, gdzie wymagają sprawdzenia na kodzie.
+(`app/src/main/java/com/limelight/thumbcast/*.java`). Nie ma tu kodu upstreamu.
+
+**Stan weryfikacji (10.11.2026):** opisy i pliki Java zostały porównane z prawdziwym kodem upstreamu
+**moonlight-stream/moonlight-android, tag v12.2 = commit `b48494cb96bff23d8886c4775cc4f39a1075495d`**
+(„Version 12.2”, 12.09.2026; w dniu sprawdzenia to też HEAD `master`) oraz z `moonlight-common-c` (`master`,
+`src/Limelight.h`; submoduł upstreamu może wskazywać inny commit, ale te stałe są częścią stabilnego protokołu).
+Odczyt szedł przez narzędzie, które zwraca tylko streszczenia i krótkie cytaty, więc **nie ma gotowych diffów**
+i nic nie było kompilowane. Opisy zawierają dosłowne kotwice (linie do znalezienia w pliku). Po nałożeniu zapisz
+własny, pewny diff: `git diff v12.2 -- app/ > patches/0001-thumbcast.diff`.
 
 ## Zawartość
 
@@ -21,21 +26,25 @@ tam, gdzie wymagają sprawdzenia na kodzie.
 
 1. **Fork i checkout tagu.** Forkujemy `moonlight-stream/moonlight-android`, tworzymy gałąź
    `thumbcast/main` od tagu v12.2 (`git checkout -b thumbcast/main v12.2`), inicjalizujemy submoduły
-   (`git submodule update --init --recursive`: `moonlight-common-c` w `app/src/main/jni/moonlight-core`).
+   (`git submodule update --init --recursive`; jedyny submoduł to `moonlight-common-c` w ścieżce
+   `app/src/main/jni/moonlight-core/moonlight-common-c`, wg `.gitmodules` v12.2).
    Sprawdzamy, że czysty upstream buduje się lokalnie (NDK 29.0.14206865, plan 1.3) **zanim** cokolwiek zmienimy.
 2. **Struktura buildu.** Dokładamy katalogi `control-model/`, `control-engine/`, `control-android/`,
    `presets/`, `gradle/libs.versions.toml` z repo Thumbcast (wariant „scalenie” z `settings.gradle.kts`
    SCAFFOLD). Upstreamowy `settings.gradle` (Groovy) zastępujemy `settings.gradle.kts` i odkomentowujemy
    `include(":app")`. Build musi przejść **bez** zmian w `:app` (moduły są jeszcze nieużywane).
-3. **`applicationId` i zależność** wg `manifest-and-appid.patch.md`. Build + instalacja obok oryginału.
+3. **`applicationId` i zależność** wg `manifest-and-appid.patch.md` (uwaga: id ustawia się we flavorze `nonRoot`, flavor
+   `root` usuwamy z powodu `minSdk 26`). Build + instalacja obok oryginału.
 4. **Nowe pliki Java.** Kopiujemy `patches/app/src/main/java/com/limelight/thumbcast/` do
-   `app/src/main/java/com/limelight/thumbcast/`. Teraz kompilator pokaże rozjazdy sygnatur
-   (`NvConnection`, `ControllerHandler.reportOscState`, `KeyboardTranslator.translate`): poprawiamy
-   tylko te trzy pliki, nie fasady w `:control-android` (fasady mają odzwierciedlać upstream; jeśli
-   upstream ma inną sygnaturę, poprawiamy fasadę **i** wpisujemy to do `CONTRACT-NOTES.md`).
+   `app/src/main/java/com/limelight/thumbcast/`. Sygnatury `NvConnection.send*`, `ControllerHandler.reportOscState`
+   i `KeyboardTranslator.translate(int, int)` zostały porównane z v12.2 (patrz niżej); kompilator i tak
+   jest ostatecznym sędzią. Ewentualne rozjazdy poprawiamy w tych trzech plikach, nie w fasadach w `:control-android`
+   (jeśli upstream ma inną sygnaturę, poprawiamy fasadę **i** wpisujemy to do `CONTRACT-NOTES.md`).
 5. **Preferencje** wg `preferences.patch.md` (najpierw zasoby, potem `PreferenceConfiguration`, potem
    `StreamSettings`). Build.
-6. **`Game.java`** wg `Game.java.patch.md`, sekcjami 1–8 po kolei. Po sekcji 3 i 5 test ręczny:
+6. **`PreferenceConfiguration`: wymuszenie `onscreenController = true`** w trybie Thumbcast (`preferences.patch.md`, pkt 4)
+   MUSI być zrobione przed testem na hoście: bez niego bit 0 maski pada nie jest ustawiany i host może nie widzieć pada.
+   **`Game.java`** wg `Game.java.patch.md`, sekcjami 1–8 po kolei. Po sekcji 3 i 5 test ręczny:
    strumień pulpitu, overlay widoczny, A z profilu Pad+ widoczne w „Kontrolery gier” Windows.
 7. **Testy**: `:control-model:test`, `:control-engine:test`, `:control-android:testDebugUnitTest`,
    na urządzeniu `:control-android:connectedDebugAndroidTest` (po dodaniu aliasów androidx.test).
@@ -57,47 +66,59 @@ tam, gdzie wymagają sprawdzenia na kodzie.
   zakomentowane wg planu 2.2): sprawdzić, czy nasz warunek „palec + overlay aktywny -> return true” jest
   nadal przed wszystkimi gałęziami, które wysyłają dotyk do hosta.
 - AGP/Gradle: trzymamy wersje upstreamu (plan 3); podbijamy razem z rebase, w version catalog.
-- Retransmisja w `HostPadReporterImpl`: jeśli upstream przeniesie retransmisję do `reportOscState`
+- Retransmisja w `HostPadReporterImpl` (potwierdzona w `VirtualController`): jeśli upstream przeniesie retransmisję do `reportOscState`
   albo `ControllerHandler`, wyłączyć naszą (`new HostPadReporterImpl(controllerHandler, false)`),
   inaczej stany będą wysyłane podwójnie (nadal identyczne, więc bez skutków dla polityki, ale niepotrzebny ruch).
 
-## Założenia wynikające WYŁĄCZNIE z planu (nie z kodu, który widziałem)
+## Wyniki weryfikacji z upstreamem v12.2 (b48494cb96bf)
 
-Żadnego pliku upstreamu nie widziałem w tej sesji. Wszystko poniżej trzeba potwierdzić przy kroku 4–6.
+Legenda: ZGODNE = tak jak w planie/kodzie Thumbcast; POPRAWIONE = założenie było błędne i plik zmieniono; NIEPEWNE = nie dało się potwierdzić.
 
-1. Sygnatury `NvConnection`: `sendKeyboardInput(short, byte, byte, byte)`, `sendMouseMove(short, short)`,
-   `sendMousePosition(short, short, short, short)`, `sendMouseButtonDown(byte)`, `sendMouseButtonUp(byte)`,
-   `sendMouseHighResScroll(short)` (plan 2.2 [Z:6i]).
-2. `ControllerHandler.reportOscState(int, short, short, short, short, byte, byte)` jest publiczne
-   i zapisuje do kontekstu 0 (plan 2.2 [Z:6d]).
-3. Retransmisja 25/50/75 ms jest w `VirtualController`, a nie w `reportOscState` (plan 2.2 [Z:6c]);
-   stąd jej kopia w `HostPadReporterImpl`.
-4. W `Game.onCreate()` istnieją `prefConfig`, `controllerHandler`, `conn`, `streamView`, a rodzic
-   `streamView` jest `FrameLayout` (plan 2.2 [Z:6b]: `(FrameLayout) streamView.getParent()`).
-5. Routing dotyku: `backgroundTouchView` + `onTouch` + `handleMotionEvent`, palce do `touchContextMap`
-   (`TouchContext[2]`), trzy palce -> `toggleKeyboard()` (plan 2.2 [Z:6b]).
-6. Rozdzielczość referencyjna dotyku w upstreamie to 1280×720 (plan 2.2), ale dla `sendMousePosition`
-   przekazujemy rozdzielczość strumienia / prostokąt wideo (overlay pozwala na oba).
-7. Proporcje wideo ustala `StreamView.setDesiredAspectRatio` (plan 2.3 pkt 5); zakładamy, że
-   rozmiar `StreamView` po layoucie = prostokąt wideo.
-8. `ControllerHandler.onInputDeviceAdded` jest pusty (plan 2.3 pkt 7), więc nasz listener nie koliduje.
-9. Klucze preferencji upstreamu (`checkbox_show_onscreen_controls` itd.) wg planu 2.1 [Z:6e];
-   struktura `preferences.xml`, nazwa metody odczytu w `PreferenceConfiguration` i API preferencji
-   (`androidx.preference` vs `android.preference`) to **moje założenia**.
-10. Sygnatura `KeyboardTranslator.translate` **nie jest w planie**; wariant w `ThumbcastKeyTranslator`
-    to założenie (komentarz w pliku podaje alternatywę). Tak samo pole `keyboardTranslator` w `Game`.
-11. Stałe protokołu w `HostProtocol` (`:control-android`): `KEY_DOWN=0x03`, `KEY_UP=0x04`,
-    `MODIFIER_SHIFT/CTRL/ALT=0x01/0x02/0x04`, `MOUSE_BUTTON_LEFT/MIDDLE/RIGHT=1/2/3` oraz format kodu
-    hosta `0x80xx` (VK z prefiksem) są **z mojej pamięci o moonlight-common-c**, nie z planu.
-    Do sprawdzenia w `KeyboardPacket`, `MouseButtonPacket` i `KeyboardTranslator`. Przy rozjeździe:
-    poprawić `HostProtocol` (jedno miejsce).
-12. `applicationId` upstreamu `com.limelight` i flavory `root`/`nonRoot` (plan 1.3); sposób ustawiania
-    suffiksu dla flavorów, authorities providerów i `shortcuts.xml` to założenia.
+1. `NvConnection`: `sendKeyboardInput(short, byte, byte, byte)`, `sendMouseMove(short, short)`, `sendMousePosition(short, short, short, short)`,
+   `sendMouseButtonDown(byte)`, `sendMouseButtonUp(byte)`, `sendMouseHighResScroll(short)`: **ZGODNE** (wszystkie `public void`, bez `throws`).
+   Istnieją też `sendMouseScroll(byte)`, `sendMouseHScroll`, `sendMouseHighResHScroll`, `sendMouseMoveAsMousePosition`, `sendUtf8Text(String)`,
+   `sendTouchEvent`, `sendPenEvent`, `sendControllerInput(short,short,int,byte,byte,short,short,short,short)`; nie używamy ich.
+2. `ControllerHandler.reportOscState(int, short, short, short, short, byte, byte)`: **ZGODNE**, `public void`, pisze do `defaultContext`
+   (kontroler nr 0, `inputMap = buttonFlags`, bez skalowania i deadzone) i woła `sendControllerInputPacket(defaultContext)`; brak blokad.
+   Pakiet łączy się z padami fizycznymi o tym samym numerze (OR przycisków, `maxByMagnitude` osi).
+3. Retransmisja 25/50/75 ms jest w `VirtualController.sendControllerInputContext()`, nie w `reportOscState`: **ZGODNE** (komentarz upstreamu:
+   „GFE sometimes discards gamepad packets”). `HostPadReporterImpl` zostaje.
+4. `Game.onCreate()`: pola `prefConfig`, `controllerHandler`, `conn`, `streamView`, `keyboardTranslator` istnieją i są ustawione przed blokiem
+   VirtualController: **ZGODNE**. Rodzic `StreamView` to FrameLayout (korzeń `activity_game.xml` to `<merge>`): **ZGODNE**.
+5. Routing dotyku (`backgroundTouchView` jako zmienna LOKALNA, `onTouch` → `handleMotionEvent`, palce do `touchContextMap`
+   `TouchContext[2]`, trzy palce → klawiatura): **ZGODNE**, z drobnym uściśleniem: palec to końcowa gałąź `else`, nie ma jawnego `TOOL_TYPE_FINGER`.
+   Miejsce wstawki wskazane w `Game.java.patch.md`, pkt 4.
+6. Referencja dotyku dla `sendMousePosition`: upstreamowy `AbsoluteTouchContext` przekazuje `targetView.getWidth()/getHeight()` (rozmiar widoku),
+   a nie 1280×720: **POPRAWIONE** (założenie 6 z planu było mylące). `RelativeTouchContext` używa `REFERENCE_HORIZ_RES/VERT_RES` (stałe w `Game`).
+   Dla nas oba warianty są równoważne; patch podaje rozdzielczość strumienia.
+7. `StreamView.setDesiredAspectRatio` + `onMeasure` ustalają rozmiar widoku (wołane w `prepareDisplayForRendering()`), `layout_gravity=center`
+   w `<merge>`: rozmiar `StreamView` = prostokąt wideo: **ZGODNE**. Patch używa `OnLayoutChangeListener`.
+8. `ControllerHandler.onInputDeviceAdded`: klasa implementuje `InputManager.InputDeviceListener`; treści `onInputDeviceAdded` nie czytałem:
+   **NIEPEWNE** (nasz listener w overlayu jest niezależny, więc to bez znaczenia dla poprawności).
+9. Klucze preferencji: `checkbox_show_onscreen_controls`, `checkbox_vibrate_osc`, `checkbox_only_show_L3R3`, `checkbox_show_guide_button`,
+   `seekbar_osc_opacity`, kategoria `category_onscreen_controls`: **ZGODNE**. API preferencji to **`android.preference.*`** (stare, `PreferenceFragment`),
+   `readPreferences(Context)` jest statyczne: **POPRAWIONE** (w `preferences.patch.md`). Nazwa metody w `StreamSettings`: `SettingsFragment.onCreate`.
+10. `KeyboardTranslator.translate`: **POPRAWIONE**. Jest instancyjna z **dwoma** parametrami: `public short translate(int keycode, int deviceId)`;
+    `ThumbcastKeyTranslator` wołał trzyargumentową (`translate(keycode, 0, -1)`), która nie istnieje. Teraz `translate(androidKeyCode, -1)`,
+    tak jak upstreamowe `Game.keyboardEvent(boolean, short)`. Pole `Game.keyboardTranslator` istnieje (`private KeyboardTranslator keyboardTranslator;`).
+11. Stałe `HostProtocol`: **ZGODNE** z `KeyboardPacket` (KEY_DOWN 0x03, KEY_UP 0x04, MODIFIER_SHIFT/CTRL/ALT 0x01/0x02/0x04, META 0x08),
+    `MouseButtonPacket` (LEFT 1, MIDDLE 2, RIGHT 3, X1 4, X2 5) i `Limelight.h`. Prefiks `0x80` w kodzie hosta: **ZGODNE**
+    (`(KEY_PREFIX << 8) | vk`). Flagi `ControllerPacket` (A 0x1000 … SPECIAL_BUTTON_FLAG 0x0400, w C: `SPECIAL_FLAG`) zgodne z CONTRACT.md.
+    Czwarty argument `sendKeyboardInput`: 0 dla znormalizowanych, `SS_KBE_FLAG_NON_NORMALIZED` (0x01) dla klawiatur z innym układem:
+    nasze 0 jest poprawne dla `translate(code, -1)`.
+12. `applicationId`: **POPRAWIONE**. Ustawiany we flavorach (`root`: `com.limelight.root`, `nonRoot`: `com.limelight`), nie w `defaultConfig`;
+    `release` dodaje `.unofficial`, `debug` `.debug`; `minSdk 21`; flavor `root` ma `maxSdk 25` (kolizja z naszym minSdk 26). Provider ma
+    `poster.${applicationId}`, brak `shortcuts.xml`. Szczegóły w `manifest-and-appid.patch.md`.
+13. **Nowe (krytyczne):** bit 0 maski pada zależy od `prefConfig.onscreenController` (patrz pkt 6 kroków). Wymuszenie w `readPreferences`.
+14. **NIEPEWNE:** pełne ciało `Game.stopConnection()`, kod `onGenericMotion`, `ShortcutHelper`, dokładne miejsca innych wystąpień
+    `onscreenController` w `Game` poza pierwszymi 100 tys. znaków pliku (odczyt był obcięty). Sprawdzić `grep -n onscreenController`.
+15. **NIEPEWNE:** zachowanie Sunshine/Apollo wobec pakietów pada z numerem 0 przy `multiController=false` (maska 1): bez zmian względem upstreamu.
 
 ## Otwarte pytania
 
-- Czy w trybie Thumbcast blokować orientację na landscape jak przy OSC (zakładam, że tak)?
-- Czy `prefConfig.onscreenController` ma być wymuszane na `false`, gdy `control_layer = thumbcast`
-  (żeby fallback rumble i inne zależności od OSC działały przewidywalnie)?
-- Menu w grze (plan 7 pkt 5, bottom sheet) nie jest częścią tego patcha; `"menu"` otwiera menu
-  kontekstowe upstreamu [?] jako tymczasowe rozwiązanie.
+- Landscape: odpowiedź z kodu: `setPreferredOrientationForCurrentDisplay()` wymusza `USER_LANDSCAPE` na ekranach nie-kwadratowych zawsze,
+  a na „squarish” tylko przy `onscreenController`. Przy wymuszeniu flagi (pkt 13) zachowanie jest jak przy OSC. Decyzja produktowa
+  (czy blokować) zostaje w `docs/DECISIONS.md`, pkt h.
+- `onscreenController` nie wymuszamy na `false`, tylko na **`true`** (odwrotnie niż zakładało pytanie): inaczej maska pada nie ma bitu 0.
+- Menu w grze (plan 7 pkt 5, bottom sheet) nie jest częścią tego patcha; w v12.2 nie znalazłem menu kontekstowego w `Game`,
+  więc `"menu"` jest no-op z logiem.

@@ -1,17 +1,66 @@
 # Patch: `app/src/main/java/com/limelight/Game.java` (upstream moonlight-android v12.2)
 
-To jest **opis** zmian, a nie gotowy `git diff`: kodu upstreamu nie było w tej sesji.
-Kontekst (nazwy pól, metod, kolejność w `onCreate()`) pochodzi z planu, sekcja 2.2 i 2.3 [Z:6b],
-a miejsca oznaczone **[?]** trzeba dopasować do faktycznego kodu podczas nakładania.
-Fragmenty oznaczone `+` dodajemy, `~` zmieniamy. Kodu upstreamu nie kopiujemy.
+Zweryfikowane na kodzie upstreamu: tag **v12.2 = commit `b48494cb96bff23d8886c4775cc4f39a1075495d`**
+(skrót `b48494cb96bf`, 12.09.2026, „Version 12.2”; w dniu sprawdzenia, 10.11.2026, to także HEAD `master`).
+Źródło: `raw.githubusercontent.com` i `api.github.com` (tagi, commity).
 
-Zasada: zmiany w `Game.java` mają być **małe i zgrupowane** w blokach oznaczonych komentarzem
-`// THUMBCAST:` (początek) i `// THUMBCAST END` (koniec), żeby przy rebase dało się je
-znaleźć `grep -n THUMBCAST`.
+To nadal **opis krok po kroku, a nie gotowy `git diff`**: narzędzie, którym czytałem upstream, podaje
+tylko krótkie cytaty (bez numerów linii i bez gwarancji białych znaków), więc nie da się uczciwie
+wygenerować diffu, który przejdzie `git apply`. Wszystkie „kotwice” poniżej (linie do znalezienia
+w pliku) są **dosłownymi cytatami z v12.2**; fragmenty `+` dodajemy. Po nałożeniu zrób własny diff:
+`git diff v12.2 -- app/src/main/java/com/limelight/Game.java > patches/Game.java.diff`.
+
+Zasada: zmiany w `Game.java` w blokach `// THUMBCAST:` … `// THUMBCAST END` (łatwy `grep -n THUMBCAST`).
+
+## Co sprawdzono na upstreamie (i jest zgodne z założeniami)
+
+- `Game extends Activity` (nie AppCompat), pola prywatne: `TouchContext[] touchContextMap = new TouchContext[2]`,
+  `ControllerHandler controllerHandler`, `KeyboardTranslator keyboardTranslator`,
+  `VirtualController virtualController`, `PreferenceConfiguration prefConfig`, `NvConnection conn`,
+  `StreamView streamView`.
+- `backgroundTouchView` to **zmienna lokalna** w `onCreate` (`View backgroundTouchView = findViewById(R.id.backgroundTouchView);`
+  + `backgroundTouchView.setOnTouchListener(this);`), nie pole. Nasz kod go nie potrzebuje.
+- Kolejność w `onCreate`: `setPreferredOrientationForCurrentDisplay()` → `streamView = findViewById(R.id.surfaceView)`
+  → … → `conn = new NvConnection(getApplicationContext(), ...)` → `controllerHandler = new ControllerHandler(this, conn, this, prefConfig);`
+  → `keyboardTranslator = new KeyboardTranslator();` → pętla `touchContextMap` → blok `if (prefConfig.onscreenController) {` (VirtualController).
+  Wszystkie potrzebne obiekty (`conn`, `controllerHandler`, `keyboardTranslator`, `streamView`) istnieją w miejscu bloku VirtualController.
+- Rodzic `StreamView`: `activity_game.xml` ma korzeń `<merge>`, więc rodzicem jest FrameLayout zawartości aktywności;
+  upstream sam robi `(FrameLayout)streamView.getParent()` dla `VirtualController` i tak samo robimy my.
+  `StreamView` ma `match_parent` + `layout_gravity="center"`, a `StreamView.onMeasure` przy ustawionym
+  `setDesiredAspectRatio(...)` (wołane w `prepareDisplayForRendering()`, nie w `onCreate`) dopasowuje rozmiar widoku
+  do proporcji: **rozmiar `StreamView` po layoucie = prostokąt wideo**.
+- `Game` dostaje dotyk przez `backgroundTouchView` (`onTouch` → `view.requestUnbufferedDispatch(event)` na `ACTION_DOWN`,
+  potem `return handleMotionEvent(view, event);`). `StreamView` nie obsługuje dotyku. Overlay dodany jako ostatnie dziecko
+  rodzica leży nad nimi i dostaje dotyk pierwszy.
+- `onWindowFocusChanged` w `Game` zeruje `modifierFlags` i woła `inputCaptureProvider.onWindowFocusChanged(hasFocus)`;
+  nie dotyka kontrolek ekranowych, więc nic tu nie dodajemy (overlay sam woła `releaseAll()` w swoim `onWindowFocusChanged(false)`).
+- Fokus klawiatury: `StreamView` ma `focusable`/`focusableInTouchMode` i listener klawiszy (`setOnKeyListener(this)`,
+  `setInputCallbacks(this)`). Overlay ma `isFocusable = false`, więc fokusu nie kradnie.
+
+## Różnice względem poprzedniej (spekulatywnej) wersji tego pliku
+
+1. Blokadę orientacji robi `setPreferredOrientationForCurrentDisplay()` (nie blok VirtualController) i zależy ona od
+   `prefConfig.onscreenController`. Rozwiązanie: wymuszamy `onscreenController = true` w `PreferenceConfiguration`
+   (patrz `preferences.patch.md`, pkt 4), więc nic nie trzeba kopiować.
+2. **Maska pada (krytyczne).** `ControllerHandler.getAttachedControllerMask()` ustawia bit 0 tylko przy
+   `readPreferences(context).onscreenController`, a `getActiveControllerMask()` przy `multiController` dodaje bit 0 tylko
+   przy `prefConfig.onscreenController`. W `Game.onCreate` jest też `if (prefConfig.onscreenController) { // If we're using OSC, always set at least gamepad 1.` →
+   `gamepadMask |= 1`. Bez tej flagi pakiety pada nr 0 (`reportOscState`) trafiałyby na hosta z maską bez bitu 0.
+   Wymuszenie flagi w `PreferenceConfiguration.readPreferences` (jedno miejsce) załatwia wszystkie trzy.
+3. Blok VirtualController owijamy **warunkiem w jednej linii**, a logikę Thumbcast wynosimy do metody
+   `createThumbcastOverlay()`. Przy błędzie profilu metoda zwraca `false` i upstream normalnie tworzy `VirtualController`
+   (fallback do legacy działa „za darmo”, bo `onscreenController` jest wymuszone).
+4. Listener layoutu używa parametrów `left/top/right/bottom` (współrzędne w rodzicu), a nie `getLocationOnScreen`.
+5. Sprzątanie idzie do `stopConnection()` (przed `conn.stop()`) i `onDestroy()`; wcześniej mówiłem ogólnie „onDestroy”.
+6. Dodano obsługę PiP (`onConfigurationChanged`), którą upstream robi dla `virtualController`.
+7. `"menu"`: w v12.2 nie znalazłem w `Game` menu kontekstowego, więc akcja jest na razie no-op z logiem.
 
 ---
 
 ## 1. Importy
+
+`Toast`, `FrameLayout`, `MotionEvent`, `PreferenceConfiguration`, `KeyboardTranslator` są już zaimportowane w v12.2.
+Dodajemy po istniejących importach `com.limelight.*`:
 
 ```java
 + // THUMBCAST:
@@ -27,8 +76,7 @@ znaleźć `grep -n THUMBCAST`.
 
 ## 2. Pola klasy `Game`
 
-Obok istniejących pól `virtualController`, `controllerHandler`, `conn`, `streamView`,
-`keyboardTranslator` [?: nazwy pól z planu 2.2; `keyboardTranslator` może się nazywać inaczej]:
+Zakotwiczenie: linia `private VirtualController virtualController;`. Tuż po niej:
 
 ```java
 + // THUMBCAST:
@@ -39,130 +87,134 @@ Obok istniejących pól `virtualController`, `controllerHandler`, `conn`, `strea
 
 ## 3. `Game.onCreate()`: utworzenie overlaya
 
-Upstream (plan 2.2): gdy `prefConfig.onscreenController` jest włączone, `onCreate()` tworzy
-`new VirtualController(controllerHandler, (FrameLayout) streamView.getParent(), this)`, potem woła
-`refreshLayout()` i `show()`; z włączonym OSC orientacja jest blokowana na landscape.
+Kotwica (dosłownie z v12.2, po pętli `touchContextMap`):
 
-Zmiana: **wokół** tego bloku dodajemy przełącznik `control_layer`. Blok legacy zostaje bez zmian
-w gałęzi `else`, żeby rebase miał minimalny konflikt.
+```java
+        if (prefConfig.onscreenController) {
+            // create virtual onscreen controller
+            virtualController = new VirtualController(controllerHandler,
+                    (FrameLayout)streamView.getParent(),
+                    this);
+            virtualController.refreshLayout();
+            virtualController.show();
+        }
+```
+
+(Blok złożony z pojedynczych dosłownych linii zwróconych przez odczyt: `if (prefConfig.onscreenController) {`,
+`// create virtual onscreen controller`, `virtualController = new VirtualController(controllerHandler,`,
+`(FrameLayout)streamView.getParent(),`, `this);`, `virtualController.refreshLayout();`, `virtualController.show();`.
+Treść jest pewna, wcięcia i łamanie linii sprawdź w pliku.) Zmiana to **jedna zmieniona linia warunku i jedna wstawiona linia przed**:
 
 ```java
 + // THUMBCAST:
-+ boolean thumbcastActive = false;
-+ if (prefConfig.controlLayer == PreferenceConfiguration.ControlLayer.THUMBCAST) {
-+     Profile profile = ThumbcastProfiles.loadOrNull(this, prefConfig.thumbcastProfileFile);
-+     if (profile == null) {
-+         // Błąd walidacji/odczytu: komunikat i powrót do legacy (bez crasha w trakcie sesji).
-+         Toast.makeText(this, getString(R.string.thumbcast_profile_error,
-+                 String.valueOf(ThumbcastProfiles.getLastError())), Toast.LENGTH_LONG).show();
-+     } else {
-+         thumbcastPadReporter = new HostPadReporterImpl(controllerHandler);
-+         thumbcastOverlay = ThumbcastOverlayFactory.create(
-+                 this,
-+                 profile,
-+                 new HostConnectionImpl(conn),
-+                 thumbcastPadReporter,
-+                 action -> onThumbcastAppAction(action),
-+                 new ThumbcastKeyTranslator(keyboardTranslator));
-+         FrameLayout parent = (FrameLayout) streamView.getParent();
-+         // Ostatnie dziecko FrameLayout = rysowane na wierzchu i jako pierwsze dostaje dotyk.
-+         parent.addView(thumbcastOverlay, new FrameLayout.LayoutParams(
-+                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-+         thumbcastOverlay.setDebugEnabled(prefConfig.thumbcastDebugOverlay);
-+         thumbcastOverlay.setStreamResolution(prefConfig.width, prefConfig.height);
-+         // Jak przy OSC: overlay zakłada landscape [?: skopiować wywołanie blokady orientacji z gałęzi OSC].
-+         thumbcastActive = true;
-+     }
-+ }
-+ if (!thumbcastActive) {
++ boolean thumbcastActive = createThumbcastOverlay();
 + // THUMBCAST END
-      // ... istniejący blok upstreamu: if (prefConfig.onscreenController) { new VirtualController(...); ... }
-+ // THUMBCAST:
-+ }
-+ // THUMBCAST END
+~ if (prefConfig.onscreenController && !thumbcastActive) {
+      // create virtual onscreen controller
+      ... (reszta bloku bez zmian)
+  }
 ```
 
 Uwagi:
-- `conn` (NvConnection) i `controllerHandler` muszą już istnieć w tym miejscu `onCreate()`.
-  Wg planu VirtualController dostaje `controllerHandler` w tym samym miejscu, więc ten warunek
-  jest spełniony dla `controllerHandler`; dla `conn` sprawdzić kolejność [?]. Jeśli `conn` powstaje
-  później, przenieść cały blok THUMBCAST za jego utworzenie (nadal przed `streamView` dostaje surface).
-- `ThumbcastProfiles.getLastError()`: w Kotlinie to `@JvmStatic var lastError` z prywatnym setterem,
-  więc z Javy wołamy `ThumbcastProfiles.getLastError()`.
-- `setDebugEnabled(...)` to setter właściwości `debugEnabled`.
-- `prefConfig.width/height` = rozdzielczość strumienia [?: nazwy pól PreferenceConfiguration].
+- Wszystkie obiekty użyte w `createThumbcastOverlay()` (`conn`, `controllerHandler`, `keyboardTranslator`, `streamView`) są już
+  zainicjalizowane w tym miejscu (kolejność wyżej).
+- Blok `if (prefConfig.usbDriver) { // Start the USB driver` następuje po bloku VirtualController i zostaje bez zmian.
 
-## 4. Prostokąt wideo (letterbox)
-
-Plan 2.3 pkt 5: proporcje wideo ustala `StreamView.setDesiredAspectRatio(...)`. Najprostsze
-i odporne na zmiany upstreamu: po każdym layoucie `streamView` przekazać jego prostokąt
-w układzie overlaya. Dodać po utworzeniu overlaya:
+Nowa metoda (wstaw obok `toggleKeyboard()` albo na końcu klasy):
 
 ```java
 + // THUMBCAST:
-+ if (thumbcastOverlay != null) {
-+     streamView.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
-+         int[] sv = new int[2];
-+         int[] ov = new int[2];
-+         v.getLocationOnScreen(sv);
-+         thumbcastOverlay.getLocationOnScreen(ov);
-+         int left = sv[0] - ov[0];
-+         int top = sv[1] - ov[1];
-+         // ref = rozdzielczość strumienia, jak w AbsoluteTouchContext upstreamu [?: tam może być rozmiar widoku].
-+         thumbcastOverlay.setVideoRect(left, top, left + v.getWidth(), top + v.getHeight(),
-+                 prefConfig.width, prefConfig.height);
-+     });
-+ }
-+ // THUMBCAST END
-```
-
-Jeśli `StreamView` wypełnia cały ekran, a letterbox robi dekoder wewnątrz Surface [?], ten
-prostokąt będzie za duży; wtedy zostaje `setStreamResolution(...)` (overlay liczy prostokąt
-z proporcji, `ViewportMath.fitCentered`) i usuwamy wywołanie `setVideoRect`.
-
-## 5. Routing dotyku: `onTouch()` / `handleMotionEvent()`
-
-Plan 2.2: `backgroundTouchView.setOnTouchListener(this)`, w `onTouch` jest
-`view.requestUnbufferedDispatch(event)` na ACTION_DOWN, potem `handleMotionEvent()`; palce trafiają do
-`touchContextMap` (`TouchContext[2]`), mysz/stylus/touchpad do gałęzi pointer, joystick do
-`controllerHandler.handleMotionEvent()`.
-
-Overlay jest **nad** `backgroundTouchView` i konsumuje każdy gest zaczęty palcem (zwraca `true`),
-a gesty myszy/rysika oddaje (`false` na ACTION_DOWN innym niż palec). Mimo to dodajemy jawne
-zabezpieczenie w gałęzi palców, bo `handleMotionEvent` jest też wołane z `dispatchGenericMotionEvent`
-/ `onGenericMotionEvent` i innych ścieżek [?]:
-
-```java
-  // w handleMotionEvent(...), tuż PRZED pętlą/odczytem touchContextMap dla TOOL_TYPE_FINGER
-+ // THUMBCAST: overlay obsługuje palce w całości (do 10 wskaźników); touchContextMap pomijamy.
-+ if (thumbcastOverlay != null && event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER) {
++ private boolean createThumbcastOverlay() {
++     if (prefConfig.controlLayer != PreferenceConfiguration.ControlLayer.THUMBCAST) {
++         return false;
++     }
++     Profile profile = ThumbcastProfiles.loadOrNull(this, prefConfig.thumbcastProfileFile);
++     if (profile == null) {
++         // Błąd odczytu/walidacji: komunikat i fallback do VirtualController (bez crasha w trakcie sesji).
++         Toast.makeText(this, getString(R.string.thumbcast_profile_error,
++                 String.valueOf(ThumbcastProfiles.getLastError())), Toast.LENGTH_LONG).show();
++         return false;
++     }
++     thumbcastPadReporter = new HostPadReporterImpl(controllerHandler);
++     thumbcastOverlay = ThumbcastOverlayFactory.create(
++             this,
++             profile,
++             new HostConnectionImpl(conn),
++             thumbcastPadReporter,
++             action -> onThumbcastAppAction(action),
++             new ThumbcastKeyTranslator(keyboardTranslator));
++     FrameLayout parent = (FrameLayout) streamView.getParent();
++     // Ostatnie dziecko FrameLayout = rysowane na wierzchu i pierwsze dostaje dotyk.
++     parent.addView(thumbcastOverlay, new FrameLayout.LayoutParams(
++             FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
++     thumbcastOverlay.setDebugEnabled(prefConfig.thumbcastDebugOverlay);
++     thumbcastOverlay.setStreamResolution(prefConfig.width, prefConfig.height);
++     // Prostokąt wideo = rozmiar StreamView po layoucie (StreamView.onMeasure dopasowuje go do
++     // proporcji, a layout_gravity=center go wyśrodkowuje). Współrzędne l/t/r/b są w układzie rodzica,
++     // czyli tym samym co overlay (MATCH_PARENT, bez paddingu).
++     streamView.addOnLayoutChangeListener((v, l, t, r, b, oldL, oldT, oldR, oldB) ->
++             thumbcastOverlay.setVideoRect(l, t, r, b, prefConfig.width, prefConfig.height));
 +     return true;
 + }
 + // THUMBCAST END
 ```
 
-- Gałęzie myszy fizycznej, klawiatury i joysticka (`controllerHandler.handleMotionEvent`) bez zmian.
-- Stuknięcie trzema palcami (`toggleKeyboard()`) w trybie Thumbcast **nie działa** (palce nie docierają
-  do upstreamu). Zastępuje je kontrolka `system` z `{"app": "soft_keyboard"}`.
-- `ACTION_CANCEL`/utrata fokusu: overlay sam woła `engine.releaseAll()`. Nie trzeba nic dodawać
-  w `Game.onWindowFocusChanged`.
+Rzutowanie `(FrameLayout) streamView.getParent()` jest identyczne z tym, które upstream robi dla `VirtualController`.
+`prefConfig.width/height` to publiczne pola `PreferenceConfiguration` (`public int width, height, fps;`) = rozdzielczość strumienia.
+Upstreamowy `AbsoluteTouchContext` podaje do `sendMousePosition` rozmiar widoku (`targetView.getWidth()/getHeight()`) jako
+odniesienie; rozdzielczość strumienia jest równoważna (host skaluje względem odniesienia), a `StreamView` = prostokąt wideo.
+`ThumbcastProfiles.getLastError()` to `@JvmStatic` getter prywatnego settera; z Javy działa jak podano.
 
-## 6. Obsługa akcji aplikacji
+## 4. Routing dotyku
 
-Nowa metoda w `Game`:
+W v12.2 palce trafiają do gałęzi `else` w `handleMotionEvent(View view, MotionEvent event)` (mysz, rysik, gumka i touchpad
+mają swoje gałęzie wcześniej; w gałęzi palca brak jawnego `TOOL_TYPE_FINGER`). Kotwica (dosłownie):
+
+```java
+            else
+            {
+                if (virtualController != null &&
+                        (virtualController.getControllerMode() == VirtualController.ControllerMode.MoveButtons ||
+                         virtualController.getControllerMode() == VirtualController.ControllerMode.ResizeButtons)) {
+                    // Ignore presses when the virtual controller is being configured
+                    return true;
+                }
+```
+
+Wstaw **przed** tym `if`em (jako pierwsza instrukcja po `{`):
+
+```java
++ // THUMBCAST: overlay obsługuje palce w całości (do 10 wskaźników); touchContextMap pomijamy.
++ if (thumbcastOverlay != null) {
++     return true;
++ }
++ // THUMBCAST END
+```
+
+To zabezpieczenie jest zwykle martwe (overlay konsumuje gest palca, zanim dotrze do `backgroundTouchView`), ale
+`handleMotionEvent` jest też wołane z `onGenericMotionEvent` (`handleMotionEvent(null, event)`), więc zostaje jako pas bezpieczeństwa.
+Gałąź joysticka (`controllerHandler.handleMotionEvent(event)`) oraz klawiatura/mysz fizyczna bez zmian.
+
+- Stuknięcie trzema palcami (`threeFingerDownTime` → klawiatura ekranowa) w trybie Thumbcast **nie działa** (palce nie dochodzą
+  do upstreamu); zastępuje je kontrolka `system` z `{"app": "soft_keyboard"}`.
+- W komentarzu upstreamu natywny `trySendTouchEvent` jest zakomentowany (`TODO: Re-enable native touch ...`); `NvConnection` ma
+  już `sendTouchEvent`/`sendPenEvent`, ale nie używamy ich (zasada 1 dotyk = 1 wejście z mapowaniem przez profil).
+
+## 5. Akcje aplikacji
 
 ```java
 + // THUMBCAST:
 + private void onThumbcastAppAction(String action) {
 +     switch (action) {
 +         case "soft_keyboard":
-+             toggleKeyboard();            // istniejąca metoda GameGestures
++             toggleKeyboard();   // istniejąca metoda Game (toggleSoftInput(0, 0)), ta sama co przy 3 palcach
 +             break;
 +         case "menu":
-+             openContextMenu(streamView); // [?] upstream ma menu kontekstowe Game; w E2 bottom sheet z planu 7 pkt 5
++             // v12.2 nie ma w Game menu kontekstowego do otwarcia [niezweryfikowane do końca]; E2: bottom sheet.
++             LimeLog.info("Thumbcast: menu requested");
 +             break;
 +         case "toggle_overlay":
-+             // Overlay już przełączył widoczność kontrolek (fabryka); tu tylko ewentualna aktualizacja UI.
++             // Overlay już przełączył widoczność kontrolek (fabryka).
 +             break;
 +         default:
 +             break;
@@ -171,28 +223,65 @@ Nowa metoda w `Game`:
 + // THUMBCAST END
 ```
 
-## 7. Sprzątanie
+(`LimeLog` jest używany w `Game`/`ControllerHandler` upstreamu; jeśli import `com.limelight.LimeLog` nie jest obecny, dodaj lub usuń linię.)
 
-W `onDestroy()` (albo w miejscu, gdzie upstream zatrzymuje połączenie, np. `stopConnection()` [?]):
+## 6. Sprzątanie
+
+`stopConnection()` (wołane z `onStop()`; wewnątrz `if (connecting || connected) {`, po wyzerowaniu flag, przed
+`controllerHandler.stop()` i uruchomieniem wątku z `conn.stop()`). Dodaj na początku tego bloku:
 
 ```java
-+ // THUMBCAST:
++ // THUMBCAST: zerowy stan na hosta PRZED zamknięciem połączenia.
 + if (thumbcastOverlay != null) {
 +     thumbcastOverlay.releaseAll();
 + }
++ // THUMBCAST END
+```
+
+(Ciała `stopConnection()` nie udało mi się zacytować w całości; opis: sprawdza `connecting || connected`, zeruje flagi, stopuje
+`controllerHandler`, woła `UiHelper.notifyStreamEnded(this)`, `conn.stop()` w osobnym wątku. Dopasuj miejsce ręcznie.)
+
+W `onStop()` upstream robi `virtualController.hide()` → `stopConnection()` → `finish()`. Dla overlaya wystarczy wywołanie
+w `stopConnection()`; dodatkowo w `onDestroy()` (po `super.onDestroy();`, przed `if (controllerHandler != null) {`):
+
+```java
++ // THUMBCAST:
 + if (thumbcastPadReporter != null) {
 +     thumbcastPadReporter.cancelPending();
 + }
 + // THUMBCAST END
 ```
 
-`releaseAll()` musi pójść **przed** zamknięciem `NvConnection`, żeby host dostał zerowy stan.
-Odpięcie widoku (`onDetachedFromWindow`) i tak woła `releaseAll()`, ale wtedy połączenie może już nie istnieć.
+## 7. Picture-in-Picture
+
+W `onConfigurationChanged` upstream chowa i pokazuje VirtualController. Kotwice (dosłownie):
+`if (isInPictureInPictureMode()) {` → `isHidingOverlays = true;` → `if (virtualController != null) { virtualController.hide();`
+oraz w `else` → `isHidingOverlays = false;` → `virtualController.show();`. Dodaj obok:
+
+```java
+  // w gałęzi PiP, po bloku virtualController.hide():
++ // THUMBCAST:
++ if (thumbcastOverlay != null) {
++     thumbcastOverlay.releaseAll();
++     thumbcastOverlay.setVisibility(View.GONE);
++ }
++ // THUMBCAST END
+
+  // w gałęzi wyjścia z PiP, po bloku virtualController.show():
++ // THUMBCAST:
++ if (thumbcastOverlay != null) {
++     thumbcastOverlay.setVisibility(View.VISIBLE);
++ }
++ // THUMBCAST END
+```
 
 ## 8. Rumble i pad BT
 
-- Rumble: bez zmian. `ControllerHandler` dalej wibruje telefonem, gdy `vibrateOsc` jest włączone
-  i nie ma pada fizycznego [Z:6d]. W trybie Thumbcast `prefConfig.onscreenController` może być
-  wyłączone; sprawdzić, czy fallback rumble nie zależy od tej flagi [?].
-- Pad BT: overlay sam nasłuchuje `InputManager.InputDeviceListener` (upstream ma pusty
-  `onInputDeviceAdded` [Z:6d]), więc w `Game` nic nie dodajemy.
+- Rumble: `ControllerHandler.handleRumble` wibruje telefonem warunkiem
+  `!foundMatchingDevice && prefConfig.onscreenController && !prefConfig.onlyL3R3 && prefConfig.vibrateOsc`.
+  Z wymuszonym `onscreenController = true` (pkt 2 wyżej) rumble działa w trybie Thumbcast; `vibrateOsc` użytkownik włącza
+  w ustawieniach (preferencja `checkbox_vibrate_osc`). Dopóki `onlyL3R3` jest włączone, wibracja jest wyłączona.
+- Pad BT: `ControllerHandler` implementuje `InputManager.InputDeviceListener`; overlay rejestruje własny listener niezależnie,
+  więc nic nie dodajemy w `Game`.
+- Połączenie z padem fizycznym: `sendControllerInputPacket` łączy `defaultContext` (nasz `reportOscState`) z padami
+  fizycznymi tego samego `controllerNumber` przez OR przycisków i `maxByMagnitude` osi, więc nasz stan i fizyczny pad 0 się sumują.

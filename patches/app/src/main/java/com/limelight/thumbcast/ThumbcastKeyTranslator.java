@@ -2,15 +2,14 @@ package com.limelight.thumbcast;
 
 // NOWY PLIK wstawiany do upstreamu moonlight-android (moduł :app).
 // KeyTranslator (:control-android) delegujący do upstreamowego KeyboardTranslator, żeby nie
-// duplikować tablic keycode Androida -> kod hosta (plan 2.3 pkt 4).
+// duplikować tablic keycode Androida -> kod hosta.
 //
-// UWAGA [?]: dokładnej sygnatury KeyboardTranslator.translate w v12.2 NIE widziałem.
-// Znane mi warianty historyczne:
-//   (a) instancyjna: short translate(int keycode, int scancode, int deviceId)
-//   (b) statyczna:   static short translate(int keycode, int deviceId)
-// Poniżej wariant (a); przy (b) zamienić wywołanie w toHostKeyCode().
-// scancode = 0 i deviceId = -1: klawisz wirtualny, bez fizycznego urządzenia (upstream w takiej
-// sytuacji powinien użyć samego keycode; sprawdzić, czy nie odrzuca deviceId < 0).
+// Zweryfikowane z upstreamem v12.2 (commit b48494cb96bf):
+//   com.limelight.binding.input.KeyboardTranslator
+//   @SuppressLint("InlinedApi") public short translate(int keycode, int deviceId)
+// Metoda jest INSTANCYJNA i ma DWA parametry (nie ma scancode). Wynik to (0x80 << 8) | VK albo 0.
+// deviceId = -1 pomija mapowanie per urządzenie: keycode jest traktowany jak QWERTY, tak samo jak
+// w upstreamowym Game.keyboardEvent(boolean, short) (translate(keyCode, -1), flagi (byte) 0).
 
 import com.limelight.binding.input.KeyboardTranslator;
 
@@ -26,6 +25,6 @@ public final class ThumbcastKeyTranslator implements KeyTranslator {
 
     @Override
     public short toHostKeyCode(int androidKeyCode) {
-        return translator.translate(androidKeyCode, 0, -1);
+        return translator.translate(androidKeyCode, -1);
     }
 }

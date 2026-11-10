@@ -3,12 +3,15 @@ package com.limelight.thumbcast;
 // NOWY PLIK wstawiany do upstreamu moonlight-android (moduł :app).
 // Delegacja fasady HostPadReporter (:control-android) do ControllerHandler.reportOscState(...).
 //
-// Retransmisja: wg planu (2.2) powtórka TEGO SAMEGO stanu po 25/50/75 ms jest w upstreamie
-// w VirtualController.sendControllerInputContext(), a NIE w reportOscState(). Ponieważ nasz overlay
-// nie używa VirtualController, powtarzamy ją tutaj w identycznej postaci: ten sam stan, nigdy nowe
-// naciśnięcie, a każdy nowy stan anuluje zaległe powtórki. To jedyny wyjątek od zasady
-// „zmiana wyjścia tylko z dotyku” dopuszczony przez ActionPolicy (plan 6.2 pkt 1).
-// Do potwierdzenia na kodzie upstreamu (patches/APPLY.md, „Założenia”).
+// Retransmisja: zweryfikowane na upstreamie v12.2 (commit b48494cb96bf): powtórka TEGO SAMEGO stanu
+// po 25/50/75 ms (Handler.postDelayed) jest w VirtualController.sendControllerInputContext(), a NIE
+// w ControllerHandler.reportOscState() (ta metoda tylko nadpisuje defaultContext i wysyła pakiet).
+// Komentarz upstreamu: GFE czasem odrzuca pakiety pada, więc zgubiony pakiet zerujący mógłby
+// zostawić zablokowaną gałkę. Nasz overlay nie używa VirtualController, więc powtarzamy ją tutaj:
+// ten sam stan, nigdy nowe naciśnięcie, a każdy nowy stan anuluje zaległe powtórki. To jedyny wyjątek
+// od zasady „zmiana wyjścia tylko z dotyku” dopuszczony przez ActionPolicy (plan 6.2 pkt 1).
+// ControllerHandler.reportOscState jest `public void` i jest wołane z wątku UI (Handler main looper),
+// tak jak w upstreamie.
 
 import android.os.Handler;
 import android.os.Looper;

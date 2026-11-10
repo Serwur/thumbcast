@@ -3,9 +3,10 @@ package app.thumbcast.android.host
 /**
  * Fasada wysyłania klawiatury i myszy do hosta.
  *
- * Sygnatury odzwierciedlają metody `com.limelight.nvstream.NvConnection` z upstreamu v12.2
- * (plan, sekcja 2.2): nazwy, kolejność i typy parametrów są takie same, dzięki czemu
- * implementacja w `patches/` (`HostConnectionImpl`) to czysta delegacja 1:1.
+ * Sygnatury odzwierciedlają metody `com.limelight.nvstream.NvConnection` z upstreamu
+ * (zweryfikowane na tagu v12.2 = commit b48494cb96bf, 12.09.2026; wszystkie sześć metod ma
+ * dokładnie te nazwy, kolejność i typy parametrów, wszystkie `public void`, bez `throws`).
+ * Implementacja w `patches/` (`HostConnectionImpl`) to więc czysta delegacja 1:1.
  *
  * Wszystkie metody są wołane z wątku UI (tak jak w upstreamie; NvConnection przekazuje dane
  * do JNI bez blokowania).
@@ -33,28 +34,40 @@ interface HostConnection {
 /**
  * Stałe protokołu po stronie hosta używane przez adaptery.
  *
- * UWAGA: wartości pochodzą z pamięci o moonlight-common-c / upstreamie (`KeyboardPacket`,
- * `MouseButtonPacket`), a nie z kodu sprawdzonego w tej sesji. Implementacja w `patches/`
- * powinna używać stałych upstreamu; te tutaj służą adapterom i testom JVM.
- * Do sprawdzenia przy pierwszym buildzie z forkiem (patches/APPLY.md, sekcja „Założenia”).
+ * Wartości zweryfikowane z upstreamem v12.2 (commit b48494cb96bf): klasy
+ * `com.limelight.nvstream.input.KeyboardPacket` i `MouseButtonPacket` (obie `byte`).
+ * Implementacja w `patches/` może używać stałych upstreamu; te tutaj służą adapterom
+ * i testom JVM (bez zależności od upstreamu).
  */
 object HostProtocol {
-    /** `KeyboardPacket.KEY_DOWN` [?]. */
+    /** `KeyboardPacket.KEY_DOWN` = 0x03 (zweryfikowane). */
     const val KEY_DOWN: Byte = 0x03
 
-    /** `KeyboardPacket.KEY_UP` [?]. */
+    /** `KeyboardPacket.KEY_UP` = 0x04 (zweryfikowane). */
     const val KEY_UP: Byte = 0x04
 
-    /** Bity modyfikatorów (`KeyboardPacket.MODIFIER_*`) [?]. */
+    /** Bity modyfikatorów (`KeyboardPacket.MODIFIER_*`, typ `byte`; zweryfikowane). */
     const val MODIFIER_SHIFT: Int = 0x01
     const val MODIFIER_CTRL: Int = 0x02
     const val MODIFIER_ALT: Int = 0x04
 
-    /** Flagi klawisza: 0 = kod znormalizowany (VK), bez dodatkowych flag. */
+    /** `KeyboardPacket.MODIFIER_META` = 0x08 (nieużywany przez model; dla kompletności). */
+    const val MODIFIER_META: Int = 0x08
+
+    /**
+     * Czwarty argument `sendKeyboardInput`. Upstream wysyła 0, gdy kod jest znormalizowany (QWERTY),
+     * a `MoonBridge.SS_KBE_FLAG_NON_NORMALIZED` dla klawiatur z innym układem. Nasze kody pochodzą
+     * z `KeyboardTranslator.translate(keycode, -1)` (zakłada QWERTY; tak samo robi upstreamowe
+     * `keyboardEvent(boolean, short)`, które przekazuje `(byte)0`), więc 0 jest poprawne.
+     */
     const val KEY_FLAGS_NONE: Byte = 0x00
 
-    /** `MouseButtonPacket.BUTTON_*` [?]. */
+    /** `MouseButtonPacket.BUTTON_*` (zweryfikowane; uwaga: środkowy = 2, prawy = 3). */
     const val MOUSE_BUTTON_LEFT: Byte = 0x01
     const val MOUSE_BUTTON_MIDDLE: Byte = 0x02
     const val MOUSE_BUTTON_RIGHT: Byte = 0x03
+
+    /** `MouseButtonPacket.BUTTON_X1` / `BUTTON_X2` (model ich nie używa). */
+    const val MOUSE_BUTTON_X1: Byte = 0x04
+    const val MOUSE_BUTTON_X2: Byte = 0x05
 }

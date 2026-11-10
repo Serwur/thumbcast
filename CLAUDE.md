@@ -27,3 +27,9 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 - Lint presetów: `.github/scripts/check_presets.py` sprawdza pola `type`/`behavior` i klucze JSON, nie dowolne napisy (etykieta „Delay” jest dozwolona). Uruchamiany w jobie `lint`.
 - `gradle/libs.versions.toml` ma aliasy `androidx-test-runner` (1.7.0) i `androidx-test-ext-junit` (1.3.0). Zależności `androidTestImplementation` w `control-android/build.gradle.kts` nadal zakomentowane (plik należy do modułu Android); odkomentować po pierwszym buildzie.
 - `:control-android` nie używa `kotlinx.serialization` bezpośrednio (tylko `ProfileCodec` z `:control-model`), więc plugin `kotlin-serialization` jest tam zbędny.
+
+## Upstream zweryfikowany (moonlight-android v12.2, b48494cb96bf, 10.11.2026)
+- W trybie Thumbcast `PreferenceConfiguration` musi wymuszać `onscreenController=true` (bit 0 maski pada, landscape, rumble). Patrz `patches/preferences.patch.md`.
+- `KeyboardTranslator.translate(int, int)` ma 2 parametry. `applicationId` ustawia się we flavorze `nonRoot`; flavor `root` do usunięcia (maxSdk 25 vs minSdk 26).
+- Patche to opisy kroków z kotwicami z v12.2, nie gotowe pliki `.patch`. Po nałożeniu zrób własny `git diff v12.2`.
+- Nic z `patches/` nie było stosowane ani kompilowane.

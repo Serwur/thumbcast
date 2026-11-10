@@ -94,12 +94,13 @@ Wszystko na wątku UI.
 
 Kod upstreamu nie jest w tym repozytorium, więc moduł kompiluje się względem cienkich interfejsów:
 - `HostConnection`: `sendKeyboardInput`, `sendMouseMove`, `sendMousePosition`, `sendMouseButtonDown/Up`,
-  `sendMouseHighResScroll` (sygnatury jak w `NvConnection`, plan 2.2);
+  `sendMouseHighResScroll` (sygnatury zweryfikowane z `NvConnection` w upstreamie v12.2, commit b48494cb96bf);
 - `HostPadReporter`: `reportOscState(int, short, short, short, short, byte, byte)`;
 - `KeyTranslator`: keycode Androida → kod hosta (w aplikacji przez upstreamowy `KeyboardTranslator`).
 
 Implementacje są w `patches/app/src/main/java/com/limelight/thumbcast/`. `HostPadReporterImpl`
-powtarza ten sam stan po 25/50/75 ms, tak jak upstreamowy `VirtualController` (plan 2.2). To jedyny
+powtarza ten sam stan po 25/50/75 ms, tak jak upstreamowy `VirtualController.sendControllerInputContext()`
+(zweryfikowane na kodzie v12.2; sam `reportOscState` nie retransmituje). To jedyny
 „czasowy” element i wysyła wyłącznie identyczny stan.
 
 ## Tabela klawiszy
@@ -126,7 +127,8 @@ powtarza ten sam stan po 25/50/75 ms, tak jak upstreamowy `VirtualController` (p
 
 - **Nie kompilowane.** Importy i API Androida sprawdzone tylko „na oko” i z dokumentacji z pamięci.
 - **Stałe protokołu** (`HostProtocol`: kierunek klawisza, bity modyfikatorów, numery przycisków myszy,
-  prefiks `0x80` kodu VK) są z pamięci, nie z kodu upstreamu. Do sprawdzenia przy forku.
+  prefiks `0x80` kodu VK) zweryfikowane z upstreamowymi `KeyboardPacket`, `MouseButtonPacket`,
+  `KeyboardTranslator` (v12.2, b48494cb96bf). Kompilacja nadal niesprawdzona.
 - **Hit test wizualny** zakłada, że `rect` jest względem całego overlaya i że późniejsza kontrolka jest
   na wierzchu. Jeśli silnik używa `safeArea` z `Viewport` albo innego z-order, podświetlenie może się
   rozjechać z faktycznym wyjściem (tylko wizualnie).

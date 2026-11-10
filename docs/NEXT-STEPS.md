@@ -20,11 +20,11 @@ git clone --recurse-submodules git@github.com:<login>/thumbcast.git
 cd thumbcast
 git remote add upstream https://github.com/moonlight-stream/moonlight-android.git
 git fetch upstream --tags
-git checkout -b thumbcast/main            # gałąź z naszymi zmianami; master śledzi upstream
-git submodule update --init --recursive  # moonlight-common-c i inne
+git checkout -b thumbcast/main v12.2     # gałąź z naszymi zmianami; master śledzi upstream (v12.2 = commit b48494cb96bf, sprawdzony 10.11.2026)
+git submodule update --init --recursive  # jedyny submoduł: moonlight-common-c w app/src/main/jni/moonlight-core/
 
 # 2. Sprawdź, że czysty upstream się buduje (zanim cokolwiek zmienisz):
-./gradlew assembleNonRootDebug           # DO ZWERYFIKOWANIA: nazwy wariantów (flavory root / nonRoot)
+./gradlew assembleNonRootDebug           # nazwa wariantu zgodna z build.gradle upstreamu v12.2 (flavory root / nonRoot, typy debug / release); sam build niesprawdzony
 ```
 
 Zainstaluj APK, sparuj z Sunshine w LAN i sprawdź stream pulpitu (plan, sekcja 13, krok 2).
@@ -51,14 +51,19 @@ Konflikty z plikami upstreamu:
 | `fastlane/metadata/android/` upstreamu | Zastąp naszymi metadanymi (inna nazwa, opis bez znaków towarowych). Usuń zrzuty i grafiki upstreamu, jeśli pokazują markę Moonlight. |
 | `README.md` upstreamu | Zastąp naszym; dopisz link do upstreamu (już jest). |
 
-`app/build.gradle` (Groovy) upstreamu może zostać w Groovy: plugin `com.android.application` jest na classpath przez nasz główny `build.gradle.kts`. DO ZWERYFIKOWANIA: czy `apply plugin:` / `plugins { id 'com.android.application' }` w `app/build.gradle` nie wymaga podania wersji po usunięciu `buildscript`.
+`app/build.gradle` (Groovy) upstreamu może zostać w Groovy: plugin `com.android.application` jest na classpath przez nasz główny `build.gradle.kts`. Upstream v12.2 używa w `app/build.gradle` `apply plugin: 'com.android.application'` (bez wersji, AGP 9.4.0 przez `buildscript` w głównym `build.gradle`); DO ZWERYFIKOWANIA: czy po usunięciu `buildscript` plugin nadal się rozwiąże z classpath naszego głównego `build.gradle.kts`.
 
 ## 2. Zmiany w `:app` (rename, flavor, zależność od modułów)
 
-W `app/build.gradle` (plan, sekcja 13, krok 6):
+W `app/build.gradle` (Groovy; plan, sekcja 13, krok 6). Szczegółowy opis ze stanem v12.2: `patches/manifest-and-appid.patch.md`.
 
-1. Nowe `applicationId` (np. `io.github.<login>.thumbcast`), nazwa aplikacji „Thumbcast”, własna ikona. Sprawdź, że APK instaluje się **obok** oryginalnego Moonlight: zmień też `android:authorities` providerów w manifeście, jeśli są.
-2. `minSdk 26` (plan, sekcja 3). DO ZWERYFIKOWANIA: czy upstreamowy kod z minSdk 21 nie ma ścieżek, które warto uprościć.
+1. Nowe `applicationId` (np. `app.thumbcast` albo `io.github.<login>.thumbcast`), nazwa aplikacji „Thumbcast”, własna ikona.
+   W v12.2 `applicationId` jest ustawiony **we flavorach** (`nonRoot`: `com.limelight`, `root`: `com.limelight.root`), nie w `defaultConfig`,
+   więc zmieniamy go we flavorze `nonRoot`. Typ `release` dodaje sufiks `.unofficial` (komentarz autora każe go usunąć po zmianie bazowego id),
+   `debug` dodaje `.debug`. Etykieta aplikacji to `resValue "string", "app_label"` w `buildTypes` (obecnie „Moonlight”): zmienić na „Thumbcast”.
+   Provider `PosterContentProvider` ma authority `poster.${applicationId}`, więc nic nie trzeba zmieniać; `shortcuts.xml` nie istnieje.
+2. `minSdk 26` (plan, sekcja 3; w upstreamie `minSdk 21`). Flavor `root` ma `maxSdk 25`, więc po podniesieniu minSdk jest pusty:
+   **usuń flavor `root`** (zostaje `nonRoot`, nazwy zadań bez zmian: `assembleNonRootDebug`, `assembleNonRootRelease`).
 3. Zależność: `implementation project(':control-android')` (ten moduł dociąga `:control-engine` i `:control-model`).
 4. Podpis release z właściwości Gradle, których używa `release.yml`:
 
@@ -78,22 +83,21 @@ android {
 }
 ```
 
-5. Ustaw w `release.yml` właściwe `APP_ASSEMBLE_TASK` i `APK_GLOB` (obecnie `:app:assembleNonRootRelease`, do potwierdzenia).
+5. `release.yml`: `APP_ASSEMBLE_TASK` = `:app:assembleNonRootRelease` pasuje do flavoru `nonRoot` z v12.2. `APK_GLOB` (`app/build/outputs/apk/**/release/*.apk`)
+   pasuje do konwencji AGP (`.../apk/nonRoot/release/`), ale niesprawdzone bez builda.
 
 ## 3. Zastosowanie `patches/`
 
-Katalog `patches/` przygotowuje agent ANDROID: hooki w `Game.java` (preferencja `control_layer = legacy|thumbcast`, utworzenie `ThumbcastOverlay` nad `StreamView`, przekierowanie palców `TOOL_TYPE_FINGER` do overlaya, `releaseAll()` przy utracie fokusu) oraz implementacje fasad `HostConnection` / `HostPadReporter` przeciw `NvConnection` i `ControllerHandler`. **Szczegóły i kolejność stosowania są w opisie w `patches/` (README lub komentarze w plikach diff); ten dokument ich nie powtarza, bo w chwili pisania katalog był jeszcze pusty.**
+Katalog `patches/` zawiera hooki w `Game.java` (preferencja `control_layer = legacy|thumbcast`, utworzenie `ThumbcastOverlay` nad `StreamView`, pominięcie `touchContextMap` dla palców, `releaseAll()` przy zatrzymaniu połączenia) oraz implementacje fasad `HostConnection` / `HostPadReporter` / `KeyTranslator` przeciw `NvConnection`, `ControllerHandler` i `KeyboardTranslator`. **Szczegóły i kolejność stosowania: `patches/APPLY.md` oraz `patches/*.patch.md`.** Opisy zostały porównane z kodem upstreamu v12.2 (commit `b48494cb96bf`, sprawdzone 10.11.2026), ale to opisy ręczne, **nie gotowe diffy** (patrz niżej). Jedna rzecz jest krytyczna: w trybie Thumbcast trzeba wymusić `onscreenController = true` w `PreferenceConfiguration.readPreferences`, inaczej bit 0 maski pada nie jest ustawiany (`patches/preferences.patch.md`, pkt 4).
 
 Ogólna procedura:
 
 ```bash
 git checkout -b thumbcast/hooks
-# Najpierw sucha próba (diff był pisany offline, bez dostępu do aktualnego Game.java):
-git apply --check --verbose patches/app/*.patch
-# Jeśli przechodzi:
-git apply --index patches/app/*.patch
-# Jeśli nie: zastosuj ręcznie według opisu w patches/ i zapisz nowy, poprawny diff:
-git diff upstream/master -- app/ > patches/app/0001-thumbcast-hooks.patch
+# W patches/ nie ma plików .patch/.diff przeznaczonych dla `git apply` (są opisy *.patch.md z dosłownymi kotwicami z v12.2).
+# Zastosuj zmiany ręcznie według patches/APPLY.md, a potem zapisz własny, pewny diff:
+git diff v12.2 -- app/ > patches/0001-thumbcast-hooks.diff
+# Nowe pliki Java: skopiuj patches/app/src/main/java/com/limelight/thumbcast/ do app/src/main/java/com/limelight/thumbcast/
 ```
 
 Po zastosowaniu: zmiany w `Game.java` powinny mieścić się w ok. 50 liniach (plan, ryzyko R5).
@@ -104,7 +108,7 @@ Po zastosowaniu: zmiany w `Game.java` powinny mieścić się w ok. 50 liniach (p
 ./gradlew :control-model:test :control-engine:test          # testy JVM
 ./gradlew :control-engine:test --tests '*Policy*' -Pthumbcast.policy.iterations=100000
 ./gradlew :control-android:lint
-./gradlew :app:assembleNonRootDebug                          # DO ZWERYFIKOWANIA nazwa wariantu
+./gradlew :app:assembleNonRootDebug                          # nazwa wariantu zgodna z v12.2; build niesprawdzony
 ```
 
 Oczekuj poprawek: kod modułów był pisany bez kompilatora. Typowe miejsca: importy, wersje w `libs.versions.toml` (sekcja 6), konfiguracja built-in Kotlin w AGP 9 dla `:control-android`, plugin serializacji.
@@ -140,10 +144,13 @@ Build i kod:
 - Suma SHA-256 dystrybucji Gradle 9.7.1 (brak `distributionSha256Sum`).
 - Brak `gradlew` i `gradle-wrapper.jar` (celowo, przychodzą z upstreamem).
 
-Upstream:
-- Aktualna postać `Game.java`, `ControllerHandler.reportOscState` i `NvConnection` (patche pisane wg planu, nie wg aktualnego kodu).
-- Nazwy wariantów builda (flavory `root`/`nonRoot`) i ścieżki APK w `release.yml`.
-- Czy upstream ma własny katalog `.github/workflows` do scalenia.
+Upstream (stan po porównaniu z v12.2, commit `b48494cb96bf`, 10.11.2026):
+- Zweryfikowane na kodzie: sygnatury `NvConnection.send*`, `ControllerHandler.reportOscState`, `KeyboardTranslator.translate(int, int)`, stałe
+  `KeyboardPacket`/`MouseButtonPacket`/`ControllerPacket`/`Limelight.h`, flavory `root`/`nonRoot` i `applicationId`, `minSdk 21`, provider
+  `poster.${applicationId}`, kolejność w `Game.onCreate()`, API preferencji (`android.preference`), `activity_game.xml` (`<merge>`).
+- Nadal niesprawdzone: żaden z patchy nie był stosowany ani kompilowany; pełne ciała `Game.stopConnection()` i `onGenericMotion`,
+  wszystkie wystąpienia `onscreenController` w `Game`, zawartość `ShortcutHelper`, ścieżka APK (konwencja AGP), czy upstream ma własny
+  katalog `.github/workflows` do scalenia.
 
 CI:
 - Workflowy przeszły tylko walidację składni YAML (PyYAML); nie były uruchomione na GitHub Actions.

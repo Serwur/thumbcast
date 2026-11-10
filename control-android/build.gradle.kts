@@ -46,7 +46,7 @@ dependencies {
 
     // Test instrumentacyjny (src/androidTest). Aliasy jeszcze nie istnieją w version catalog;
     // odkomentować po dodaniu ich przez SCAFFOLD (nieznany alias psuje konfigurację całego buildu).
-    // androidTestImplementation(libs.androidx.test.runner)
-    // androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
     // androidTestImplementation(libs.junit4)
 }

@@ -1,12 +1,28 @@
 # Patch: preferencje (`PreferenceConfiguration`, `StreamSettings`, `res/xml/preferences.xml`, stringi)
 
-Opis zmian bez kodu upstreamu. Nazwy istniejących kluczy (`checkbox_show_onscreen_controls`,
-`seekbar_osc_opacity`, `checkbox_vibrate_osc`, …) pochodzą z planu 2.1 [Z:6e]; strukturę plików
-(PreferenceCategory, `ListPreference`) zakładam jako typową dla upstreamu [?].
+Zweryfikowane na upstreamie v12.2 (commit `b48494cb96bff23d8886c4775cc4f39a1075495d`, 12.09.2026).
+Opis zmian krok po kroku (nie `git diff`; patrz uwaga w `Game.java.patch.md`).
+
+Co sprawdzono:
+- `res/xml/preferences.xml`: korzeń `<PreferenceScreen>` z `xmlns:android` i `xmlns:seekbar`. Kategorie w kolejności:
+  `category_basic_settings`, (audio, bez klucza), `category_gamepad_settings`, `category_input_settings`,
+  **`category_onscreen_controls`**, (host, bez klucza), `category_ui_settings`, `category_advanced_settings`.
+  Dzieci `category_onscreen_controls`: `checkbox_show_onscreen_controls`, `checkbox_vibrate_osc`, `checkbox_only_show_L3R3`,
+  `checkbox_show_guide_button`, `seekbar_osc_opacity` (wszystkie poza pierwszym mają `android:dependency="checkbox_show_onscreen_controls"`)
+  oraz `ConfirmDeleteOscPreference` (`title_reset_osc`).
+- `StreamSettings extends Activity`, zagnieżdżony `public static class SettingsFragment extends PreferenceFragment`
+  z **`android.preference.PreferenceFragment`** (stare API, nie androidx). Fragment ma `public void onCreate(Bundle savedInstanceState)`
+  z `addPreferencesFromResource(R.xml.preferences);` (nie ma `onCreatePreferences`). Kategorię OSC znajduje przez
+  `findPreference("category_onscreen_controls")`; na urządzeniach bez ekranu dotykowego usuwa ją przez `screen.removePreference(category)`.
+- `PreferenceConfiguration`: `public static PreferenceConfiguration readPreferences(Context context)`, lokalna zmienna
+  `SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);`, pola `public int width, height, fps;`,
+  `public boolean onscreenController; onlyL3R3; vibrateOsc;`, stała `ONSCREEN_CONTROLLER_PREF_STRING = "checkbox_show_onscreen_controls"`,
+  `ONSCREEN_CONTROLLER_DEFAULT = false`. Metoda kończy się `return config;`.
 
 ## 1. `res/xml/preferences.xml`
 
-Nowa kategoria **przed** kategorią z ustawieniami OSC (żeby było widać, że legacy OSC to druga opcja):
+Nowa kategoria wstawiona **bezpośrednio przed** `<PreferenceCategory android:key="category_onscreen_controls" ...>`
+(żeby było widać, że legacy OSC to druga opcja). Nowy `ListPreference` nie ma `android:dependency` (patrz uwaga niżej):
 
 ```xml
 + <!-- THUMBCAST: -->
@@ -28,8 +44,7 @@ Nowa kategoria **przed** kategorią z ustawieniami OSC (żeby było widać, że 
 +         android:summary="%s"
 +         android:entries="@array/thumbcast_profile_names"
 +         android:entryValues="@array/thumbcast_profile_values"
-+         android:defaultValue="mmo-pad-plus.thumbcast.json"
-+         android:dependency="list_control_layer" />
++         android:defaultValue="mmo-pad-plus.thumbcast.json" />
 +
 +     <CheckBoxPreference
 +         android:key="checkbox_thumbcast_debug"
@@ -40,9 +55,8 @@ Nowa kategoria **przed** kategorią z ustawieniami OSC (żeby było widać, że 
 + <!-- THUMBCAST END -->
 ```
 
-Uwaga: `android:dependency` działa tylko dla preferencji typu boolean (wyłącza zależną, gdy
-nadrzędna jest „false”). Dla `ListPreference` to nie zadziała; usunąć atrybut i ukrywać profil
-w `StreamSettings` (pkt 3). Zostawione w opisie celowo, żeby nie zostało dodane przy kopiowaniu.
+Uwaga: `android:dependency` działa tylko dla nadrzędnej preferencji typu boolean, więc dla `ListPreference`
+go nie używamy; włączanie/wyłączanie profilu robi kod w `StreamSettings` (pkt 5).
 
 ## 2. `res/values/arrays.xml` (albo nowy plik `res/values/thumbcast_arrays.xml`, mniej konfliktów)
 
@@ -78,7 +92,7 @@ w `StreamSettings` (pkt 3). Zostawione w opisie celowo, żeby nie zostało dodan
 | `summary_thumbcast_debug` | Shows active pointers, sent pad flags and touch-to-send latency | Pokazuje aktywne wskaźniki, wysłane flagi pada i opóźnienie dotyk→wysyłka |
 | `thumbcast_profile_error` | Control profile could not be loaded, using classic controller: %1$s | Nie udało się wczytać profilu, używam klasycznego kontrolera: %1$s |
 
-## 4. `preferences/PreferenceConfiguration.java`
+## 4. `preferences/PreferenceConfiguration.java` (pola, odczyt, **wymuszenie `onscreenController`**)
 
 ```java
 + // THUMBCAST:
@@ -95,8 +109,13 @@ w `StreamSettings` (pkt 3). Zostawione w opisie celowo, żeby nie zostało dodan
 + // THUMBCAST END
 ```
 
-W statycznej metodzie odczytu (`readPreferences(Context)` [?: nazwa w upstreamie]) obok
-odczytu `onscreenController`:
+W `readPreferences(Context context)` **zaraz po** (dosłownie z v12.2):
+
+```java
+config.onscreenController = prefs.getBoolean(ONSCREEN_CONTROLLER_PREF_STRING, ONSCREEN_CONTROLLER_DEFAULT);
+```
+
+dodaj:
 
 ```java
 + // THUMBCAST:
@@ -104,48 +123,79 @@ odczytu `onscreenController`:
 + config.controlLayer = "legacy".equals(layer) ? ControlLayer.LEGACY : ControlLayer.THUMBCAST;
 + config.thumbcastProfileFile = prefs.getString(THUMBCAST_PROFILE_PREF_STRING, DEFAULT_THUMBCAST_PROFILE);
 + config.thumbcastDebugOverlay = prefs.getBoolean(THUMBCAST_DEBUG_PREF_STRING, false);
++ if (config.controlLayer == ControlLayer.THUMBCAST) {
++     // KRYTYCZNE: upstream ustawia bit 0 maski pada (kontroler nr 0, do którego pisze reportOscState)
++     // WYŁĄCZNIE przy onscreenController: ControllerHandler.getAttachedControllerMask() (czyta preferencje
++     // przez readPreferences, nie pole prefConfig), getActiveControllerMask() (multiController) i Game.onCreate
++     // (gamepadMask |= 1). Poza tym ta flaga włącza landscape w setPreferredOrientationForCurrentDisplay()
++     // oraz rumble telefonem w ControllerHandler.handleRumble(). Wymuszamy ją więc w jedynym miejscu.
++     config.onscreenController = true;
++ }
 + // THUMBCAST END
 ```
 
-Decyzja do potwierdzenia: domyślna wartość `thumbcast` oznacza, że nowa instalacja startuje
-z naszą warstwą. Przy aktualizacji z czystego upstreamu (inne `applicationId`, więc w praktyce nie
-występuje) preferencji nie ma, więc też `thumbcast`.
+Skutek uboczny: gdy ładowanie profilu się nie uda, `Game` tworzy upstreamowy `VirtualController`
+(`prefConfig.onscreenController` jest `true`), czyli fallback do legacy działa bez dodatkowego kodu.
+Ścieżki `Game`, które używają `prefConfig.onscreenController`, to (v12.2): maska pada w `onCreate`, tworzenie
+`VirtualController`, `setPreferredOrientationForCurrentDisplay()`; w pliku może być więcej wystąpień poza
+fragmentem, który przeczytałem (odczyt był obcięty przy ok. 100 tys. znaków z 120 tys.): zrób `grep -n onscreenController`.
+
+Domyślna wartość `thumbcast` oznacza, że nowa instalacja startuje z naszą warstwą (inne `applicationId` niż upstream,
+więc preferencje oryginału nie są dziedziczone).
 
 ## 5. `preferences/StreamSettings.java`
 
-W fragmencie ustawień (`SettingsFragment.onCreatePreferences`/`onCreate` [?]):
+Stare API (`android.preference.*`), więc `findPreference(CharSequence)` zwraca `Preference`. W `SettingsFragment.onCreate`,
+**po** `addPreferencesFromResource(R.xml.preferences);` (i najlepiej po istniejących usunięciach preferencji dla urządzeń bez
+dotyku/wibracji, żeby `findPreference` nie zwracało `null` dla usuniętych):
 
 ```java
 + // THUMBCAST: ustawienia OSC legacy mają sens tylko w trybie legacy, profil tylko w trybie thumbcast.
-+ ListPreference layer = (ListPreference) findPreference("list_control_layer");
-+ Preference profile = findPreference("list_thumbcast_profile");
-+ Preference osc = findPreference("checkbox_show_onscreen_controls");
-+ Preference.OnPreferenceChangeListener l = (pref, value) -> {
-+     boolean tc = "thumbcast".equals(value);
-+     profile.setEnabled(tc);
-+     if (osc != null) osc.setEnabled(!tc);
-+     return true;
-+ };
-+ l.onPreferenceChange(layer, layer.getValue());
-+ layer.setOnPreferenceChangeListener(l);
++ final ListPreference layer = (ListPreference) findPreference("list_control_layer");
++ final Preference profile = findPreference("list_thumbcast_profile");
++ final Preference osc = findPreference("checkbox_show_onscreen_controls");
++ final Preference vibrate = findPreference("checkbox_vibrate_osc");
++ if (layer != null) {
++     Preference.OnPreferenceChangeListener l = (pref, value) -> {
++         boolean tc = "thumbcast".equals(value);
++         if (profile != null) profile.setEnabled(tc);
++         if (osc != null) osc.setEnabled(!tc);
++         // Wibracja telefonu przy rumble (vibrateOsc) działa też w trybie Thumbcast, więc nie może zależeć od
++         // checkbox_show_onscreen_controls (który w tym trybie jest wyszarzony i ma wartość false).
++         if (vibrate != null) vibrate.setDependency(tc ? null : "checkbox_show_onscreen_controls");
++         return true;
++     };
++     l.onPreferenceChange(layer, layer.getValue());
++     layer.setOnPreferenceChangeListener(l);
++ }
 + // THUMBCAST END
 ```
 
-Jeśli upstream używa `android.preference.*` (stare API) zamiast `androidx.preference.*` [?],
-rzutowania i nazwy metod są te same; zmienia się tylko import.
+Uwaga: `checkbox_only_show_L3R3`, `checkbox_show_guide_button` i `seekbar_osc_opacity` zależą od `checkbox_show_onscreen_controls`
+i w trybie Thumbcast zostają wyszarzone (przezroczystość bierze overlay z profilu, `GlobalSettings.opacity`).
+Jeśli `ListPreference` w XML nie ma domyślnej wartości zapisanej jeszcze w `SharedPreferences`, `layer.getValue()` zwraca
+`android:defaultValue` po zainicjalizowaniu przez `addPreferencesFromResource`; sprawdź na urządzeniu.
 
 ## 6. Assety z presetami
 
 Presety z katalogu `presets/` repo kopiujemy do `app/src/main/assets/presets/` zadaniem Gradle
 (nie ręcznie, żeby nie rozjechały się z walidowanymi plikami):
 
-```kotlin
-// app/build.gradle(.kts) [?: upstream ma Groovy]
-android.sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/thumbcastAssets"))
-val copyPresets = tasks.register<Copy>("copyThumbcastPresets") {
-    from(rootProject.file("presets")) { include("*.thumbcast.json") }
-    into(layout.buildDirectory.dir("generated/thumbcastAssets/presets"))
+```groovy
+// app/build.gradle (upstream jest w Groovy; zweryfikowane: `apply plugin: 'com.android.application'`)
+android {
+    sourceSets {
+        main {
+            assets.srcDir layout.buildDirectory.dir("generated/thumbcastAssets")
+        }
+    }
 }
-tasks.named("preBuild") { dependsOn(copyPresets) }
+def copyPresets = tasks.register('copyThumbcastPresets', Copy) {
+    from(rootProject.file('presets')) { include '*.thumbcast.json' }
+    into layout.buildDirectory.dir('generated/thumbcastAssets/presets')
+}
+tasks.named('preBuild') { dependsOn copyPresets }
 ```
+(Składnia Groovy z `layout.buildDirectory` w `srcDir` jest nieprzetestowana; w razie problemu użyć
+`"$buildDir/generated/thumbcastAssets"`. Task `preBuild` istnieje w module aplikacji AGP.)
 `ThumbcastProfiles.load(context, name)` czyta najpierw `filesDir/profiles/<name>`, potem `assets/presets/<name>`.
