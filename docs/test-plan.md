@@ -20,10 +20,12 @@
 
 | ID | Konfiguracja |
 |---|---|
-| H1 | Windows 11 + Sunshine stable + Virtual HID z licencją |
-| H2 | Windows 11 + Sunshine stable + ViGEmBus, `gamepad = x360` |
-| H3 | Windows 11 + Sunshine stable bez sterownika pada (tylko KBM) |
+| H1 | Windows 11 + Sunshine stable + Virtual HID Driver z licencją (`gamepad_driver = virtualhid`, `gamepad = xseries`) |
+| H2 | Windows 11 + Sunshine stable + ViGEmBus 1.17+, `gamepad_driver = vigembus`, `gamepad = x360` (darmowa ścieżka) |
+| H3 | Windows 11 + Sunshine stable bez sterownika pada (tryb bez pada, tylko KBM) |
 | H4 | macOS + Sunshine (KBM; pady tylko w pre-release [?]) |
+
+Ścieżki pada opisuje [host-setup.md](host-setup.md), decyzje [DECISIONS.md](DECISIONS.md) (pkt b, c, f). Klient wysyła te same pakiety pada niezależnie od sterownika, więc **T-01, T-02 i T-04 wykonaj na H1 i H2** i porównaj wyniki (różnica = problem sterownika, nie aplikacji). Przed testami w grze na H1/H2 potwierdź, że pad jest widoczny w Windows (`joy.cpl`). Na **H3 i H4 wykonuj scenariusze w profilu „MMO – Klawiatura”**: ruch (WASD, 8 kierunków) zamiast T-01 analogowego, kamera przez RMB-look, T-03 nie dotyczy (brak trybu pada), a Q2 (obrót kamery przez Raw Input bez sterownika) sprawdza krok B7. Aplikacja na hoście bez sterownika pada ma proponować tryb KBM (diagnostyka hosta, E3).
 
 **Sieci:** N1 LAN Wi-Fi 5 GHz; N2 Tailscale direct przez LTE/5G; N3 Tailscale przez DERP (test negatywny).
 
@@ -48,6 +50,7 @@ Gra: MMO z natywnym Gamepad UI (WoW: Forever). W grze włączone: Enable Gamepad
 | T-07 | Pad BT: podłączenie w trakcie sesji (auto-hide), rozłączenie (powrót overlaya), pad i dotyk jednocześnie. | Overlay chowa się w ≤ 1 s; gesty myszy działają dalej; brak podwójnych wejść. |
 | T-08 | Odporność: połączenie telefoniczne, obrót ekranu, przejście Wi-Fi→LTE (reconnect upstreamu), blokada ekranu. | Po każdym zdarzeniu wszystkie wejścia zwolnione (0 „stuck input”). |
 | T-09 | Polityka: fuzzing wejścia (testy właściwości w CI, 10⁵ sekwencji) i ręczny przegląd presetów. | 0 naruszeń; check `policy-tests` zielony; presety bez akordów i zakazanych typów. |
+| T-10 | Tryb bez pada (host H3/H4, profil „MMO – Klawiatura”): ruch WASD, kamera RMB-look, tap, pinch, czat. | Wszystkie akcje działają bez sterownika pada; RMB zwolniony po końcu gestu (0 „stuck input”); wynik Q2 zapisany. |
 
 ## 4. Procedura T-03: czy mysz przełącza HUD gry z trybu pada
 
@@ -161,3 +164,4 @@ Wynik zapisz w `docs/tests/RRRR-MM-DD-T-03.md` i zaktualizuj presety (`presets/`
 | | T-07 | | | | | |
 | | T-08 | | | | | |
 | | T-09 | | | | | |
+| | T-10 | | | | | |

@@ -1,6 +1,8 @@
 # Thumbcast
 
-> **Start: [URUCHOMIENIE.md](URUCHOMIENIE.md)**
+> **Start: [URUCHOMIENIE.md](URUCHOMIENIE.md)**. Plan: [docs/PLAN.md](docs/PLAN.md), decyzje (mają pierwszeństwo): [docs/DECISIONS.md](docs/DECISIONS.md).
+
+> Nazwa repozytorium ma być `thumbcast`. Do czasu zmiany nazwy w GitHub Settings repo nazywa się `Serwur/wow-portable`.
 
 > **Status: pre-alpha.** Projekt nie jest zatwierdzony, wspierany ani sponsorowany przez Blizzard Entertainment ani przez projekt Moonlight. Na tym etapie repo zawiera szkielet modułów, dokumentację i CI. Aplikacji nie da się jeszcze zainstalować.
 
@@ -26,7 +28,7 @@ PC (Windows / macOS)                         Telefon (Android)
             LAN albo Tailscale (direct)     └───────────────────────────────────┘
 ```
 
-- **Host:** [Sunshine](https://github.com/LizardByte/Sunshine), zgodny z GameStream. Konfiguracja: [docs/host-setup.md](docs/host-setup.md).
+- **Host:** [Sunshine](https://github.com/LizardByte/Sunshine) (GPLv3) albo jego forki Apollo i Vibepollo, zgodne z GameStream. Pad wirtualny w Windows: darmowy ViGEmBus 1.17+ (projekt zarchiwizowany) albo płatny Virtual HID Driver od LizardByte. Konfiguracja: [docs/host-setup.md](docs/host-setup.md), uzasadnienie: [docs/DECISIONS.md](docs/DECISIONS.md).
 - **Klient:** fork upstreamu `moonlight-stream/moonlight-android`. Warstwa streamingu zostaje bez zmian. Wejście dotykowe zastępuje nowa warstwa w Kotlinie:
 
 | Moduł | Typ | Rola |
@@ -39,8 +41,8 @@ PC (Windows / macOS)                         Telefon (Android)
 | `:app` | upstream | Dochodzi po forku: [docs/NEXT-STEPS.md](docs/NEXT-STEPS.md). |
 
 Tryby sterowania:
-- **Pad+** (domyślny): ruch, kamera i umiejętności jako wirtualny pad Xbox, a tap, szczypanie i klik w interfejs jako mysz. Wymaga sterownika pada po stronie PC.
-- **Klawiatura+Mysz**: działa na każdym hoście, także na macOS i na Windows bez sterownika pada.
+- **Pad+** (domyślny): ruch, kamera i umiejętności jako wirtualny pad Xbox, a tap, szczypanie i klik w interfejs jako mysz. Wymaga sterownika pada po stronie PC (ViGEmBus albo Virtual HID Driver).
+- **Klawiatura+Mysz**: działa na każdym hoście, także na macOS i na Windows bez sterownika pada (plan awaryjny i tryb domyślny dla hostów bez pada).
 
 ## Budowanie
 
@@ -62,6 +64,8 @@ Testy właściwości polityki z pełną liczbą iteracji (tak jak w CI):
 
 ## Dokumentacja
 
+- [docs/PLAN.md](docs/PLAN.md): plan techniczny (wygenerowany 8.11.2026)
+- [docs/DECISIONS.md](docs/DECISIONS.md): decyzje projektowe z 10.11.2026 (pierwszeństwo przed planem)
 - [FAIR_PLAY.md](FAIR_PLAY.md): zasady i ryzyko
 - [CONTRIBUTING.md](CONTRIBUTING.md): jak współtworzyć
 - [SECURITY.md](SECURITY.md): zgłaszanie podatności

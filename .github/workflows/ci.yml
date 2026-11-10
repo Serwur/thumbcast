@@ -160,10 +160,9 @@ jobs:
                --include='*.kts' --include='*.gradle' --include='*.toml' . ; then
             echo "Wykryto zakazaną zależność (Firebase/Crashlytics/Play Services)"; exit 1
           fi
-          # Zakazane typy wyjść w presetach (plan sekcja 5.3).
-          if [ -d presets ] && grep -rniE '"(sequence|macro|repeat|turbo|delay|toggle_auto)"' presets ; then
-            echo "Preset zawiera zakazany typ (makro/sekwencja/turbo)"; exit 1
-          fi
+          # Zakazane typy w presetach (plan sekcja 5.3). Sprawdza pola "type"/"behavior" i klucze JSON,
+          # a nie dowolne napisy, więc etykieta w rodzaju "Delay" nie jest błędem.
+          python3 .github/scripts/check_presets.py presets
 
       - name: Raporty lint
         if: always()

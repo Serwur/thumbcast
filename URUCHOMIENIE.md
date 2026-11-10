@@ -1,5 +1,7 @@
 # Jak to uruchomić (od zera do pierwszego testu w grze)
 
+Repo ma docelowo nazywać się `thumbcast` (do czasu zmiany w GitHub Settings: `Serwur/wow-portable`). Plan: `docs/PLAN.md`. Decyzje, które mają pierwszeństwo przed planem: `docs/DECISIONS.md`.
+
 Stan projektu: **szkielet napisany offline. Nic nie było kompilowane ani testowane.** Spodziewaj się poprawek przy pierwszym buildzie. Aplikacja nie jest jeszcze gotowa do użycia, to baza do dalszej pracy.
 
 ## Co jest w repo
@@ -13,7 +15,8 @@ Repo **nie zawiera** kodu Moonlight. Aplikacja powstaje przez scalenie tych modu
 
 ## Krok 1. PC z grą (host)
 1. Zainstaluj Sunshine (LizardByte) na PC z WoW Forever, wg `docs/host-setup.md`.
-2. Pad wirtualny w Sunshine wymaga sterownika (od v2026.906 płatny Virtual HID Driver, awaryjnie ViGEmBus). Klawiatura i mysz działają bez niego.
+2. Pad wirtualny w Sunshine wymaga sterownika. Darmowa ścieżka: **ViGEmBus 1.17+** (web UI Sunshine → Troubleshooting → zainstaluj; potem `gamepad_driver = vigembus`, `gamepad = x360`; projekt zarchiwizowany w XI 2023). Płatna ścieżka: LizardByte Virtual HID Driver (14,99 USD/rok albo 49,99 USD jednorazowo, 5 maszyn). Szczegóły: `docs/host-setup.md`, `docs/DECISIONS.md`.
+3. Bez żadnego sterownika pada używaj trybu Klawiatura+Mysz: klawiatura i mysz działają bez niego.
 
 ## Krok 2. Środowisko na komputerze z internetem
 Android Studio (zgodne z AGP 9.4+), SDK platforma 37, NDK 29.0.14206865 + CMake, JDK 17, Git.

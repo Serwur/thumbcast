@@ -53,7 +53,7 @@ dependencies {
 ### Konwencje, na których polega CI (prośba do ENGINE i ANDROID)
 - Główny `build.gradle.kts` ustawia `useJUnitPlatform()` dla modułów z pluginem `org.jetbrains.kotlin.jvm` i przekazuje do testów właściwość systemową `thumbcast.policy.iterations` (lokalnie 1000, w CI 100000). Testy właściwości polityki powinny czytać liczbę iteracji przez `System.getProperty("thumbcast.policy.iterations")?.toIntOrNull() ?: 1000`.
 - **Wymagany check `policy-tests`** uruchamia `:control-engine:test --tests '*Policy*'`. Klasy testów polityki w `:control-engine` muszą mieć w nazwie `Policy` (np. `ActionPolicyPropertyTest`). Job failuje, gdy nie wykona się żaden test lub gdy jest jakakolwiek porażka.
-- Job `lint` uruchamia `:control-android:lint` i odrzuca w `presets/` JSON-y zawierające wartości `"sequence"`, `"macro"`, `"repeat"`, `"turbo"`, `"delay"`, `"toggle_auto"` (także jako wartości pól, nie tylko klucze; uwaga na etykiety).
+- Job `lint` uruchamia `:control-android:lint` i odrzuca w `presets/` JSON-y, w których pole `"type"` (lub `"behavior"`) ma wartość `"sequence"`, `"macro"`, `"repeat"`, `"turbo"`, `"delay"` albo `"toggle_auto"`, lub w których któraś z tych nazw jest kluczem obiektu (skrypt `.github/scripts/check_presets.py`, zmiana z 10.11.2026). Etykiety i inne napisy nie są sprawdzane, więc `"label": "Delay"` jest dozwolone.
 - `emulator-tests.yml` (ręczny) uruchamia `:control-android:connectedDebugAndroidTest`.
 - `release.yml` oczekuje, że `:app` czyta podpis z właściwości Gradle `thumbcastKeystoreFile`, `thumbcastKeystorePassword`, `thumbcastKeyAlias`, `thumbcastKeyPassword` (opis w `docs/NEXT-STEPS.md`).
 

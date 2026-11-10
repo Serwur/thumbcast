@@ -35,6 +35,11 @@ androidx-core = "1.19.1"
 androidx-annotation = "1.11.0"
 # https://github.com/robolectric/robolectric/releases : 4.17 (10.09), wspiera SDK 37.
 robolectric = "4.17"
+# https://developer.android.com/jetpack/androidx/releases/test (WebFetch 10.11.2026; strona: "last updated" 29.10.2026):
+# najnowsze stabilne: androidx.test:runner 1.7.0 (data wydania nie odczytana ze strony), androidx.test.ext:junit 1.3.0 (30.07.2025).
+# DO ZWERYFIKOWANIA przy pierwszym buildzie z siecią (zgodność z compileSdk 37 / AGP 9.4).
+androidx-test-runner = "1.7.0"
+androidx-test-ext-junit = "1.3.0"
 # Wpis na przyszłość (moduł :control-editor, etap E2). Plan sekcja 3 [Z:24]: foundation 1.12.1, material3 1.4.0.
 compose-bom = "2026.09.00"
 
@@ -56,6 +61,9 @@ androidx-core = { module = "androidx.core:core", version.ref = "androidx-core" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidx-annotation" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+# Testy instrumentacyjne (src/androidTest w :control-android): libs.androidx.test.runner, libs.androidx.test.ext.junit
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
 
 # Compose: na przyszłość (E2, :control-editor). Używać przez platform(libs.androidx.compose.bom).
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
@@ -64,7 +72,7 @@ androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
 androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 
 # Brak wersji w planie, więc niezdefiniowane (dodać po sprawdzeniu):
-#   ktlint / detekt (plan sekcja 3, "Jakość"), LeakCanary (debug), androidx.test (core, ext-junit, espresso),
+#   ktlint / detekt (plan sekcja 3, "Jakość"), LeakCanary (debug), androidx.test (core, espresso; runner i ext-junit dodane),
 #   kotlinx-coroutines (kotest-property dociąga je przechodnio; jawny wpis do decyzji), ZXing (QR, E5).
 
 [bundles]
