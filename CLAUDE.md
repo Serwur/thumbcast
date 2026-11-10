@@ -25,7 +25,7 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 - `onTick(nowMs)` w `InputEngine` jest poza kontraktem, ale używany przez nakładkę.
 - `LICENSE` zawiera pełny tekst GPLv3 (kopia z Debiana, `/usr/share/common-licenses/GPL-3`, 35149 B, SHA-256 `3972dc97...6986`; z gnu.org nie pobrano, bo proxy blokuje; porównać z oficjalnym `gpl-3.0.txt` przy okazji); nagłówek projektu i SPDX są w `NOTICE`.
 - Lint presetów: `.github/scripts/check_presets.py` sprawdza pola `type`/`behavior` i klucze JSON, nie dowolne napisy (etykieta „Delay” jest dozwolona). Uruchamiany w jobie `lint`.
-- `gradle/libs.versions.toml` ma aliasy `androidx-test-runner` (1.7.0) i `androidx-test-ext-junit` (1.3.0). Zależności `androidTestImplementation` w `control-android/build.gradle.kts` nadal zakomentowane (plik należy do modułu Android); odkomentować po pierwszym buildzie.
+- `gradle/libs.versions.toml` ma aliasy `androidx-test-runner` (1.7.0) i `androidx-test-ext-junit` (1.3.0). Zależności `androidTestImplementation` (runner, ext-junit) w `control-android/build.gradle.kts` są odkomentowane (10.11.2026); `libs.junit4` nadal zakomentowane.
 - `:control-android` nie używa `kotlinx.serialization` bezpośrednio (tylko `ProfileCodec` z `:control-model`), więc plugin `kotlin-serialization` jest tam zbędny.
 
 ## Upstream zweryfikowany (moonlight-android v12.2, b48494cb96bf, 10.11.2026)
@@ -33,3 +33,4 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 - `KeyboardTranslator.translate(int, int)` ma 2 parametry. `applicationId` ustawia się we flavorze `nonRoot`; flavor `root` do usunięcia (maxSdk 25 vs minSdk 26).
 - Patche to opisy kroków z kotwicami z v12.2, nie gotowe pliki `.patch`. Po nałożeniu zrób własny `git diff v12.2`.
 - Nic z `patches/` nie było stosowane ani kompilowane.
+- Zatwierdzone 10.11.2026 (DECISIONS.md pkt i): wymuszamy `onscreenController=true`, usuwamy flavor `root` i sufiks `.unofficial` po zmianie `applicationId`.

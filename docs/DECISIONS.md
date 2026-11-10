@@ -55,3 +55,9 @@ Repo ma nazywać się **`thumbcast`**. Właściciel zmienia nazwę w GitHub Sett
 - **Fork vs submoduł:** repo = fork upstreamu z modułami obok `app/` (rekomendacja z [NEXT-STEPS.md](NEXT-STEPS.md)), czy upstream jako submoduł git. Do rozstrzygnięcia przy pierwszej sesji z siecią.
 - **`applicationId`:** `io.github.<login>.thumbcast` [?]. Ustalić przed pierwszym wydaniem (późniejsza zmiana = nowa aplikacja) i po kontroli znaków towarowych ([naming.md](naming.md)).
 - **Landscape lock:** czy wymuszać orientację poziomą w sesji streamu (upstream robi to przy włączonym OSC), czy obsługiwać też portret.
+
+## (i) Decyzje po weryfikacji upstreamu (10.11.2026, zatwierdzone przez właściciela)
+
+- **Wymuszanie `onscreenController=true` w trybie Thumbcast:** tak. Bit 0 maski pada zależy od tej flagi. Skutki uboczne: blokada landscape i rumble telefonem jak przy OSC. Daje też bezpieczny powrót do starego sterowania przy uszkodzonym profilu. Szczegóły: `patches/preferences.patch.md`.
+- **Flavor `root`:** usuwamy (maxSdk 25 koliduje z minSdk 26; dotyczy tylko Androida 5–7).
+- **Sufiks `.unofficial` w release:** usuwamy po zmianie `applicationId`.
