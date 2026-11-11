@@ -25,6 +25,9 @@ class ButtonRecognizer(
 
     val isLatched: Boolean get() = latched
 
+    /** HOLD trzymany przez co najmniej jeden palec (stan wizualny). */
+    val isHeld: Boolean get() = pressedBy.isNotEmpty()
+
     fun onDown(pointerId: Int) {
         val press = heldEffect(true)
         if (press == null) {
