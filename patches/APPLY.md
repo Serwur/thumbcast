@@ -138,5 +138,6 @@ Legenda: ZGODNE = tak jak w planie/kodzie Thumbcast; POPRAWIONE = założenie by
   a na „squarish” tylko przy `onscreenController`. Przy wymuszeniu flagi (pkt 13) zachowanie jest jak przy OSC. Decyzja produktowa
   (czy blokować) zostaje w `docs/DECISIONS.md`, pkt h.
 - `onscreenController` nie wymuszamy na `false`, tylko na **`true`** (odwrotnie niż zakładało pytanie): inaczej maska pada nie ma bitu 0.
-- Menu w grze: od 11.11.2026 `AlertDialog` z `ThumbcastSession` (w v12.2 `Game` nie ma własnego menu). Back w trybie Thumbcast
-  otwiera menu zamiast kończyć strumień; w trybie legacy bez zmian.
+- Menu w grze: od 11.11.2026 w `ThumbcastSession` (w v12.2 `Game` nie ma własnego menu); od wieczora 11.11.2026 to widok
+  `ThumbcastMenuView` nad overlayem w oknie aktywności, nie `AlertDialog` (patrz `Game.java.patch.md`, pkt 5). Back w trybie
+  Thumbcast otwiera menu zamiast kończyć strumień, przy otwartym menu je zamyka; w trybie legacy bez zmian.

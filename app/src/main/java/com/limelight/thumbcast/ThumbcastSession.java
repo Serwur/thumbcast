@@ -5,11 +5,11 @@ package com.limelight.thumbcast;
 //
 // Sesja odpowiada za: wczytanie profilu (błąd = null, Game tworzy wtedy VirtualController), rozmiar
 // kontrolek (ScaleTransform), overlay nad StreamView, prostokąt wideo, HostPadReporterImpl, akcje
-// aplikacji (Command: mapa akcja -> Runnable), menu w grze (☰, gest od górnej krawędzi, systemowy Back),
+// aplikacji (Command: mapa akcja -> Runnable), menu w grze (☰, gest od górnej krawędzi, systemowy Back;
+// widok ThumbcastMenuView nad overlayem, pozycje w ThumbcastMenuModel),
 // ukrywanie kontrolek przy podłączonym padzie, PiP i sprzątanie.
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.hardware.input.InputManager;
 import android.os.Build;
@@ -17,8 +17,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.InputDevice;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -30,10 +28,8 @@ import com.limelight.nvstream.NvConnection;
 import com.limelight.preferences.PreferenceConfiguration;
 import com.limelight.ui.GameGestures;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import app.thumbcast.android.ThumbcastOverlayFactory;
@@ -53,10 +49,6 @@ public final class ThumbcastSession {
         void disconnect();
     }
 
-    /** Klawiatura ekranowa po zamknięciu menu: okno aktywności musi najpierw odzyskać fokus. */
-    private static final long KEYBOARD_AFTER_DIALOG_MS = 200;
-    private static final int DIALOG_THEME = android.R.style.Theme_DeviceDefault_Dialog_Alert;
-
     private final Activity activity;
     private final Host host;
     private final ThumbcastSettings settings;
@@ -73,9 +65,10 @@ public final class ThumbcastSession {
     private boolean gamepadConnected;
     /** Wybór z menu / akcji toggle_overlay; null = reguła automatyczna (pad + ustawienie). */
     private Boolean manualHidden;
-    private AlertDialog dialog;
-    private Runnable afterDialog;
-    private long afterDialogDelayMs;
+    /** Rodzic StreamView: overlay i menu są jego ostatnimi dziećmi. */
+    private final FrameLayout overlayParent;
+    /** Tworzony przy pierwszym otwarciu; pokazany = dodany do {@link #overlayParent}. */
+    private ThumbcastMenuView menuView;
     private boolean destroyed;
 
     private final InputManager.InputDeviceListener deviceListener = new InputManager.InputDeviceListener() {
@@ -150,9 +143,9 @@ public final class ThumbcastSession {
                 padReporter,
                 this::onAppAction,
                 new ThumbcastKeyTranslator(keyboardTranslator));
-        FrameLayout parent = (FrameLayout) streamView.getParent();
+        overlayParent = (FrameLayout) streamView.getParent();
         // Ostatnie dziecko FrameLayout jest rysowane na wierzchu i pierwsze dostaje dotyk.
-        parent.addView(overlay, new FrameLayout.LayoutParams(
+        overlayParent.addView(overlay, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         overlay.setDebugEnabled(prefConfig.thumbcastDebugOverlay);
         overlay.setStreamResolution(prefConfig.width, prefConfig.height);
@@ -178,12 +171,16 @@ public final class ThumbcastSession {
         return !destroyed;
     }
 
-    /** Systemowy Back (przycisk lub gest): zamiast wyjścia otwiera menu. true = obsłużone. */
+    /** Systemowy Back (przycisk lub gest): zamiast wyjścia otwiera menu, a przy otwartym je zamyka. true = obsłużone. */
     public boolean onBackPressed() {
         if (destroyed) {
             return false;
         }
-        showMenu();
+        if (isMenuShown()) {
+            hideMenu();
+        } else {
+            showMenu();
+        }
         return true;
     }
 
@@ -191,7 +188,7 @@ public final class ThumbcastSession {
     public void onPictureInPictureChanged(boolean inPip) {
         if (inPip) {
             overlay.releaseAll();
-            dismissDialog();
+            hideMenu();
             overlay.setVisibility(View.GONE);
         } else {
             overlay.setVisibility(View.VISIBLE);
@@ -203,7 +200,7 @@ public final class ThumbcastSession {
         overlay.releaseAll();
     }
 
-    /** onDestroy: bez zaległych retransmisji, listenerów i okien. */
+    /** onDestroy: bez zaległych retransmisji, listenerów i menu. */
     public void onDestroy() {
         destroyed = true;
         padReporter.cancelPending();
@@ -211,7 +208,7 @@ public final class ThumbcastSession {
         if (inputManager != null) {
             inputManager.unregisterInputDeviceListener(deviceListener);
         }
-        dismissDialog();
+        hideMenu();
     }
 
     // =====================================================================================
@@ -255,6 +252,8 @@ public final class ThumbcastSession {
     private void applyControlsHidden() {
         boolean hidden = manualHidden != null ? manualHidden : (hideOnGamepad && gamepadConnected);
         overlay.setControlsHidden(hidden);
+        // Pad podłączony/odłączony przy otwartym menu: etykieta Ukryj/Pokaż przyciski.
+        refreshMenu();
     }
 
     private void refreshGamepadState() {
@@ -314,116 +313,113 @@ public final class ThumbcastSession {
     }
 
     // =====================================================================================
-    // Menu w grze
+    // Menu w grze (widok nad overlayem w oknie aktywności, bez osobnego okna)
     // =====================================================================================
+
+    private boolean isMenuShown() {
+        return menuView != null && menuView.getParent() != null;
+    }
 
     private void showMenu() {
         if (destroyed || activity.isFinishing()) {
             return;
         }
-        // Palce schodzą z overlaya na okno dialogu: nic nie może zostać wciśnięte na hoście.
+        // Nic nie może zostać wciśnięte na hoście. Palce, które jeszcze leżą na overlayu, po releaseAll
+        // nie są śledzone (translator ignoruje ich MOVE), a nowe trafiają w menu, które konsumuje każdy dotyk.
         overlay.releaseAll();
-        dismissDialog();
-
-        final List<CharSequence> labels = new ArrayList<>();
-        final List<Runnable> actions = new ArrayList<>();
-        final List<Long> delays = new ArrayList<>();
-        addItem(labels, actions, delays, activity.getString(R.string.thumbcast_menu_disconnect), host::disconnect, 0);
-        addItem(labels, actions, delays, activity.getString(overlay.getControlsHidden()
-                ? R.string.thumbcast_menu_show_controls : R.string.thumbcast_menu_hide_controls),
-                this::toggleControls, 0);
-        addItem(labels, actions, delays, activity.getString(R.string.thumbcast_menu_keyboard),
-                host::toggleKeyboard, KEYBOARD_AFTER_DIALOG_MS);
-        addItem(labels, actions, delays, activity.getString(R.string.thumbcast_menu_control_size, scalePercent),
-                this::showScaleDialog, 0);
-        addItem(labels, actions, delays, activity.getString(hideOnGamepad
-                ? R.string.thumbcast_menu_hide_on_gamepad_on : R.string.thumbcast_menu_hide_on_gamepad_off),
-                () -> setHideOnGamepad(!hideOnGamepad), 0);
-
-        AlertDialog d = new AlertDialog.Builder(activity, DIALOG_THEME)
-                .setTitle(R.string.thumbcast_menu_title)
-                .setItems(labels.toArray(new CharSequence[0]), (di, which) -> {
-                    afterDialog = actions.get(which);
-                    afterDialogDelayMs = delays.get(which);
-                })
-                .setNegativeButton(R.string.thumbcast_menu_resume, null)
-                .create();
-        show(d);
-    }
-
-    private static void addItem(List<CharSequence> labels, List<Runnable> actions, List<Long> delays,
-                                CharSequence label, Runnable action, long delayMs) {
-        labels.add(label);
-        actions.add(action);
-        delays.add(delayMs);
-    }
-
-    private void showScaleDialog() {
-        if (destroyed || activity.isFinishing()) {
-            return;
+        if (menuView == null) {
+            menuView = new ThumbcastMenuView(activity, menuListener);
         }
-        final int[] values = ThumbcastSettings.SCALE_PERCENTS;
-        CharSequence[] labels = new CharSequence[values.length];
-        int checked = -1;
-        for (int i = 0; i < values.length; i++) {
-            labels[i] = activity.getString(R.string.thumbcast_percent, values[i]);
-            if (values[i] == scalePercent) {
-                checked = i;
+        if (menuView.getParent() == null) {
+            // Ostatnie dziecko: rysowane nad overlayem i pierwsze w kolejce dotyku.
+            overlayParent.addView(menuView, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+            menuView.scrollToTop();
+        }
+        refreshMenu();
+    }
+
+    /** Zamknięcie bez akcji (Wróć do gry, tap w tło, Back, PiP, onDestroy). */
+    private void hideMenu() {
+        if (isMenuShown()) {
+            overlayParent.removeView(menuView);
+        }
+    }
+
+    private void refreshMenu() {
+        if (isMenuShown()) {
+            menuView.bind(ThumbcastMenuModel.build(this::menuString, menuTarget));
+        }
+    }
+
+    private String menuString(int resId, Object... args) {
+        return args.length == 0 ? activity.getString(resId) : activity.getString(resId, args);
+    }
+
+    private final ThumbcastMenuView.Listener menuListener = new ThumbcastMenuView.Listener() {
+        @Override
+        public void onMenuAction(ThumbcastMenuModel.Item item, Runnable action) {
+            if (destroyed || !isMenuShown()) {
+                return;
             }
-        }
-        AlertDialog d = new AlertDialog.Builder(activity, DIALOG_THEME)
-                .setTitle(R.string.title_thumbcast_control_scale)
-                .setSingleChoiceItems(labels, checked, (di, which) -> {
-                    final int percent = values[which];
-                    afterDialog = () -> applyScale(percent);
-                    afterDialogDelayMs = 0;
-                    di.dismiss();
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .create();
-        show(d);
-    }
-
-    /**
-     * Pokazuje dialog bez zrywania trybu immersive (okno bez fokusu w chwili show() dostaje flagi UI
-     * aktywności) i wykonuje wybraną akcję dopiero po zamknięciu, gdy fokus wraca do strumienia.
-     */
-    @SuppressWarnings("deprecation")
-    private void show(AlertDialog d) {
-        d.setOnDismissListener(di -> {
-            if (dialog == di) {
-                dialog = null;
+            if (item.closesMenu) {
+                hideMenu();
             }
-            Runnable action = afterDialog;
-            afterDialog = null;
-            if (action != null && !destroyed) {
-                mainHandler.postDelayed(() -> {
-                    if (!destroyed) {
-                        action.run();
-                    }
-                }, afterDialogDelayMs);
-            }
-        });
-        afterDialog = null;
-        dialog = d;
-        Window w = d.getWindow();
-        if (w != null) {
-            w.setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+            action.run();
+            refreshMenu();
         }
-        d.show();
-        if (w != null) {
-            w.getDecorView().setSystemUiVisibility(activity.getWindow().getDecorView().getSystemUiVisibility());
-            w.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
-        }
-    }
 
-    /** Zamknięcie bez wykonywania wybranej akcji (PiP, onDestroy, ponowne otwarcie menu). */
-    private void dismissDialog() {
-        AlertDialog d = dialog;
-        dialog = null;
-        afterDialog = null;
-        if (d != null && d.isShowing()) {
-            d.dismiss();
+        @Override
+        public void onDismissRequested() {
+            hideMenu();
         }
-    }
+    };
+
+    private final ThumbcastMenuModel.Target menuTarget = new ThumbcastMenuModel.Target() {
+        @Override
+        public void disconnect() {
+            host.disconnect();
+        }
+
+        @Override
+        public boolean areControlsHidden() {
+            return overlay.getControlsHidden();
+        }
+
+        @Override
+        public void toggleControls() {
+            ThumbcastSession.this.toggleControls();
+        }
+
+        @Override
+        public void toggleKeyboard() {
+            // Okno aktywności nie traci fokusu (menu to widok, nie dialog), więc dawne opóźnienie 200 ms
+            // nie jest potrzebne. Zostaje post: klawiatura po zdjęciu menu, poza obsługą kliknięcia.
+            mainHandler.post(() -> {
+                if (!destroyed) {
+                    host.toggleKeyboard();
+                }
+            });
+        }
+
+        @Override
+        public int getScalePercent() {
+            return scalePercent;
+        }
+
+        @Override
+        public void setScalePercent(int percent) {
+            applyScale(percent);
+        }
+
+        @Override
+        public boolean isHideOnGamepad() {
+            return hideOnGamepad;
+        }
+
+        @Override
+        public void setHideOnGamepad(boolean hide) {
+            ThumbcastSession.this.setHideOnGamepad(hide);
+        }
+    };
 }

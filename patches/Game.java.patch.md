@@ -134,6 +134,16 @@ Syntetyczny Back z prawego przycisku myszy i przyciski pada obsługuje wcześnie
 tylko Back systemowy. Akcje `Output.App` z overlaya rozdziela sesja (mapa akcja → `Runnable`, klucze `AppActions.*`):
 `menu` → menu strumienia, `soft_keyboard` → klawiatura, `toggle_overlay` → ukryj/pokaż kontrolki.
 
+Menu strumienia (od 11.11.2026, poprawka po teście na Androidzie 16) nie jest osobnym oknem. Wcześniejszy `AlertDialog`
+z `FLAG_NOT_FOCUSABLE` i skopiowanym `setSystemUiVisibility` aktywności rozjeżdżał przy edge-to-edge/immersive miejsce
+rysowania i obszar dotyku (tap trafiał w pozycję niżej). Teraz `ThumbcastMenuView` jest dokładany jako ostatnie dziecko
+tego samego `FrameLayout` co StreamView i overlay: przyciemnione tło na cały ekran (tap = „Wróć do gry”, konsumuje każdy
+dotyk, więc overlay nic nie dostaje), panel boczny przy krawędzi END, przewijany, wiersze min. 52 dp; rozmiar kontrolek
+to wiersz z − / + (kolejne wartości `ThumbcastSettings.SCALE_PERCENTS`, zmiana na żywo). Pozycje i akcje są
+w `ThumbcastMenuModel`. Przy otwarciu `overlay.releaseAll()`. Back przy otwartym menu je zamyka, PiP i `onDestroy` zamykają
+menu. Okno nie traci fokusu (StreamView go zachowuje, elementy menu nie są fokusowalne), więc klawiatura ekranowa po
+zamknięciu idzie przez zwykły `post` bez dawnego opóźnienia 200 ms. `Game.java` bez zmian.
+
 ## 6. Sprzątanie
 
 `stopConnection()`, na początku bloku `if (connecting || connected) {`:
