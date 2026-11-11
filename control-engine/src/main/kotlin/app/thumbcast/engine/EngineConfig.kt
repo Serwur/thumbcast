@@ -53,7 +53,12 @@ data class StickSpec(
     /** Klawisze WASD; używane tylko gdy tryb profilu = KEYBOARD_MOUSE i pole nie jest null. */
     val kbmKeys: StickKeys?,
     /** Próg (0..1, po martwej strefie) od którego joystick w KBM wciska klawisze kierunków. */
-    val kbmThreshold: Float
+    val kbmThreshold: Float,
+    /**
+     * Histereza nasycenia: po dojściu do 100% wychylenie zostaje 100% (kierunek za palcem),
+     * dopóki palec nie wróci w martwą strefę albo nie zostanie podniesiony. Tylko z palcem, bez timerów.
+     */
+    val sprintLock: Boolean = false
 ) : ControlSpec
 
 data class ButtonSpec(

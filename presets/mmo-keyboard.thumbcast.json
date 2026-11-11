@@ -27,7 +27,7 @@
       "rect": { "x": 0.0, "y": 0.40, "w": 0.35, "h": 0.60 }, "floating": true,
       "deadzone": 0.12, "outerDeadzone": 0.04, "curve": { "type": "linear" },
       "kbmKeys": { "up": "W", "down": "S", "left": "A", "right": "D" },
-      "kbmThreshold": 0.35, "sprintLock": false },
+      "kbmThreshold": 0.35, "sprintLock": true },
 
     { "id": "strafe_left", "type": "button", "label": "Krok w lewo", "output": { "key": "Q" },
       "rect": { "x": 0.03, "y": 0.25, "w": 0.10, "h": 0.12 }, "shape": "rounded_rect" },

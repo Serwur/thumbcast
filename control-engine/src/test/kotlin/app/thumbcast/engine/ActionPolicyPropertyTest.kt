@@ -1,7 +1,9 @@
 package app.thumbcast.engine
 
+import app.thumbcast.model.Control
 import app.thumbcast.model.Profile
 import app.thumbcast.model.ProfileMode
+import app.thumbcast.model.StickControl
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.long
 import io.kotest.property.checkAll
@@ -18,6 +20,7 @@ import kotlin.test.fail
  * Kotest generuje ziarno, z którego budujemy deterministyczny strumień zdarzeń (poprawny albo chaotyczny:
  * CANCEL, podwójny DOWN tego samego id, UP bez DOWN, MOVE nieznanych palców, cofający się czas, releaseAll
  * w trakcie, zmiana viewportu, ticki). Ziarno jest w komunikacie błędu, więc porażkę da się odtworzyć.
+ * Część profili (wybór z ziarna) ma gałkę z `sprintLock = true`.
  *
  * Sprawdzane po każdym kroku:
  *  P1. każda krawędź wciśnięcia ma przyczynę: cykl TOUCH (DOWN/MOVE/UP, nie CANCEL) albo TICK tylko dla long-pressu,
@@ -38,28 +41,28 @@ class ActionPolicyPropertyTest {
     @Test
     fun padPlusValidStreams(): Unit = runBlocking<Unit> {
         checkAll(iterations, Arb.long()) { seed ->
-            Scenario(seed, testProfile(), chaotic = false, slide = false).run()
+            Scenario(seed, withSprintLock(testProfile(), seed), chaotic = false, slide = false).run()
         }
     }
 
     @Test
     fun padPlusChaoticStreams(): Unit = runBlocking<Unit> {
         checkAll(iterations, Arb.long()) { seed ->
-            Scenario(seed, testProfile(), chaotic = true, slide = false).run()
+            Scenario(seed, withSprintLock(testProfile(), seed), chaotic = true, slide = false).run()
         }
     }
 
     @Test
     fun padPlusSlideToPressChaoticStreams(): Unit = runBlocking<Unit> {
         checkAll(iterations, Arb.long()) { seed ->
-            Scenario(seed, testProfile(slideToPress = true), chaotic = true, slide = true).run()
+            Scenario(seed, withSprintLock(testProfile(slideToPress = true), seed), chaotic = true, slide = true).run()
         }
     }
 
     @Test
     fun keyboardMouseChaoticStreams(): Unit = runBlocking<Unit> {
         checkAll(iterations, Arb.long()) { seed ->
-            Scenario(seed, testProfile(mode = ProfileMode.KEYBOARD_MOUSE), chaotic = true, slide = false).run()
+            Scenario(seed, withSprintLock(testProfile(mode = ProfileMode.KEYBOARD_MOUSE), seed), chaotic = true, slide = false).run()
         }
     }
 
@@ -83,6 +86,21 @@ class ActionPolicyPropertyTest {
         }
     }
 
+    /**
+     * Mniej więcej połowa strumieni dostaje gałkę z `sprintLock = true` (histereza nasycenia, 11.11.2026).
+     * Wybór z ziarna (z osobną solą, żeby nie korelował ze strumieniem zdarzeń), więc porażka jest odtwarzalna.
+     */
+    private fun withSprintLock(p: Profile, seed: Long): Profile {
+        if (!Random(seed xor SPRINT_SALT).nextBoolean()) return p
+        val controls = ArrayList<Control>()
+        for (c in p.controls) controls.add(if (c is StickControl) c.copy(sprintLock = true) else c)
+        return p.copy(controls = controls)
+    }
+
+    private companion object {
+        const val SPRINT_SALT: Long = 0x5EED_5B1A7L
+    }
+
     /** Jeden strumień zdarzeń i jego sprawdzenia. */
     private class Scenario(
         private val seed: Long,
@@ -95,6 +113,7 @@ class ActionPolicyPropertyTest {
         private val clock: FakeClock = FakeClock(1000L)
         private val engine: InputEngine = InputEngine(profile, sink, clock, testViewport())
         private val kbm: Boolean = profile.mode == ProfileMode.KEYBOARD_MOUSE
+        private val sprint: Boolean = profile.controls.any { it is StickControl && it.sprintLock }
 
         /** Model testu: palce, które dostały DOWN i nie dostały UP/CANCEL (pozycje). */
         private val live: LinkedHashMap<Int, TouchPointer> = LinkedHashMap()
@@ -357,7 +376,7 @@ class ActionPolicyPropertyTest {
         }
 
         private fun check(cond: Boolean, msg: String) {
-            if (!cond) fail("seed=$seed chaotic=$chaotic slide=$slide: $msg")
+            if (!cond) fail("seed=$seed chaotic=$chaotic slide=$slide sprintLock=$sprint: $msg")
         }
     }
 }

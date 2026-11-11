@@ -132,7 +132,7 @@ Autor: agent ENGINE, 2026-11-07. Pliki: `control-engine/**`. Typy z kontraktu (`
 - `TouchEvent` z `actionPointerId = -1` dla MOVE/CANCEL: zgodne. UP bez wcześniejszego DOWN jest ignorowany. Podwójny DOWN tego samego id kończy poprzedni palec (bez tapu i long-pressu), a potem zaczyna nowy.
 - Leworęczność: `HandednessTransform.mirror` (MODEL) zapisuje odbite `rect` i strefę kamery w profilu, więc silnik **nie odbija profilu drugi raz** (`EngineConfig.leftHanded = false` z `ProfileAdapter`). Pole `leftHanded` służy tylko do odbicia w czasie działania (testy, podgląd).
 - `ButtonControl.chord` jest ignorowany przez silnik: przycisk daje wyłącznie `output`. Od 11.11.2026 walidator (MODEL) odrzuca każdy akord, więc `ProfileCodec.decode` takiego profilu nie zwróci. Akordów nie wdrażamy (FAIR_PLAY.md).
-- `StickControl.sprintLock` jest ignorowany. Poza obrysem wychylenie i tak wynosi 100%, bo `|v| ≥ 1 - outerDeadzone` daje 1.
+- `StickControl.sprintLock` (od 11.11.2026) to histereza nasycenia: po dojściu do `|v| ≥ 1 - outerDeadzone` wychylenie zostaje 100% z kierunkiem za palcem, aż palec wróci w martwą strefę (`|v| ≤ deadzone`) albo zostanie podniesiony (UP/CANCEL/`releaseAll` → 0). Stan żyje tylko z palcem, zmienia się tylko w cyklu dotyku tego palca. `false` = zachowanie jak dotąd. Szczegóły: `control-engine/docs/engine.md`.
 - Przyciski `MouseWheel` (1 ząbek) i `App` dają jedno zdarzenie przy DOWN; `MouseLook`/`Stick` na przycisku są ignorowane.
 
 ### Do zweryfikowania przy pierwszym buildzie

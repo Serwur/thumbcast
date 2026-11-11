@@ -68,7 +68,8 @@ object ProfileAdapter {
             StickSpec(
                 id = c.id, rect = c.rect, floating = c.floating,
                 deadzone = c.deadzone, outerDeadzone = c.outerDeadzone, curve = curveOf(c.curve),
-                padStick = stick, kbmKeys = c.kbmKeys, kbmThreshold = c.kbmThreshold
+                padStick = stick, kbmKeys = c.kbmKeys, kbmThreshold = c.kbmThreshold,
+                sprintLock = c.sprintLock
             )
         }
         is ButtonControl -> ButtonSpec(c.id, c.rect, c.output, false)

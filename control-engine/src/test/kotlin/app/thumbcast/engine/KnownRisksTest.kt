@@ -23,6 +23,7 @@ import kotlin.test.assertTrue
  * - `chord`: walidator odrzuca każdy akord, także przy `allowChords = true` (opcja B, FAIR_PLAY.md).
  * Testy silnika na takich profilach zostają jako opis zachowania dla profilu niewalidowanego
  * (`ProfileCodec.decodeUnvalidated`, przyszły edytor). `ProfileCodec.decode` takiego profilu nie zwróci.
+ * `sprintLock` rozstrzygnięty 11.11.2026 (histereza nasycenia); test poniżej opisuje już nowe zachowanie.
  */
 class KnownRisksTest {
 
@@ -160,15 +161,19 @@ class KnownRisksTest {
     }
 
     @Test
-    fun sprintLockIsANoOpBecauseOutsideTheOutlineIsAlreadyFull() {
+    fun sprintLockIsHysteresisUntilDeadzoneOnlyWhileFingerIsDown() {
+        // Decyzja właściciela 11.11.2026: sprintLock = histereza nasycenia (szczegóły w StickRecognizerTest).
         val off = stickTrace(false)
         val on = stickTrace(true)
-        assertEquals(off, on, "sprintLock nie zmienia wyjścia silnika")
-        // Poza obrysem i tak jest 100% (definicja z PLAN 5.4 jest spełniona bez flagi).
+        // Do nasycenia i poza obrysem obie wersje są identyczne (poza obrysem i tak jest 100%).
+        assertEquals(off.subList(0, 4), on.subList(0, 4))
         assertEquals(32767, off[2].second)
-        // Brak „zatrzasku”: powrót do obrysu zmniejsza wychylenie, UP zeruje (nic nie zostaje po palcu).
-        assertTrue(off[4].second in 1 until 32767, "powrót do obrysu: ${off[4]}")
+        // Powrót do obrysu: bez flagi wychylenie maleje, ze sprintLock zostaje 100% (kierunek za palcem, tu w górę).
+        assertTrue(off[4].second in 1 until 32767, "powrót do obrysu bez sprintLock: ${off[4]}")
+        assertEquals(Pair(0, 32767), on[4], "powrót do obrysu ze sprintLock")
+        // Brak zatrzasku po palcu: UP zeruje w obu wersjach (nic nie zostaje po palcu).
         assertEquals(Pair(0, 0), off[5])
+        assertEquals(Pair(0, 0), on[5])
     }
 
     // ------------------------------------------------------------------ ryzyko 3: long-press i ticki
