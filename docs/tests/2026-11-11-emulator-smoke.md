@@ -84,3 +84,33 @@ Locale aplikacji ustawione przez `cmd locale set-app-locales io.github.serwur.th
 - Build release i podpisywanie.
 
 Po teście dane aplikacji na emulatorze wyczyszczono (`pm clear`), APK zostało zainstalowane.
+
+## Weryfikacja poprawek (11.11.2026)
+
+Build z `main` na `d902f902`: poprawka wibracji `c4655016` (po `setDependency(null)` wywołanie `vibrateOscPref.onDependencyChanged(oscPref, false)`) i nadpisania marki w `app/src/nonRoot/res/`. `:app:assembleNonRootDebug`: BUILD SUCCESSFUL. Ten sam emulator (API 37), `adb install -r` na wcześniejszą instalację z wyczyszczonymi danymi.
+
+| # | Sprawdzenie | Wynik |
+|---|---|---|
+| 5 | Thumbcast → legacy: profil wyszarzony, OSC aktywne, wibracja zależna od OSC | OK |
+| 6a | Legacy z odznaczonym OSC → Thumbcast: „Enable vibration” aktywne od razu | OK (wcześniej BŁĄD) |
+| 6b | Legacy z zaznaczonym OSC → Thumbcast: „Enable vibration” aktywne od razu | OK (wcześniej BŁĄD) |
+| 10 | Ikona i etykieta w launcherze | OK |
+| 11 | Teksty z nową marką w ustawieniach | OK |
+| 12 | Bufor `logcat -b crash` pusty | OK |
+
+Szczegóły (stany z `uiautomator dump`, bez wychodzenia z ekranu ustawień):
+
+- Legacy, OSC odznaczone: „Control profile” `enabled=false`, „Show on-screen controls” `enabled=true`, „Enable vibration” `enabled=false` (zależność od OSC działa jak w upstreamie).
+- Powrót na Thumbcast: „Control profile” `enabled=true`, „Show on-screen controls” `enabled=false`, „Enable vibration” `enabled=true`.
+- Legacy, po zaznaczeniu OSC: „Enable vibration” `enabled=true`. Powrót na Thumbcast: OSC `checked=true enabled=false`, „Enable vibration” `enabled=true`.
+- W trybie Thumbcast checkbox wibracji da się przełączyć (`checked` true → false → true).
+
+Launcher: w szufladzie aplikacji pozycja „Thumbcast (…” (etykieta przycięta przez launcher, `content-desc` = „Thumbcast (Debug)”). Ikona to biały punkt z dwoma pierścieniami (pełny biały i półprzezroczysty) na ciemnym morskim tle. Kolor tła odczytany ze zrzutu: `#1D6B5F`, taki sam jak `ic_launcher_background` w `app/src/nonRoot/res/values/ic_launcher_background.xml`. Launcher pokazuje też aplikację w podpowiedziach („Predicted app: Thumbcast (Debug)”).
+
+Teksty: „Language” ma opis „Language to use for Thumbcast”. Opis martwej strefy gałki: „Note: Some games can enforce a larger deadzone than what Thumbcast is configured to use.” (wcześniej „…what Moonlight is configured to use.”). W przejrzanych ekranach ustawień nie ma już słowa „Moonlight”. Nie przeglądałem wszystkich ekranów ani innych lokalizacji.
+
+Log: `logcat -b crash` pusty, 0 wpisów `FATAL EXCEPTION` / `E AndroidRuntime` w buforach main i system przez całą sesję. Proces aplikacji żył do końca testu.
+
+Zrzuty (opis): szuflada aplikacji z nową ikoną w ostatnim rzędzie obok „Settings” i „TMoble”; ustawienia po powrocie z legacy z zaznaczonym OSC: OSC wyszarzone i zaznaczone, „Enable vibration” aktywne z zaznaczonym checkboxem w kolorze akcentu.
+
+Po weryfikacji dane aplikacji wyczyszczono (`pm clear`), emulator zamknięto.
