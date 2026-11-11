@@ -109,6 +109,11 @@ class StickRecognizer(
 
     val activePointerId: Int get() = activePointer
 
+    // Odczyt dla stanu wizualnego (EngineVisualState); znaczące tylko przy activePointerId != -1.
+    val centerXPx: Float get() = centerX
+    val centerYPx: Float get() = centerY
+    val radiusPx: Float get() = radius
+
     fun onDown(pointerId: Int, x: Float, y: Float, rect: PxRect, viewport: Viewport) {
         if (activePointer != -1) return
         activePointer = pointerId

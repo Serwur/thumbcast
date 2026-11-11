@@ -118,12 +118,13 @@ Autor: agent ENGINE, 2026-11-07. Pliki: `control-engine/**`. Typy z kontraktu (`
 
 ### Doprecyzowania typów (kontrakt ich nie rozpisuje)
 - `RectPx(left: Int, top: Int, right: Int, bottom: Int)`; prawa i dolna krawędź wyłączne (jak `android.graphics.Rect`); `width`, `height`, `contains(x, y)`. Zgodne z założeniem ANDROID.
-- `Viewport(widthPx, heightPx, videoRect, videoRefWidth, videoRefHeight, safeArea: RectPx? = null)`. Szóste pole to rozszerzenie z wartością domyślną, więc wywołania 5-argumentowe się kompilują. Gdy `safeArea == null`, `rect` kontrolek liczony jest względem całego overlaya (tak samo jak wizualny hit test ANDROID). Gdy ANDROID zacznie podawać `safeArea`, powinien liczyć podświetlenie względem tego samego prostokąta.
+- `Viewport(widthPx, heightPx, videoRect, videoRefWidth, videoRefHeight, safeArea: RectPx? = null)`. Szóste pole to rozszerzenie z wartością domyślną, więc wywołania 5-argumentowe się kompilują. Gdy `safeArea == null`, `rect` kontrolek liczony jest względem całego overlaya (tak samo jak geometria rysunku ANDROID, `ControlLayout`). Gdy ANDROID zacznie podawać `safeArea`, powinien liczyć grafikę względem tego samego prostokąta (podświetlenie idzie już z `visualState()`).
 - `PolicyViolation(timeMs, cycle: CycleKind?, pointerId, bindingId, effect: String, reason: String)` w `ActionPolicy.kt`.
 
 ### Poza kontraktem (dodatki ENGINE)
 - `InputEngine.onTick(nowMs: Long)` oraz `onTick()` (z `Clock`). To tick czasu traktowany jak syntetyczny MOVE aktywnych palców. Służy wyłącznie do rozpoznania long-pressu trzymanego palca i do wygaszania kamery. **Bez aktywnego palca nic nie robi.** Overlay ANDROID woła go raz na klatkę, i tak ma zostać.
 - Opcjonalny interfejs `EmitCauseListener` (`onEmitCause(cause: EmitCause?)`). Jeśli `InputSink` go implementuje, przed każdym wywołaniem metody sinka dostaje przyczynę (cykl, akcja dotyku, `timeMs`, `pointerId`, wiązanie). Używa go `FakeInputSink`, przyda się też overlayowi debug. Nie jest wymagany.
+- `InputEngine.visualState(): EngineVisualState` (11.11.2026): stan do rysowania, tylko do odczytu (palec → kontrolka, HOLD, LATCH, gałki). Overlay ANDROID rysuje i wibruje wyłącznie na jego podstawie, bez własnego hit testu. Opis: `control-engine/docs/engine.md`, sekcja „Stan wizualny”.
 - `InputEngine.violationCount`, `InputEngine.padSnapshot()`, `InputEngine.activeProfile`, konstruktor `InputEngine(config: EngineConfig, profile, sink, clock, viewport)` (testy, przyszły „tryb testu” edytora).
 
 ### Semantyka, na której mogą polegać inni

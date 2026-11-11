@@ -110,6 +110,16 @@ class GeometryTest {
     }
 
     @Test
+    fun gestureExclusionForSticksTakesOnlyStickZones() {
+        // Gałka „move” x 0..600 dotyka lewej krawędzi; przyciski i „menu” nie są gałkami.
+        val layout = ControlLayout.of(sampleProfile(), 2000, 1000)
+        val out = GestureExclusion.forSticks(layout, 2000f, 1f)
+        assertEquals(1, out.size)
+        assertEquals(0f, out[0].left, 0.01f)
+        assertEquals(GestureExclusion.MAX_EXCLUSION_DP, out[0].height, 0.01f)
+    }
+
+    @Test
     fun latencyPercentiles() {
         val s = LatencyStats(8)
         assertEquals(-1L, s.percentile(95))

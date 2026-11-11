@@ -12,8 +12,8 @@ import app.thumbcast.model.StickControl
 import app.thumbcast.model.SystemControl
 
 /**
- * Kontrolka przeliczona na px do rysowania. Tylko dla grafiki i haptyki: o tym, co trafia do hosta,
- * decyduje wyłącznie silnik (`InputEngine`), który robi własny hit test.
+ * Kontrolka przeliczona na px do rysowania (geometria grafiki, etykieta, kształt). Stan „wciśnięcia”
+ * i właściciela palca bierze się z silnika (`InputEngine.visualState()`), nie z [ControlLayout.hitTest].
  */
 data class LaidOutControl(
     val control: Control,
@@ -113,12 +113,6 @@ class ControlLayout(val controls: List<LaidOutControl>) {
          * Profil z ukrytymi kontrolkami (pad BT podłączony albo ręczne ukrycie): zostają tylko
          * kontrolki systemowe (menu, klawiatura), a gesty z `gestures` działają dalej (plan 4.2).
          */
-        fun withControlsHidden(profile: Profile): Profile {
-            val kept: ArrayList<Control> = ArrayList()
-            for (c in profile.controls) {
-                if (c is SystemControl) kept.add(c)
-            }
-            return profile.copy(controls = kept)
-        }
+        fun withControlsHidden(profile: Profile): Profile = EffectiveProfile.hideControls(profile)
     }
 }

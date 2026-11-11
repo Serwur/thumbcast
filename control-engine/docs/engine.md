@@ -66,6 +66,10 @@ TouchEvent (overlay Androida)        tick czasu (onTick, tylko gdy dotyka palec)
 
 Zgodność z 1 dotyk = 1 wejście: stan należy do aktywnego palca gałki i ginie razem z nim. Zmienia się wyłącznie w `update`, czyli w cyklu DOWN/MOVE tego palca; tick nie dotyka gałek. Każda zmiana wyjścia jest intencją `HOLD` tego samego wiązania (`control:<id>`) z przyczyną w zdarzeniu dotyku, więc reguły R1–R9 działają bez nowych wyjątków. `sprintLock = false` wywołuje dokładnie to samo `StickMath.shape` co wcześniej.
 
+## Stan wizualny (`visualState`)
+
+`InputEngine.visualState(): EngineVisualState` (plik `VisualState.kt`) to migawka do rysowania, tylko do odczytu: palce (`PointerVisual`: pozycja, punkt DOWN, kontrolka-właściciel albo `null` dla gestu), przyciski HOLD trzymane palcem (`heldIds`), zatrzaśnięte LATCH (`latchedIds`) i wszystkie gałki (`StickVisual`: środek, promień i surowe wychylenie palca obcięte do koła jednostkowego, w osiach ekranu). Dla aktywnej gałki to te same wartości, z których rozpoznawacz liczy wyjście; dla nieaktywnej środek `rect` i promień, który przyjmie `onDown`. Overlay nie ma własnego hit testu, więc wygląd i haptyka idą za strefą aktywacji, slide-to-press i promieniem silnika. Odczyt nie otwiera cyklu polityki i niczego nie emituje.
+
 ## Jak ActionPolicy egzekwuje 1 dotyk = 1 wejście
 
 Każde wyjście jest **intencją** z trzema atrybutami: palec (`pointerId`), logiczne wejście (`bindingId`, np. `control:a`, `gesture:camera`) i rodzaj (`HOLD`, `LATCH`, `ONE_SHOT`, `ONE_SHOT_TIMED`). Polityka prowadzi rejestr *właścicieli* każdego trwałego stanu (przycisk pada, trigger, gałka, klawisz, przycisk myszy) oraz stan każdego palca.

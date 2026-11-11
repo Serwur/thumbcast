@@ -39,6 +39,13 @@ class InputEngine(profile: Profile, sink: InputSink, private val clock: Clock, v
     /** Bieżący stan pada (debug overlay, testy). */
     fun padSnapshot(): PadSnapshot = policy.padSnapshot()
 
+    /**
+     * Stan do rysowania (palec -> kontrolka, HOLD, LATCH, środek/promień/wychylenie gałek), tylko do odczytu.
+     * Overlay nie robi własnego hit testu: wygląd idzie za tym, co silnik rozpoznał (strefa aktywacji, slide-to-press).
+     */
+    fun visualState(): EngineVisualState =
+        EngineVisualState.capture(tracker.all(), sticks.values, buttons.values, hitTest, currentViewport, tuning)
+
     /** Niezmiennik „1 palec = 1 wejście” w stanie polityki (testy). */
     internal fun debugMaxBindingsPerPointer(): Int = policy.maxBindingsPerPointer()
 
