@@ -64,3 +64,13 @@ Repo ma nazywać się **`thumbcast`**. Właściciel zmienia nazwę w GitHub Sett
 
 - **Fork vs submoduł: scalenie historii.** Historia upstreamu `moonlight-stream/moonlight-android` od `v12.2` (`b48494cb96bf`) jest scalona z historią Thumbcast (`git merge --allow-unrelated-histories`), moduły `control-*` leżą obok `app/`. Upstream jest zdalnym repo `upstream`; kolejne wydania wciągamy przez `git merge <tag>`. Fork na GitHubie odpadł, bo `Serwur/thumbcast` już istniało jako zwykłe repo.
 - **`applicationId`: `io.github.serwur.thumbcast`** (flavor `nonRoot`; debug ma sufiks `.debug`). Kontrola znaków towarowych nazwy ([naming.md](naming.md)) nadal przed pierwszym wydaniem.
+
+## (k) Decyzje po pierwszym teście na telefonie (11.11.2026, zatwierdzone przez właściciela)
+
+- **Kolejność prac:** najpierw menu w streamie (wyjście, ukrywanie przycisków, klawiatura, rozmiar kontrolek), potem tryb touchpad (pulpit) i układ Big Picture z dwiema gałkami, potem reszta refaktoru.
+- **Refaktor:** dzielimy nasz kod (overlay, gesty, `ActionPolicy.emit`) i wynosimy logikę Thumbcast z `Game.java` do własnej klasy sesji; `Game` ma tylko krótkie wywołania. Klas upstreamu (`Game.java`, `ControllerHandler.java`) nie przepisujemy, żeby dalej scalać wydania Moonlight.
+- **Pady:**
+  - fizyczny pad (DualSense, Xbox One) podłączony do telefonu: obsługuje go kod upstreamu; dokładamy auto-chowanie przycisków i testy;
+  - pad PlayStation widziany przez grę na PC: na start DS4 przez ViGEmBus (`gamepad = ds4` w Sunshine, za darmo, ikonki PS);
+  - **fork ViGEmBus z emulacją DualSense / Xbox One: właściciel chce go robić mimo kosztu.** To zmienia pkt (d) dla sterownika: robimy go w **osobnym repo**, nie w Thumbcast. Ryzyka i warunki: sterownik jądra wymaga do dystrybucji certyfikatu EV i podpisu atestacyjnego Microsoftu (konto Partner Center); bez tego działa tylko w trybie test-signing, którego nie wolno używać na PC do gier z anticheatem (ryzyko bana). Sunshine musi umieć utworzyć nowy typ pada, więc potrzebna jest też zmiana w Sunshine (fork albo PR do upstreamu) [?]. Do czasu działającego, podpisanego sterownika wspieramy X360 i DS4 (ViGEmBus) oraz płatny Virtual HID Driver.
+- **Instalator i instrukcje dla użytkownika (Windows), FAQ:** po wydaniu wersji testowej (beta).
