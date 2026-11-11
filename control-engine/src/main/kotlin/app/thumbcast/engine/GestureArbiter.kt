@@ -26,7 +26,7 @@ class GestureArbiter(
     private val video: VideoMapper = VideoMapper(viewport)
     val tap: TapRecognizer = TapRecognizer(config.tap, video, emitter)
     val longPress: LongPressRecognizer = LongPressRecognizer(config.longPress, config.tap.maxMovePx, video, emitter)
-    val camera: CameraDragRecognizer = CameraDragRecognizer(config.camera, config.tuning, emitter)
+    val camera: CameraDragRecognizer = CameraDragRecognizer.create(config.camera, config.tuning, emitter)
     val pinch: PinchRecognizer = PinchRecognizer(config.pinch, config.tuning, emitter)
     val edge: EdgeSwipeRecognizer = EdgeSwipeRecognizer(config.edgeSwipe, config.tuning, screen, emitter)
 
