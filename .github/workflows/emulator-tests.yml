@@ -1,28 +1,29 @@
-# SZABLON: testy instrumentacyjne na emulatorze (reactivecircus/android-emulator-runner).
+# Testy instrumentacyjne :control-android na emulatorze (reactivecircus/android-emulator-runner).
 #
-# Na razie uruchamiany tylko ręcznie (workflow_dispatch). Po forku i dodaniu testów instrumentacyjnych
-# (Espresso, plan sekcja 3) dodać wyzwalacz pull_request i ewentualnie wymagany check.
-# Wersja akcji: v2.38.0 (https://github.com/ReactiveCircus/android-emulator-runner/releases, sprawdzone 7.11.2026).
+# Uruchamiany tylko ręcznie (workflow_dispatch); nie jest wymaganym checkiem. Jedyny test to
+# control-android/src/androidTest (MultiTouchInstrumentedTest, szkic). Po ustabilizowaniu dodać
+# wyzwalacz pull_request. :app nie ma testów instrumentacyjnych (wariant: :app:connectedNonRootDebugAndroidTest).
+#
+# Wersje akcji: android-emulator-runner v2.38.0 (sprawdzone 7.11.2026), actions/cache v6 (v6.1.0, sprawdzone 11.11.2026).
+# Obrazy system-images;android-{26,34,36};default;x86_64 są w repozytorium SDK Google (sys-img2-4.xml, 11.11.2026);
+# "default" = obraz bez GMS (zgodny z założeniem F-Droid).
 # Akceleracja KVM na runnerach Linux GitHub wymaga reguły udev (krok poniżej).
 #
-# DO ZWERYFIKOWANIA: dostępność obrazów systemu dla API 36/37 (target "google_apis" vs "default")
-# oraz czy F-Droid-friendly testy wymagają obrazu bez GMS ("default").
+# Sprawdzone lokalnie 11.11.2026: :control-android:assembleDebugAndroidTest się kompiluje.
+# connectedDebugAndroidTest ani sam workflow nie były uruchomione (brak urządzenia, brak przebiegu na GitHub).
 
 name: emulator-tests
 
 on:
   workflow_dispatch:
     inputs:
-      api-level:
-        description: "Poziom API emulatora"
+      api-levels:
+        description: "Poziomy API emulatora, po przecinku (26 = minSdk, 36 = targetSdk)"
         required: false
-        default: "34"
+        default: "26, 34, 36"
 
 permissions:
   contents: read
-
-env:
-  GRADLE_VERSION: "9.7.1"
 
 jobs:
   instrumented:
@@ -32,9 +33,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 26 = minSdk Thumbcast (plan sekcja 3), 34 = współczesny, 36 = targetSdk.
-        api-level: [26, 34, 36]
+        api-level: ${{ fromJSON(format('[{0}]', inputs.api-levels || '26, 34, 36')) }}
     steps:
+      # :control-android nie potrzebuje submodułów ani NDK (to tylko :app), ale checkout jest jak w ci.yml.
       - uses: actions/checkout@v7
         with:
           submodules: recursive
@@ -45,12 +46,6 @@ jobs:
           java-version: "17"
 
       - uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: ${{ env.GRADLE_VERSION }}
-
-      - name: Wybór polecenia Gradle
-        run: |
-          if [ -x ./gradlew ]; then echo "GW=./gradlew" >> "$GITHUB_ENV"; else echo "GW=gradle" >> "$GITHUB_ENV"; fi
 
       - name: Włączenie KVM
         run: |
@@ -58,15 +53,14 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      # DO ZWERYFIKOWANIA: najnowsza główna wersja actions/cache (nie sprawdzono w sieci).
       - name: Cache AVD
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         id: avd-cache
         with:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ matrix.api-level }}
+          key: avd-${{ matrix.api-level }}-default-x86_64
 
       - name: Utworzenie snapshotu AVD
         if: steps.avd-cache.outputs.cache-hit != 'true'
@@ -89,8 +83,7 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          # Po forku dodać :app:connectedNonRootDebugAndroidTest (DO ZWERYFIKOWANIA nazwa wariantu).
-          script: $GW --stacktrace :control-android:connectedDebugAndroidTest
+          script: ./gradlew --stacktrace :control-android:connectedDebugAndroidTest
 
       - name: Raporty
         if: always()

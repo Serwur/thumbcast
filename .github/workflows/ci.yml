@@ -1,4 +1,4 @@
-# CI Thumbcast: testy JVM, lint, testy właściwości polityki (wymagany check "policy-tests").
+# CI Thumbcast: testy JVM, testy właściwości polityki, lint, build APK debug.
 #
 # Wymagane checki w ochronie gałęzi main (Settings > Branches): "jvm-tests", "policy-tests".
 # Nazwy jobów poniżej są nazwami checków; nie zmieniać ich bez aktualizacji ochrony gałęzi.
@@ -6,8 +6,9 @@
 # Wersje akcji sprawdzone 7.11.2026 na stronach wydań:
 #   actions/checkout v7, actions/setup-java v6, gradle/actions/setup-gradle v6 (v6.4.1), actions/upload-artifact v7.
 #
-# Do czasu forka w repo nie ma ./gradlew (patrz gradle/wrapper/gradle-wrapper.properties).
-# Krok "Wybór polecenia Gradle" używa wtedy Gradle 9.7.1 zainstalowanego przez setup-gradle.
+# Gradle: zawsze ./gradlew (wrapper z upstreamu, wersja i distributionSha256Sum w
+# gradle/wrapper/gradle-wrapper.properties). setup-gradle bez `gradle-version` tylko cache'uje
+# i sprawdza gradle-wrapper.jar (validate-wrappers domyślnie włączone).
 
 name: ci
 
@@ -23,9 +24,6 @@ permissions:
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
-
-env:
-  GRADLE_VERSION: "9.7.1"
 
 jobs:
   jvm-tests:
@@ -47,15 +45,9 @@ jobs:
 
       - name: Gradle (cache)
         uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: ${{ env.GRADLE_VERSION }}
-
-      - name: Wybór polecenia Gradle
-        run: |
-          if [ -x ./gradlew ]; then echo "GW=./gradlew" >> "$GITHUB_ENV"; else echo "GW=gradle" >> "$GITHUB_ENV"; fi
 
       - name: Testy JVM (model i silnik)
-        run: $GW --stacktrace :control-model:test :control-engine:test
+        run: ./gradlew --stacktrace :control-model:test :control-engine:test
 
       - name: Raporty testów
         if: always()
@@ -88,16 +80,10 @@ jobs:
           java-version: "17"
 
       - uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: ${{ env.GRADLE_VERSION }}
-
-      - name: Wybór polecenia Gradle
-        run: |
-          if [ -x ./gradlew ]; then echo "GW=./gradlew" >> "$GITHUB_ENV"; else echo "GW=gradle" >> "$GITHUB_ENV"; fi
 
       - name: Testy właściwości polityki (10^5 iteracji)
         run: >
-          $GW --stacktrace :control-engine:test
+          ./gradlew --stacktrace :control-engine:test
           --tests '*Policy*'
           -Pthumbcast.policy.iterations=100000
 
@@ -140,17 +126,11 @@ jobs:
           java-version: "17"
 
       - uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: ${{ env.GRADLE_VERSION }}
 
-      - name: Wybór polecenia Gradle
-        run: |
-          if [ -x ./gradlew ]; then echo "GW=./gradlew" >> "$GITHUB_ENV"; else echo "GW=gradle" >> "$GITHUB_ENV"; fi
-
-      # Android Lint dla :control-android. Po forku dodać :app:lint<Wariant>.
+      # Android Lint dla :control-android. Lint :app jest w jobie app-build (ten sam setup co build APK).
       # ktlint/detekt (plan sekcja 3) dodać po wpisaniu ich wersji do libs.versions.toml.
       - name: Android Lint
-        run: $GW --stacktrace :control-android:lint
+        run: ./gradlew --stacktrace :control-android:lint
 
       - name: Strażnik nazw i zakazanych zależności
         run: |
@@ -170,5 +150,61 @@ jobs:
         with:
           name: lint-reports
           path: "**/build/reports/lint-results*.*"
+          if-no-files-found: ignore
+          retention-days: 14
+
+  app-build:
+    # Build aplikacji (:app, upstream + hooki Thumbcast) i Android Lint :app.
+    # Nie jest wymaganym checkiem (stan 11.11.2026).
+    name: app-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      # :app buduje moonlight-common-c (z enet i nanors) przez ndkBuild, więc submoduły są konieczne.
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # NDK instalowany jawnie, choć AGP umie go pobrać sam: wersja jest czytana z app/build.gradle
+      # (jedno źródło prawdy), błąd pobierania widać w osobnym kroku zamiast w środku buildu,
+      # a krok nie zależy od tego, które NDK akurat są w obrazie runnera (gdy wersja już jest, nic nie pobiera).
+      - name: NDK (wersja z app/build.gradle)
+        run: |
+          set -euo pipefail
+          ndk=$(sed -n 's/^[[:space:]]*ndkVersion[[:space:]]*"\([^"]*\)".*/\1/p' app/build.gradle)
+          if [ -z "$ndk" ]; then echo "Nie znaleziono ndkVersion w app/build.gradle"; exit 1; fi
+          echo "NDK $ndk"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk" > /dev/null
+          test -d "$ANDROID_HOME/ndk/$ndk"
+
+      - name: Build APK debug
+        run: ./gradlew --stacktrace :app:assembleNonRootDebug
+
+      - name: APK debug jako artefakt
+        uses: actions/upload-artifact@v7
+        with:
+          name: thumbcast-debug-apk
+          path: app/build/outputs/apk/nonRoot/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      # Lint :app: upstream v12.2 + hooki daje 0 błędów i ok. 260 ostrzeżeń (lokalnie 11.11.2026),
+      # więc krok blokuje tylko nowe błędy (abortOnError AGP); ostrzeżenia są w raporcie.
+      - name: Android Lint :app
+        run: ./gradlew --stacktrace :app:lintNonRootDebug
+
+      - name: Raport lint :app
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-lint-report
+          path: app/build/reports/lint-results-nonRootDebug.*
           if-no-files-found: ignore
           retention-days: 14

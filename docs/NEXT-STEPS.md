@@ -84,7 +84,8 @@ android {
 ```
 
 5. `release.yml`: `APP_ASSEMBLE_TASK` = `:app:assembleNonRootRelease` pasuje do flavoru `nonRoot` z v12.2. `APK_GLOB` (`app/build/outputs/apk/**/release/*.apk`)
-   pasuje do konwencji AGP (`.../apk/nonRoot/release/`), ale niesprawdzone bez builda.
+   pasuje do konwencji AGP (`.../apk/nonRoot/release/`). Sprawdzone 11.11.2026 lokalnie z testowym keystore: powstaje
+   `app-nonRoot-release.apk`, `apksigner verify` OK.
 
 ## 3. Zastosowanie `patches/`
 
@@ -160,9 +161,18 @@ Upstream (stan po porównaniu z v12.2, commit `b48494cb96bf`, 10.11.2026):
   katalog `.github/workflows` do scalenia.
 
 CI:
-- Workflowy przeszły tylko walidację składni YAML (PyYAML); nie były uruchomione na GitHub Actions.
-- Wersje akcji sprawdzone na stronach wydań 7.11.2026 (checkout v7, setup-java v6, setup-gradle v6, upload-artifact v7, android-emulator-runner v2.38.0), z wyjątkiem `actions/cache@v4` (nie sprawdzono).
-- Dostępność obrazów emulatora API 26/34/36 z `target: default`.
+- **Aktualizacja 11.11.2026.** `ci.yml` (jobs `jvm-tests`, `policy-tests`, `lint`) jest zielony na GitHub Actions. Wszystkie workflowy
+  używają `./gradlew` (bez fallbacku na `gradle`, bez `gradle-version` w setup-gradle). Nowy job `app-build` (niewymagany):
+  NDK z `ndkVersion` w `app/build.gradle` przez `sdkmanager`, `:app:assembleNonRootDebug`, APK debug jako artefakt
+  `thumbcast-debug-apk`, potem `:app:lintNonRootDebug` (lokalnie 0 błędów, ok. 260 ostrzeżeń, więc blokuje tylko nowe błędy).
+  Job `app-build` nie był jeszcze uruchomiony na GitHub Actions.
+- Lokalnie (Windows, 11.11.2026) przechodzą wszystkie polecenia Gradle z workflowów, w tym podpisany `:app:assembleNonRootRelease`
+  z testowym keystore i `:control-android:assembleDebugAndroidTest`. Nieuruchomione: `release.yml`, `emulator-tests.yml`,
+  `connectedDebugAndroidTest` (brak urządzenia), krok `sdkmanager` (lokalnie brak `cmdline-tools`).
+- Składnia: PyYAML i actionlint 1.7.12 (bez shellcheck) bez uwag.
+- Wersje akcji sprawdzone na stronach wydań 7.11.2026 (checkout v7, setup-java v6, setup-gradle v6, upload-artifact v7,
+  android-emulator-runner v2.38.0) i 11.11.2026 (`actions/cache` v6.1.0, w `emulator-tests.yml` zmienione z v4).
+- Obrazy emulatora `system-images;android-{26,34,36};default;x86_64` istnieją w repozytorium SDK Google (sprawdzone 11.11.2026).
 
 Host i gra:
 - Wszystkie [?] z planu: T-03, rozpoznawanie DS4 przez grę (Q1), Raw Input w KBM bez licencji (Q2), kontekst 0 vs osobny pad (Q3), traktowanie `100.64/10` przez Sunshine, MTU w Tailscale.
