@@ -40,8 +40,8 @@ data class StickControl(
 
 /**
  * Zwykły przycisk. `behavior` musi być HOLD (LATCH tylko w ModifierControl).
- * `chord` (opcjonalny, domyślnie brak): drugi element akordu (modyfikator), wciskany i zwalniany razem z `output`.
- * Dozwolony tylko przy `global.allowChords = true`; maks. 1 modyfikator + 1 przycisk wynika z konstrukcji.
+ * `chord` (opcjonalny, domyślnie brak): pole zostaje w schemacie bez migracji, ale od 11.11.2026 akordy nie są obsługiwane.
+ * Walidator odrzuca każdą wartość, także przy `global.allowChords = true` (FAIR_PLAY.md: 1 dotyk = 1 wejście).
  */
 @Serializable
 @SerialName("button")

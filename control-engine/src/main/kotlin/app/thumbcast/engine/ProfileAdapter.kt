@@ -22,7 +22,7 @@ import app.thumbcast.model.SystemControl
  * drugi raz (leftHanded = false). EngineConfig.leftHanded zostaje do odbicia w czasie działania
  * (np. podgląd w edytorze) i do testów.
  *
- * Akordy (ButtonControl.chord) nie są obsługiwane przez silnik w E1: pole jest ignorowane, przycisk daje
+ * Akordy (ButtonControl.chord) nie są obsługiwane (od 11.11.2026 odrzuca je walidator): pole jest ignorowane, przycisk daje
  * tylko swoje `output` (bezpieczniej: nigdy więcej niż jedno wejście z dotyku).
  */
 object ProfileAdapter {

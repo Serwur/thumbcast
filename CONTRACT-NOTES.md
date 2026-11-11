@@ -67,7 +67,8 @@ Autor: agent MODEL, 2026-11-07. Pliki: `control-model/**`, `presets/*.thumbcast.
 - `CameraDrag(zone: GestureZone, output: CameraOutput, sensitivity, curve, deadzonePx, invertY, maxDeflection, decayMs)`, `TapTarget(enabled, output, maxMovePx, maxMs)`, `LongPress(enabled, output, minMs)`, `PinchZoom(enabled, output, pxPerNotch)`, `EdgeSwipe(enabled, output)`. Pola `output` gestów to osobne enumy: `CameraOutput { PAD_RIGHT_STICK, MOUSE_LOOK }`, `TapOutput`, `LongPressOutput`, `PinchOutput`, `EdgeSwipeOutput`.
 - Nowe enumy: `Shape { CIRCLE, ROUNDED_RECT, RECT }`, `CurveType { LINEAR, POWER }`, `HapticEffect`, `GestureZone { RIGHT_FREE, LEFT_FREE }`.
 - `StickControl` ma też pola `sprintLock` (z przykładu) i `icon`. Wszystkie pola poza `id`/`rect` mają wartości domyślne, a `label` domyślnie wynosi `null`.
-- `ButtonControl` ma też `icon` i opcjonalne `chord: Output?`, domyślnie `null`. **Akord jest odrzucany przez walidator, dopóki `global.allowChords == false`.**
+- `ButtonControl` ma też `icon` i opcjonalne `chord: Output?`, domyślnie `null`. **Od 11.11.2026 walidator odrzuca każdy akord, także przy `global.allowChords == true`** (komunikat z fragmentem `ProfileValidator.ERR_CHORD_UNSUPPORTED`, patrz FAIR_PLAY.md). Pola `chord` i `allowChords` zostają w schemacie bez migracji.
+- Od 11.11.2026 w trybie `PAD_PLUS` jedna gałka pada może mieć tylko jedno źródło. Walidator odrzuca dwie kontrolki `stick` z tym samym `output` oraz `stick` z `right_stick` przy `gestures.cameraDrag.output = PAD_RIGHT_STICK` (komunikat z fragmentem `ProfileValidator.ERR_STICK_AXIS_CONFLICT`). W `KEYBOARD_MOUSE` reguła nie obowiązuje.
 - `ModifierControl(id, rect, label, output, behavior, shape, icon)`: wyjście musi być modyfikatorem (`LT`/`RT`/`LB`/`RB` albo klawisz `SHIFT`/`CTRL`/`ALT`).
 - `SystemControl(id, rect, label, output: Output.App, shape, icon)`: pole `output` ma typ zawężony do `Output.App`.
 - `AppActions.ALL = {"menu", "soft_keyboard", "toggle_overlay"}`. `KeyCodes.ALL` to `A`–`Z`, `0`–`9`, `F1`–`F12`, `SHIFT`, `CTRL`, `ALT`, `SPACE`, `ESC`, `TAB`, `ENTER`, `-`, `=` oraz strzałki `UP`, `DOWN`, `LEFT`, `RIGHT`. Mapowanie tych nazw na kody VK hosta należy do ANDROID.
@@ -130,7 +131,7 @@ Autor: agent ENGINE, 2026-11-07. Pliki: `control-engine/**`. Typy z kontraktu (`
 - `releaseAll()` wysyła zerowy `padState` (o ile pad był wcześniej użyty w tej instancji silnika), puszcza wszystkie klawisze i przyciski myszy, czyści LATCH. `setProfile` zawsze robi `releaseAll`. `setViewport` z inną geometrią robi `releaseAll` tylko wtedy, gdy dotyka jakiś palec (LATCH bez palców przeżywa obrót).
 - `TouchEvent` z `actionPointerId = -1` dla MOVE/CANCEL: zgodne. UP bez wcześniejszego DOWN jest ignorowany. Podwójny DOWN tego samego id kończy poprzedni palec (bez tapu i long-pressu), a potem zaczyna nowy.
 - Leworęczność: `HandednessTransform.mirror` (MODEL) zapisuje odbite `rect` i strefę kamery w profilu, więc silnik **nie odbija profilu drugi raz** (`EngineConfig.leftHanded = false` z `ProfileAdapter`). Pole `leftHanded` służy tylko do odbicia w czasie działania (testy, podgląd).
-- `ButtonControl.chord` jest w E1 ignorowany przez silnik: przycisk daje wyłącznie `output`. Akordy wymagałyby osobnej reguły w ActionPolicy (2 wyjścia z jednego wiązania).
+- `ButtonControl.chord` jest ignorowany przez silnik: przycisk daje wyłącznie `output`. Od 11.11.2026 walidator (MODEL) odrzuca każdy akord, więc `ProfileCodec.decode` takiego profilu nie zwróci. Akordów nie wdrażamy (FAIR_PLAY.md).
 - `StickControl.sprintLock` jest ignorowany. Poza obrysem wychylenie i tak wynosi 100%, bo `|v| ≥ 1 - outerDeadzone` daje 1.
 - Przyciski `MouseWheel` (1 ząbek) i `App` dają jedno zdarzenie przy DOWN; `MouseLook`/`Stick` na przycisku są ignorowane.
 

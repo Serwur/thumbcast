@@ -37,7 +37,7 @@ Wszystkie współrzędne są znormalizowane do zakresu 0..1 względem bezpieczne
 | `haptics.onRelease` | jw. | `"none"` | |
 | `slideToPress` | bool | false | Przesunięcie palca na inny przycisk najpierw zwalnia poprzedni, potem wciska nowy. Nigdy nie trzyma dwóch naraz. |
 | `autoHideOnGamepad` | bool | true | Po podłączeniu pada BT overlay chowa joystick i przyciski. |
-| `allowChords` | bool | **false** | Włącza pole `chord` w przyciskach (szara strefa, plan 6.2 pkt 4). |
+| `allowChords` | bool | **false** | Nic nie włącza. Od 11.11.2026 akordy nie są obsługiwane (FAIR_PLAY.md). Pole zostaje bez migracji. |
 
 ## `gestures`
 
@@ -85,7 +85,7 @@ Pola wspólne dla wszystkich typów:
 
 | Pole | Domyślnie | Reguły |
 |---|---|---|
-| `output` | `{ "pad": "left_stick" }` | Musi to być gałka (`Output.Stick`). |
+| `output` | `{ "pad": "left_stick" }` | Musi to być gałka (`Output.Stick`). W `pad_plus` jedna gałka pada ma jedno źródło: dwie kontrolki `stick` z tą samą gałką albo `right_stick` przy `gestures.cameraDrag.output = "pad_right_stick"` to błąd. |
 | `floating` | true | Środek joysticka wypada w miejscu, w którym kciuk dotknął strefy. |
 | `deadzone` | 0.12 | 0..0.5 |
 | `outerDeadzone` | 0.04 | 0..0.5; suma z `deadzone` ≤ 0.9 |
@@ -101,7 +101,7 @@ Pola wspólne dla wszystkich typów:
 | `output` | wymagane | Przycisk pada, trigger, klawisz albo `mouse` left/right/middle. W trybie `keyboard_mouse` wyjścia pada są zabronione. Gałka, `wheel`, `look` i `app` są zabronione. |
 | `behavior` | `"hold"` | Dozwolone tylko `"hold"`. Wartość `"latch"` jest błędem. |
 | `shape` | `"circle"` | `"circle"` \| `"rounded_rect"` \| `"rect"` |
-| `chord` | brak | **Opcjonalne, domyślnie wyłączone.** Pole jest dozwolone tylko wtedy, gdy `global.allowChords = true`. Zawiera jedno wyjście-modyfikator (`LB`, `RB`, `LT`, `RT` albo `SHIFT`, `CTRL`, `ALT`), które jest wciskane i zwalniane razem z `output`. Przykłady: `{ "output": {"key":"1"}, "chord": {"key":"SHIFT"} }` albo `{ "output": {"pad":"Y"}, "chord": {"pad":"LB"} }`. Modyfikator i przycisk muszą pochodzić z tego samego urządzenia, a `output` nie może sam być modyfikatorem. Akord ma zawsze najwyżej 1 modyfikator i 1 przycisk. |
+| `chord` | brak | **Nieobsługiwane od 11.11.2026.** Każda wartość jest błędem walidacji, także przy `global.allowChords = true` (FAIR_PLAY.md: 1 dotyk = 1 wejście). Zamiast akordu użyj osobnej kontrolki `modifier` w trybie `hold` albo `latch`. Pole zostaje w schemacie bez migracji. |
 
 ### `modifier`
 
@@ -171,6 +171,7 @@ To samo co `button`, z dwiema różnicami: `behavior` może mieć wartość `"la
 { "output": { "pad": "A", "key": "M" } }                     // dwa wyjścia
 { "output": { "pad": ["LB", "RB"] } }                        // tablica w wyjściu
 { "type": "button", "behavior": "latch", ... }               // latch poza modyfikatorem
-{ "type": "button", "chord": { "pad": "LB" } }               // akord bez global.allowChords
+{ "type": "button", "chord": { "pad": "LB" } }               // akord (nieobsługiwany, także przy allowChords)
+{ "type": "stick", "output": { "pad": "right_stick" } }      // w pad_plus przy kamerze pad_right_stick
 { "type": "system", "output": { "app": "run_script" } }      // niedozwolona akcja aplikacji
 ```
