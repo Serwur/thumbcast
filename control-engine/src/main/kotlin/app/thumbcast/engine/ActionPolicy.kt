@@ -214,96 +214,153 @@ class ActionPolicy(
     // ---------------------------------------------------------------- intencje
 
     override fun emit(intent: Intent) {
-        val effect = intent.effect
+        // Kolejność sprawdzeń jest częścią zachowania (decyduje, który powód naruszenia trafia do logu):
+        // R1, R2, R7, R6, potem dla wciśnięć R3, R4, R5, a dla zwolnień R8. R9 egzekwuje pointerUp.
+        val e = ruleR1Cause(intent) ?: return
+        val press = Effects.isPress(intent.effect)
+        if (!ruleR2PointerInEvent(intent, press)) return
+        if (!ruleR7TimeAlone(intent, press)) return
+        if (!ruleR6LatchOnDown(intent, e)) return
+        if (press) {
+            if (!ruleR3LivePointer(intent, e)) return
+            if (!ruleR4OneBindingPerPointer(intent)) return
+            if (!ruleR5OneShotOnce(intent)) return
+            commitPress(intent)
+            return
+        }
+        ruleR8ReleaseByOwner(intent)
+    }
+
+    // ---------------------------------------------------------------- reguły (wywoływane w kolejności z emit)
+
+    /** R1: wyjście tylko w otwartym cyklu z dotykiem/tickiem, na wątku cyklu. Zwraca zdarzenie cyklu albo null. */
+    private fun ruleR1Cause(intent: Intent): TouchEvent? {
         val pid = intent.pointerId
         val bid = intent.bindingId
-
-        // R1
+        val effect = intent.effect
         if (!inCycle) {
             record(pid, bid, effect.toString(), "brak przyczyny: wyjście poza cyklem onTouch/onTick")
-            return
+            return null
         }
         if (Thread.currentThread() !== cycleThread) {
             record(pid, bid, effect.toString(), "brak przyczyny: wyjście z innego wątku")
-            return
+            return null
         }
         val kindNow = cycleKind
         val e = cycleEvent
         if (e == null || (kindNow != CycleKind.TOUCH && kindNow != CycleKind.TICK)) {
             record(pid, bid, effect.toString(), "brak przyczyny: cykl bez zdarzenia dotyku")
-            return
+            return null
         }
-        val press = Effects.isPress(effect)
-        val heldKey = Effects.heldKeyOf(effect)
-        // R2 (tylko wciśnięcia; zwolnienie zawsze zmniejsza stan, a jego przyczyną jest bieżące zdarzenie)
-        if (press && !cyclePointerIds.contains(pid)) {
-            record(pid, bid, effect.toString(), "brak przyczyny: wskaźnik spoza zdarzenia")
-            return
-        }
+        return e
+    }
 
-        // R7
-        if (kindNow == CycleKind.TICK && press && intent.kind != BindingKind.ONE_SHOT_TIMED) {
-            if (!(effect is StickSet && isDecay(effect, pid, bid))) {
-                record(pid, bid, effect.toString(), "sam upływ czasu nie może tworzyć wejścia")
-                return
-            }
+    /** R2 (tylko wciśnięcia; zwolnienie zawsze zmniejsza stan, a jego przyczyną jest bieżące zdarzenie). */
+    private fun ruleR2PointerInEvent(intent: Intent, press: Boolean): Boolean {
+        if (press && !cyclePointerIds.contains(intent.pointerId)) {
+            record(intent.pointerId, intent.bindingId, intent.effect.toString(), "brak przyczyny: wskaźnik spoza zdarzenia")
+            return false
         }
-        // R6
-        if (intent.kind == BindingKind.LATCH) {
-            if (kindNow != CycleKind.TOUCH || e.action != TouchAction.DOWN || e.actionPointerId != pid) {
-                record(pid, bid, effect.toString(), "LATCH zmienia stan tylko przy DOWN")
-                return
-            }
-        }
+        return true
+    }
 
-        if (press) {
-            // R3
-            if (!livePointers.contains(pid)) {
-                record(pid, bid, effect.toString(), "wciśnięcie bez aktywnego palca")
-                return
+    /** R7: w cyklu TICK tylko long-press (ONE_SHOT_TIMED), zwolnienia i wygaszanie gałki. */
+    private fun ruleR7TimeAlone(intent: Intent, press: Boolean): Boolean {
+        val effect = intent.effect
+        if (cycleKind == CycleKind.TICK && press && intent.kind != BindingKind.ONE_SHOT_TIMED) {
+            if (!(effect is StickSet && isDecay(effect, intent.pointerId, intent.bindingId))) {
+                record(intent.pointerId, intent.bindingId, effect.toString(), "sam upływ czasu nie może tworzyć wejścia")
+                return false
             }
-            if (e.action == TouchAction.CANCEL) {
-                record(pid, bid, effect.toString(), "wciśnięcie w cyklu CANCEL")
-                return
-            }
-            if (e.action == TouchAction.UP && e.actionPointerId == pid &&
-                intent.kind != BindingKind.ONE_SHOT && intent.kind != BindingKind.ONE_SHOT_TIMED) {
-                record(pid, bid, effect.toString(), "wciśnięcie trwałe przy UP palca")
-                return
-            }
-            // R4 (LATCH należy do kontrolki, nie do palca, więc nie blokuje palca)
-            if (intent.kind != BindingKind.LATCH) {
-                val current = pointerBinding[pid]
-                if (current != null && current != bid && holdsAnything(pid, current)) {
-                    record(pid, bid, effect.toString(), "drugie wejście z jednego palca (trzyma $current)")
-                    return
-                }
-            }
-            // R5
-            if (intent.kind == BindingKind.ONE_SHOT || intent.kind == BindingKind.ONE_SHOT_TIMED) {
-                val used = oneShotBinding[pid]
-                if (used != null && used != bid) {
-                    record(pid, bid, effect.toString(), "drugi gest jednorazowy z jednego palca (był $used)")
-                    return
-                }
-                if (isOneShotEdge(effect)) {
-                    val count = oneShotEdges[pid] ?: 0
-                    if (count >= 1) {
-                        record(pid, bid, effect.toString(), "powtórzone wejście jednorazowe")
-                        return
-                    }
-                    oneShotEdges[pid] = count + 1
-                }
-                oneShotBinding[pid] = bid
-            }
-            if (intent.kind != BindingKind.LATCH) pointerBinding[pid] = bid
-            if (heldKey != null) addHolder(heldKey, Holder(if (intent.kind == BindingKind.LATCH) -1 else pid, bid, intent.kind == BindingKind.LATCH))
-            forward(effect, causeFor(pid, bid, intent.kind))
-            return
         }
+        return true
+    }
 
-        // Zwolnienie / zero / efekt pusty.
-        if (heldKey == null) return // np. MouseMove(0,0), Wheel(0): nic do wysłania
+    /** R6: LATCH zmienia stan tylko w cyklu DOWN tego samego palca. */
+    private fun ruleR6LatchOnDown(intent: Intent, e: TouchEvent): Boolean {
+        if (intent.kind != BindingKind.LATCH) return true
+        val pid = intent.pointerId
+        if (cycleKind != CycleKind.TOUCH || e.action != TouchAction.DOWN || e.actionPointerId != pid) {
+            record(pid, intent.bindingId, intent.effect.toString(), "LATCH zmienia stan tylko przy DOWN")
+            return false
+        }
+        return true
+    }
+
+    /** R3: wciśnięcie wymaga żywego palca; w CANCEL nic, przy UP palca tylko wejście jednorazowe. */
+    private fun ruleR3LivePointer(intent: Intent, e: TouchEvent): Boolean {
+        val pid = intent.pointerId
+        val bid = intent.bindingId
+        val effect = intent.effect
+        if (!livePointers.contains(pid)) {
+            record(pid, bid, effect.toString(), "wciśnięcie bez aktywnego palca")
+            return false
+        }
+        if (e.action == TouchAction.CANCEL) {
+            record(pid, bid, effect.toString(), "wciśnięcie w cyklu CANCEL")
+            return false
+        }
+        if (e.action == TouchAction.UP && e.actionPointerId == pid &&
+            intent.kind != BindingKind.ONE_SHOT && intent.kind != BindingKind.ONE_SHOT_TIMED) {
+            record(pid, bid, effect.toString(), "wciśnięcie trwałe przy UP palca")
+            return false
+        }
+        return true
+    }
+
+    /** R4: palec zmienia wiązanie tylko, gdy poprzednie niczego nie trzyma (LATCH należy do kontrolki, nie do palca). */
+    private fun ruleR4OneBindingPerPointer(intent: Intent): Boolean {
+        if (intent.kind == BindingKind.LATCH) return true
+        val pid = intent.pointerId
+        val bid = intent.bindingId
+        val current = pointerBinding[pid]
+        if (current != null && current != bid && holdsAnything(pid, current)) {
+            record(pid, bid, intent.effect.toString(), "drugie wejście z jednego palca (trzyma $current)")
+            return false
+        }
+        return true
+    }
+
+    /** R5: najwyżej jedno wiązanie jednorazowe i jedna krawędź wciśnięcia na cykl życia palca. */
+    private fun ruleR5OneShotOnce(intent: Intent): Boolean {
+        if (intent.kind != BindingKind.ONE_SHOT && intent.kind != BindingKind.ONE_SHOT_TIMED) return true
+        val pid = intent.pointerId
+        val bid = intent.bindingId
+        val effect = intent.effect
+        val used = oneShotBinding[pid]
+        if (used != null && used != bid) {
+            record(pid, bid, effect.toString(), "drugi gest jednorazowy z jednego palca (był $used)")
+            return false
+        }
+        if (isOneShotEdge(effect)) {
+            val count = oneShotEdges[pid] ?: 0
+            if (count >= 1) {
+                record(pid, bid, effect.toString(), "powtórzone wejście jednorazowe")
+                return false
+            }
+            oneShotEdges[pid] = count + 1
+        }
+        oneShotBinding[pid] = bid
+        return true
+    }
+
+    /** Wciśnięcie przeszło reguły R1–R7: zapis wiązania i właściciela, wysłanie. */
+    private fun commitPress(intent: Intent) {
+        val pid = intent.pointerId
+        val bid = intent.bindingId
+        val latch = intent.kind == BindingKind.LATCH
+        if (!latch) pointerBinding[pid] = bid
+        val heldKey = Effects.heldKeyOf(intent.effect)
+        if (heldKey != null) addHolder(heldKey, Holder(if (latch) -1 else pid, bid, latch))
+        forward(intent.effect, causeFor(pid, bid, intent.kind))
+    }
+
+    /** R8: zwolnienie, zero albo efekt pusty. Zwalnia tylko właściciel; wspólny stan schodzi przy ostatnim. */
+    private fun ruleR8ReleaseByOwner(intent: Intent) {
+        val effect = intent.effect
+        val pid = intent.pointerId
+        val bid = intent.bindingId
+        val heldKey = Effects.heldKeyOf(effect) ?: return // np. MouseMove(0,0), Wheel(0): nic do wysłania
         val list = holders[heldKey]
         val latch = intent.kind == BindingKind.LATCH
         val holderPid = if (latch) -1 else pid
@@ -320,7 +377,6 @@ class ActionPolicy(
         }
         if (!removed) {
             if (list != null && list.isNotEmpty()) {
-                // R8
                 record(pid, bid, effect.toString(), "próba zwolnienia cudzego wejścia")
             }
             // Nic nie było trzymane przez nikogo: zwolnienie jest no-op, nie wysyłamy.
