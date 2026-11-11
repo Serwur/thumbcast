@@ -17,4 +17,21 @@
         <item>mmo-pad-plus.thumbcast.json</item>
         <item>mmo-keyboard.thumbcast.json</item>
     </string-array>
+    <!-- Rozmiar kontrolek (ThumbcastSettings.SCALE_PERCENTS, domyślnie 85). -->
+    <string-array name="thumbcast_control_scale_names" translatable="false">
+        <item>60%</item>
+        <item>70%</item>
+        <item>85%</item>
+        <item>100%</item>
+        <item>115%</item>
+        <item>130%</item>
+    </string-array>
+    <string-array name="thumbcast_control_scale_values" translatable="false">
+        <item>60</item>
+        <item>70</item>
+        <item>85</item>
+        <item>100</item>
+        <item>115</item>
+        <item>130</item>
+    </string-array>
 </resources>

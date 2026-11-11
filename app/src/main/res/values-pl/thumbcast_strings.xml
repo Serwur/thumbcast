@@ -11,4 +11,18 @@
     <string name="title_thumbcast_debug">Nakładka debug wejścia</string>
     <string name="summary_thumbcast_debug">Pokazuje aktywne wskaźniki, wysłane flagi pada i opóźnienie dotyk→wysyłka</string>
     <string name="thumbcast_profile_error">Nie udało się wczytać profilu, używam klasycznego kontrolera: %1$s</string>
+    <string name="title_thumbcast_control_scale">Rozmiar kontrolek</string>
+    <string name="title_thumbcast_hide_on_gamepad">Ukryj przyciski przy podłączonym padzie</string>
+    <string name="summary_thumbcast_hide_on_gamepad">Przyciski i gałki znikają, gdy podłączony jest fizyczny pad; gesty i przycisk menu zostają</string>
+    <string name="thumbcast_percent">%1$d%%</string>
+    <!-- Menu w grze (☰, gest od górnej krawędzi, systemowy Back). -->
+    <string name="thumbcast_menu_title">Menu strumienia</string>
+    <string name="thumbcast_menu_disconnect">Rozłącz</string>
+    <string name="thumbcast_menu_hide_controls">Ukryj przyciski</string>
+    <string name="thumbcast_menu_show_controls">Pokaż przyciski</string>
+    <string name="thumbcast_menu_keyboard">Klawiatura</string>
+    <string name="thumbcast_menu_control_size">Rozmiar kontrolek: %1$d%%</string>
+    <string name="thumbcast_menu_hide_on_gamepad_on">Ukryj przyciski przy podłączonym padzie: wł.</string>
+    <string name="thumbcast_menu_hide_on_gamepad_off">Ukryj przyciski przy podłączonym padzie: wył.</string>
+    <string name="thumbcast_menu_resume">Wróć do gry</string>
 </resources>
