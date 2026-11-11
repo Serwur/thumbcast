@@ -36,7 +36,7 @@ PC (Windows / macOS)                         Telefon (Android)
 | `:control-model` | Kotlin/JVM | Profil sterowania (JSON, schemat v1), walidacja, migracje. Schemat nie zna makr ani sekwencji. |
 | `:control-engine` | Kotlin/JVM | Silnik wejścia: śledzenie wskaźników, rozpoznawanie gestów, `ActionPolicy`, mapowanie wyjść. Testy właściwości. |
 | `:control-android` | biblioteka Androida | `ThumbcastOverlay` (jeden View, do 10 palców), adaptery do upstreamu. |
-| `presets/` | JSON | Profile domyślne: „MMO – Pad+”, „MMO – Klawiatura”. |
+| `presets/` | JSON | Profile domyślne: „MMO – Pad+”, „MMO – Klawiatura”, „Pulpit – Touchpad” (pulpit, sama mysz), „Big Picture” (dwie gałki, pełny układ pada, touchpad w wolnej strefie). |
 | `patches/` | diff | Minimalne hooki w `Game.java` upstreamu. |
 | `:app` | upstream | Dochodzi po forku: [docs/NEXT-STEPS.md](docs/NEXT-STEPS.md). |
 

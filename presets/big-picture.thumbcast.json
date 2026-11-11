@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "id": "b85e4c21-9f3d-4a67-8c12-0d6e5f4a3b04",
+  "name": "Big Picture",
+  "tags": { "use": "launcher", "preset": "big-picture" },
+  "mode": "pad_plus",
+  "reference": { "aspect": "20:9", "unit": "dp-normalized" },
+  "handedness": "right",
+  "global": {
+    "opacity": 0.55,
+    "haptics": { "enabled": true, "strength": 0.6, "onPress": "tick", "onRelease": "none" },
+    "slideToPress": false,
+    "autoHideOnGamepad": true,
+    "allowChords": false
+  },
+  "gestures": {
+    "tapTarget":  { "enabled": true, "output": "mouse_left_at_point", "maxMovePx": 12, "maxMs": 220 },
+    "longPress":  { "enabled": true, "output": "mouse_right_at_point", "minMs": 450 },
+    "edgeSwipeTop": { "enabled": true, "output": "app_menu" },
+    "freeZone": "touchpad",
+    "touchpad": { "sensitivity": 1.3, "scrollPxPerNotch": 24 }
+  },
+  "controls": [
+    { "id": "left_stick", "type": "stick", "label": "Lewa gałka", "output": { "pad": "left_stick" },
+      "rect": { "x": 0.03, "y": 0.42, "w": 0.14, "h": 0.311 }, "floating": false,
+      "deadzone": 0.12, "outerDeadzone": 0.04, "curve": { "type": "linear" } },
+    { "id": "right_stick", "type": "stick", "label": "Prawa gałka", "output": { "pad": "right_stick" },
+      "rect": { "x": 0.68, "y": 0.6, "w": 0.14, "h": 0.311 }, "floating": false,
+      "deadzone": 0.12, "outerDeadzone": 0.04, "curve": { "type": "linear" } },
+
+    { "id": "dpad_up", "type": "button", "label": "▲", "output": { "pad": "UP" },
+      "rect": { "x": 0.2325, "y": 0.64, "w": 0.045, "h": 0.1 }, "shape": "rounded_rect" },
+    { "id": "dpad_left", "type": "button", "label": "◀", "output": { "pad": "LEFT" },
+      "rect": { "x": 0.1825, "y": 0.75, "w": 0.045, "h": 0.1 }, "shape": "rounded_rect" },
+    { "id": "dpad_right", "type": "button", "label": "▶", "output": { "pad": "RIGHT" },
+      "rect": { "x": 0.2825, "y": 0.75, "w": 0.045, "h": 0.1 }, "shape": "rounded_rect" },
+    { "id": "dpad_down", "type": "button", "label": "▼", "output": { "pad": "DOWN" },
+      "rect": { "x": 0.2325, "y": 0.86, "w": 0.045, "h": 0.1 }, "shape": "rounded_rect" },
+
+    { "id": "y", "type": "button", "label": "Y", "output": { "pad": "Y" },
+      "rect": { "x": 0.8675, "y": 0.29, "w": 0.055, "h": 0.122 }, "shape": "circle" },
+    { "id": "x", "type": "button", "label": "X", "output": { "pad": "X" },
+      "rect": { "x": 0.8075, "y": 0.4, "w": 0.055, "h": 0.122 }, "shape": "circle" },
+    { "id": "b", "type": "button", "label": "B", "output": { "pad": "B" },
+      "rect": { "x": 0.9275, "y": 0.4, "w": 0.055, "h": 0.122 }, "shape": "circle" },
+    { "id": "a", "type": "button", "label": "A", "output": { "pad": "A" },
+      "rect": { "x": 0.8675, "y": 0.51, "w": 0.055, "h": 0.122 }, "shape": "circle" },
+
+    { "id": "lt", "type": "modifier", "label": "LT", "output": { "pad": "LT" }, "behavior": "hold",
+      "rect": { "x": 0.015, "y": 0.15, "w": 0.08, "h": 0.1 } },
+    { "id": "lb", "type": "modifier", "label": "LB", "output": { "pad": "LB" }, "behavior": "hold",
+      "rect": { "x": 0.105, "y": 0.15, "w": 0.08, "h": 0.1 } },
+    { "id": "rb", "type": "modifier", "label": "RB", "output": { "pad": "RB" }, "behavior": "hold",
+      "rect": { "x": 0.815, "y": 0.15, "w": 0.08, "h": 0.1 } },
+    { "id": "rt", "type": "modifier", "label": "RT", "output": { "pad": "RT" }, "behavior": "hold",
+      "rect": { "x": 0.905, "y": 0.15, "w": 0.08, "h": 0.1 } },
+
+    { "id": "back", "type": "button", "label": "Widok", "output": { "pad": "BACK" },
+      "rect": { "x": 0.4, "y": 0.02, "w": 0.055, "h": 0.09 }, "shape": "rounded_rect" },
+    { "id": "guide", "type": "button", "label": "Guide", "output": { "pad": "GUIDE" },
+      "rect": { "x": 0.4725, "y": 0.02, "w": 0.055, "h": 0.09 }, "shape": "circle" },
+    { "id": "start", "type": "button", "label": "Menu", "output": { "pad": "START" },
+      "rect": { "x": 0.545, "y": 0.02, "w": 0.055, "h": 0.09 }, "shape": "rounded_rect" },
+
+    { "id": "app_menu", "type": "system", "label": "☰", "output": { "app": "menu" },
+      "rect": { "x": 0.015, "y": 0.02, "w": 0.045, "h": 0.09 } },
+    { "id": "chat", "type": "system", "label": "⌨", "output": { "app": "soft_keyboard" },
+      "rect": { "x": 0.065, "y": 0.02, "w": 0.045, "h": 0.09 } }
+  ]
+}

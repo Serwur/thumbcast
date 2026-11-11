@@ -176,9 +176,9 @@ Pola `gestures.freeZone` i `gestures.touchpad` (11.11.2026) dodano bez podnoszen
       "rect": { "x": 0.0, "y": 0.40, "w": 0.35, "h": 0.60 }, "floating": true,
       "deadzone": 0.12, "outerDeadzone": 0.04, "curve": { "type": "linear" } },
     { "id": "lt", "type": "modifier", "label": "LT", "output": { "pad": "LT" }, "behavior": "hold",
-      "rect": { "x": 0.03, "y": 0.25, "w": 0.10, "h": 0.12 } },
+      "rect": { "x": 0.035, "y": 0.256, "w": 0.09, "h": 0.108 } },
     { "id": "a", "type": "button", "label": "Skok", "icon": "jump", "output": { "pad": "A" },
-      "rect": { "x": 0.82, "y": 0.78, "w": 0.08, "h": 0.18 }, "shape": "circle" },
+      "rect": { "x": 0.824, "y": 0.789, "w": 0.072, "h": 0.162 }, "shape": "circle" },
     { "id": "chat", "type": "system", "label": "⌨", "output": { "app": "soft_keyboard" },
       "rect": { "x": 0.09, "y": 0.02, "w": 0.06, "h": 0.09 } }
   ]
