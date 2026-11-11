@@ -126,6 +126,11 @@ Autor: agent ENGINE, 2026-11-07. Pliki: `control-engine/**`. Typy z kontraktu (`
 - Opcjonalny interfejs `EmitCauseListener` (`onEmitCause(cause: EmitCause?)`). Jeśli `InputSink` go implementuje, przed każdym wywołaniem metody sinka dostaje przyczynę (cykl, akcja dotyku, `timeMs`, `pointerId`, wiązanie). Używa go `FakeInputSink`, przyda się też overlayowi debug. Nie jest wymagany.
 - `InputEngine.violationCount`, `InputEngine.padSnapshot()`, `InputEngine.activeProfile`, konstruktor `InputEngine(config: EngineConfig, profile, sink, clock, viewport)` (testy, przyszły „tryb testu” edytora).
 
+### Zmiana kontraktu 11.11.2026: kółko poziome
+- `InputSink.mouseHScroll(highResDelta: Int)`: nowa metoda abstrakcyjna (bez domyślnej implementacji, żeby żaden sink nie gubił po cichu przewijania). 120 = 1 ząbek, dodatnie = w prawo. `mouseWheel` bez zmian (dodatnie = w górę).
+- W silniku efekt `HWheel(delta)` (obok `Wheel`). `OutputMapper` wysyła go tylko przy `delta != 0`. Dla `ActionPolicy` jest to wciśnięcie bez trwałego stanu, tak jak `Wheel`: wymaga przyczyny, palca w zdarzeniu i żywego palca, a w cyklu TICK jest odrzucane (R7).
+- ANDROID: `HostConnection.sendMouseHighResHScroll(scrollAmount: Short)` = upstreamowe `NvConnection.sendMouseHighResHScroll(short)` (`public void`, sprawdzone w `app/src/main/java/com/limelight/nvstream/NvConnection.java`). `MouseSink.mouseHScroll` obcina do zakresu `Short` i pomija zero; `CompositeInputSink.mouseHScroll` deleguje do `MouseSink`. `HostConnectionImpl` (`:app`) deleguje 1:1.
+
 ### Semantyka, na której mogą polegać inni
 - **Retransmisji stanu pada silnik NIE robi** (odpowiedź na pytanie ANDROID). `padState` jest wysyłany tylko przy zmianie, a retransmisję 25/50/75 ms zostawiamy w `HostPadReporterImpl` (upstream). Nie wyłączać jej.
 - `releaseAll()` wysyła zerowy `padState` (o ile pad był wcześniej użyty w tej instancji silnika), puszcza wszystkie klawisze i przyciski myszy, czyści LATCH. `setProfile` zawsze robi `releaseAll`. `setViewport` z inną geometrią robi `releaseAll` tylko wtedy, gdy dotyka jakiś palec (LATCH bez palców przeżywa obrót).

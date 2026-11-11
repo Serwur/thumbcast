@@ -12,7 +12,7 @@ class FakeClock(var now: Long = 0L) : Clock {
 }
 
 /** Rodzaj zarejestrowanego wywołania InputSink. */
-enum class SinkCall { PAD, KEY, MOVE, BUTTON, POSITION, WHEEL, APP }
+enum class SinkCall { PAD, KEY, MOVE, BUTTON, POSITION, WHEEL, HWHEEL, APP }
 
 /** Jedno wywołanie InputSink z przyczyną podaną przez ActionPolicy tuż przed nim. */
 data class SinkRecord(
@@ -130,6 +130,10 @@ class FakeInputSink : InputSink, EmitCauseListener {
 
     override fun mouseWheel(highResDelta: Int) {
         records.add(SinkRecord(SinkCall.WHEEL, cause, wheel = highResDelta))
+    }
+
+    override fun mouseHScroll(highResDelta: Int) {
+        records.add(SinkRecord(SinkCall.HWHEEL, cause, wheel = highResDelta))
     }
 
     override fun app(action: String) {

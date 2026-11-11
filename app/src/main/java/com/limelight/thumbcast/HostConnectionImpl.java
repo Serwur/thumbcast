@@ -46,4 +46,9 @@ public final class HostConnectionImpl implements HostConnection {
     public void sendMouseHighResScroll(short scrollAmount) {
         conn.sendMouseHighResScroll(scrollAmount);
     }
+
+    @Override
+    public void sendMouseHighResHScroll(short scrollAmount) {
+        conn.sendMouseHighResHScroll(scrollAmount);
+    }
 }

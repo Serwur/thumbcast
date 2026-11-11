@@ -67,6 +67,11 @@ class CompositeInputSink(
         emitSent("wheel", highResDelta.toString())
     }
 
+    override fun mouseHScroll(highResDelta: Int) {
+        mouse.mouseHScroll(highResDelta)
+        emitSent("hwheel", highResDelta.toString())
+    }
+
     override fun app(action: String) {
         appActions.onAppAction(action)
         emitSent("app", action)

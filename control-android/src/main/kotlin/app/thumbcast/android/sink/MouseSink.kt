@@ -8,7 +8,7 @@ import app.thumbcast.model.MouseBtn
  * Adapter myszy: `InputSink.mouse*` -> `NvConnection.sendMouse*`.
  *
  * - Ruch względny jest dzielony na kawałki mieszczące się w `Short` (bez gubienia reszty).
- * - Kółko: `highResDelta` (120 = 1 ząbek) obcinane do zakresu `Short`.
+ * - Kółko pionowe i poziome: `highResDelta` (120 = 1 ząbek) obcinane do zakresu `Short`.
  * - Przyciski: śledzimy stan, żeby [releaseAll] zwolnił tylko to, co faktycznie wciśnięto.
  */
 class MouseSink(private val connection: HostConnection) {
@@ -60,6 +60,14 @@ class MouseSink(private val connection: HostConnection) {
             return
         }
         connection.sendMouseHighResScroll(clampShort(highResDelta).toShort())
+    }
+
+    /** Kółko poziome (dodatnie = w prawo). */
+    fun mouseHScroll(highResDelta: Int) {
+        if (highResDelta == 0) {
+            return
+        }
+        connection.sendMouseHighResHScroll(clampShort(highResDelta).toShort())
     }
 
     fun releaseAll() {

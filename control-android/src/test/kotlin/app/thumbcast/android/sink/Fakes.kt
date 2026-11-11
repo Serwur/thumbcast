@@ -30,6 +30,10 @@ class RecordingHostConnection : HostConnection {
     override fun sendMouseHighResScroll(scrollAmount: Short) {
         calls.add("scroll $scrollAmount")
     }
+
+    override fun sendMouseHighResHScroll(scrollAmount: Short) {
+        calls.add("hscroll $scrollAmount")
+    }
 }
 
 class RecordingPadReporter : HostPadReporter {

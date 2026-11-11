@@ -449,7 +449,7 @@ class ActionPolicy(
     }
 
     private fun isOneShotEdge(e: OutputEffect): Boolean =
-        e is AppAction || e is Wheel || Effects.isHolding(e)
+        e is AppAction || e is Wheel || e is HWheel || Effects.isHolding(e)
 
     /** Wygaszanie: ten sam właściciel, moduł nie rośnie na żadnej osi, bez zmiany znaku. */
     private fun isDecay(e: StickSet, pid: Int, bid: String): Boolean {

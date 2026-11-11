@@ -82,7 +82,8 @@ interface InputSink {
     fun mouseMoveRelative(dx: Int, dy: Int)
     fun mouseButton(button: MouseBtn, down: Boolean)
     fun mousePosition(x: Int, y: Int, refWidth: Int, refHeight: Int)   // pozycja w układzie wideo
-    fun mouseWheel(highResDelta: Int)                                   // 120 = 1 ząbek
+    fun mouseWheel(highResDelta: Int)                                   // 120 = 1 ząbek, dodatnie = w górę
+    fun mouseHScroll(highResDelta: Int)                                 // kółko poziome, 120 = 1 ząbek, dodatnie = w prawo (od 11.11.2026)
     fun app(action: String)
 }
 
