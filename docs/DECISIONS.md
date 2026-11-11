@@ -52,8 +52,6 @@ Repo ma nazywać się **`thumbcast`**. Właściciel zmienia nazwę w GitHub Sett
 
 ## (h) Otwarte decyzje
 
-- **Fork vs submoduł:** repo = fork upstreamu z modułami obok `app/` (rekomendacja z [NEXT-STEPS.md](NEXT-STEPS.md)), czy upstream jako submoduł git. Do rozstrzygnięcia przy pierwszej sesji z siecią.
-- **`applicationId`:** `io.github.<login>.thumbcast` [?]. Ustalić przed pierwszym wydaniem (późniejsza zmiana = nowa aplikacja) i po kontroli znaków towarowych ([naming.md](naming.md)).
 - **Landscape lock:** czy wymuszać orientację poziomą w sesji streamu (upstream robi to przy włączonym OSC), czy obsługiwać też portret.
 
 ## (i) Decyzje po weryfikacji upstreamu (10.11.2026, zatwierdzone przez właściciela)
@@ -61,3 +59,8 @@ Repo ma nazywać się **`thumbcast`**. Właściciel zmienia nazwę w GitHub Sett
 - **Wymuszanie `onscreenController=true` w trybie Thumbcast:** tak. Bit 0 maski pada zależy od tej flagi. Skutki uboczne: blokada landscape i rumble telefonem jak przy OSC. Daje też bezpieczny powrót do starego sterowania przy uszkodzonym profilu. Szczegóły: `patches/preferences.patch.md`.
 - **Flavor `root`:** usuwamy (maxSdk 25 koliduje z minSdk 26; dotyczy tylko Androida 5–7).
 - **Sufiks `.unofficial` w release:** usuwamy po zmianie `applicationId`.
+
+## (j) Decyzje z 11.11.2026 (zatwierdzone przez właściciela)
+
+- **Fork vs submoduł: scalenie historii.** Historia upstreamu `moonlight-stream/moonlight-android` od `v12.2` (`b48494cb96bf`) jest scalona z historią Thumbcast (`git merge --allow-unrelated-histories`), moduły `control-*` leżą obok `app/`. Upstream jest zdalnym repo `upstream`; kolejne wydania wciągamy przez `git merge <tag>`. Fork na GitHubie odpadł, bo `Serwur/thumbcast` już istniało jako zwykłe repo.
+- **`applicationId`: `io.github.serwur.thumbcast`** (flavor `nonRoot`; debug ma sufiks `.debug`). Kontrola znaków towarowych nazwy ([naming.md](naming.md)) nadal przed pierwszym wydaniem.

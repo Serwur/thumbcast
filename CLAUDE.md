@@ -17,11 +17,11 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 - `docs/PLAN.md`: plan techniczny (wygenerowany 8.11.2026, kopia źródłowa, nie poprawiać treści).
 - `docs/DECISIONS.md` (10.11.2026) **ma pierwszeństwo przed PLAN.md**. Skrót: host = Sunshine (GPLv3) lub forki Apollo/Vibepollo; pad w Windows = ViGEmBus 1.17+ (darmowy, zarchiwizowany) albo płatny LizardByte Virtual HID Driver; klient wysyła standardowe pakiety pada niezależnie od sterownika hosta; własnego streamingu ani sterownika nie robimy; zdalnie przez Tailscale/ZeroTier (nie port forwarding, nie tunele HTTP); tryb Klawiatura+Mysz to plan awaryjny dla hostów bez pada.
 - Repo: `Serwur/thumbcast` (nazwa zmieniona 11.11.2026, dawniej `wow-portable`). Agent nie zmienia ustawień repo. Stan i następne kroki: `docs/HANDOFF.md`.
-- Otwarte decyzje: fork vs submoduł, `applicationId`, landscape lock (lista w DECISIONS.md, pkt h).
+- Otwarte decyzje: landscape lock (DECISIONS.md, pkt h). Rozstrzygnięte 11.11.2026 (pkt j): repo = scalona historia upstreamu v12.2 (remote `upstream`), `applicationId` `io.github.serwur.thumbcast`.
 - Konfiguracja hosta i testy: `docs/host-setup.md`, `docs/test-plan.md` (hosty H1 Virtual HID, H2 ViGEmBus, H3 bez pada, H4 macOS; scenariusz T-10 dla trybu bez pada).
 
 ## Uwagi
-- Kod powstał offline, bez kompilatora. Pierwszy build wymaga poprawek. Start: `URUCHOMIENIE.md`, `docs/NEXT-STEPS.md`.
+- Kod powstał offline. Od 11.11.2026 `:app:assembleNonRootDebug`/`Release` przechodzi (kod główny `control-*` kompiluje się); testy i patche jeszcze nie. Build: `JAVA_HOME` = JBR Android Studio (systemowa Java 1.8 się nie nadaje). Start: `URUCHOMIENIE.md`, `docs/NEXT-STEPS.md`.
 - `onTick(nowMs)` w `InputEngine` jest poza kontraktem, ale używany przez nakładkę.
 - `LICENSE` zawiera pełny tekst GPLv3 (kopia z Debiana, `/usr/share/common-licenses/GPL-3`, 35149 B, SHA-256 `3972dc97...6986`; z gnu.org nie pobrano, bo proxy blokuje; porównać z oficjalnym `gpl-3.0.txt` przy okazji); nagłówek projektu i SPDX są w `NOTICE`.
 - Lint presetów: `.github/scripts/check_presets.py` sprawdza pola `type`/`behavior` i klucze JSON, nie dowolne napisy (etykieta „Delay” jest dozwolona). Uruchamiany w jobie `lint`.

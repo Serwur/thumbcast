@@ -51,7 +51,7 @@ Konflikty z plikami upstreamu:
 | `fastlane/metadata/android/` upstreamu | Zastąp naszymi metadanymi (inna nazwa, opis bez znaków towarowych). Usuń zrzuty i grafiki upstreamu, jeśli pokazują markę Moonlight. |
 | `README.md` upstreamu | Zastąp naszym; dopisz link do upstreamu (już jest). |
 
-`app/build.gradle` (Groovy) upstreamu może zostać w Groovy: plugin `com.android.application` jest na classpath przez nasz główny `build.gradle.kts`. Upstream v12.2 używa w `app/build.gradle` `apply plugin: 'com.android.application'` (bez wersji, AGP 9.4.0 przez `buildscript` w głównym `build.gradle`); DO ZWERYFIKOWANIA: czy po usunięciu `buildscript` plugin nadal się rozwiąże z classpath naszego głównego `build.gradle.kts`.
+`app/build.gradle` (Groovy) upstreamu zostaje w Groovy: plugin `com.android.application` jest na classpath przez nasz główny `build.gradle.kts`. Sprawdzone 11.11.2026: po usunięciu `buildscript` `apply plugin: 'com.android.application'` rozwiązuje się poprawnie.
 
 ## 2. Zmiany w `:app` (rename, flavor, zależność od modułów)
 
@@ -129,6 +129,13 @@ Pełna procedura i tabela wyników: [test-plan.md, sekcja 4](test-plan.md#4-proc
 4. **Faza B** (kroki B1–B7) po wpięciu overlaya z `patches/` i profilu „MMO – Pad+”.
 
 ## 6. Czego NIE dało się zweryfikować offline
+
+**Aktualizacja 11.11.2026 (krok 1 z HANDOFF.md, Windows + Android Studio):** sekcje 1 i 2 wykonane wariantem „scalenie historii”.
+Sprawdzone buildem: konfiguracja Gradle działa; Kotlin 2.4.21 (KGP `kotlin-jvm`) i built-in Kotlin z AGP 9.4.0 współistnieją bez konfliktu;
+kod główny trzech modułów `control-*` się kompiluje; kotlinx-serialization 1.12.0 działa z Kotlin 2.4.21 (kompilacja `:control-model`);
+`distributionSha256Sum` dodany; APK release to `app/build/outputs/apk/nonRoot/release/app-nonRoot-release-unsigned.apk` (bez podpisu),
+więc `APK_GLOB` z `release.yml` pasuje. Upstream v12.2 nie ma `.github/workflows` (tylko szablony zgłoszeń i konfiguracje ProBot, te usunięte).
+Nadal niesprawdzone: testy (Kotest, JUnit 6, Robolectric), lint, CI na GitHub Actions, patche.
 
 Build i kod:
 - Żaden plik Gradle nie był uruchomiony; nie wiadomo, czy build się konfiguruje.
