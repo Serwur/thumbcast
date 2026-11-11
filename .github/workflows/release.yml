@@ -8,9 +8,13 @@
 #   THUMBCAST_KEY_ALIAS         alias klucza
 #   THUMBCAST_KEY_PASSWORD      hasło klucza
 #
-# Moduł :app pojawi się dopiero po forku. Zadanie Gradle i ścieżka APK zależą od flavorów upstreamu
-# (root / nonRoot, plan sekcja 1.3) i od flavoru "thumbcast" (plan sekcja 13, krok 6).
-# DO ZWERYFIKOWANIA po forku: nazwa zadania w APP_ASSEMBLE_TASK i katalog wyjściowy w APK_GLOB.
+# Sekrety trafiają do :app jako właściwości Gradle thumbcastKeystoreFile, thumbcastKeystorePassword,
+# thumbcastKeyAlias, thumbcastKeyPassword (signingConfigs.release w app/build.gradle). Bez nich
+# AGP daje app-nonRoot-release-unsigned.apk i krok weryfikacji podpisu kończy się błędem.
+#
+# Sprawdzone lokalnie 11.11.2026 (testowy keystore): :app:assembleNonRootRelease z tymi właściwościami
+# daje app/build/outputs/apk/nonRoot/release/app-nonRoot-release.apk, pasuje do APK_GLOB, apksigner verify OK.
+# Sam workflow nie był uruchomiony na GitHub Actions.
 
 name: release
 
@@ -27,7 +31,6 @@ permissions:
   contents: write
 
 env:
-  GRADLE_VERSION: "9.7.1"
   APP_ASSEMBLE_TASK: ":app:assembleNonRootRelease"
   APK_GLOB: "app/build/outputs/apk/**/release/*.apk"
 
@@ -52,36 +55,46 @@ jobs:
       - name: Gradle (cache)
         uses: gradle/actions/setup-gradle@v6
         with:
-          gradle-version: ${{ env.GRADLE_VERSION }}
           cache-read-only: true
 
-      - name: Wybór polecenia Gradle
+      # Jak w ci.yml (job app-build): NDK jawnie, wersja z app/build.gradle.
+      - name: NDK (wersja z app/build.gradle)
         run: |
-          if [ -x ./gradlew ]; then echo "GW=./gradlew" >> "$GITHUB_ENV"; else echo "GW=gradle" >> "$GITHUB_ENV"; fi
+          set -euo pipefail
+          ndk=$(sed -n 's/^[[:space:]]*ndkVersion[[:space:]]*"\([^"]*\)".*/\1/p' app/build.gradle)
+          if [ -z "$ndk" ]; then echo "Nie znaleziono ndkVersion w app/build.gradle"; exit 1; fi
+          echo "NDK $ndk"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk" > /dev/null
+          test -d "$ANDROID_HOME/ndk/$ndk"
 
       # Bramka: release nie powstaje bez zielonych testów polityki.
       - name: Testy JVM i testy polityki
         run: >
-          $GW --stacktrace :control-model:test :control-engine:test
+          ./gradlew --stacktrace :control-model:test :control-engine:test
           -Pthumbcast.policy.iterations=100000
 
       - name: Odtworzenie keystore z sekretu
         env:
           KEYSTORE_B64: ${{ secrets.THUMBCAST_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.THUMBCAST_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.THUMBCAST_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.THUMBCAST_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          if [ -z "${KEYSTORE_B64:-}" ]; then echo "Brak sekretu THUMBCAST_KEYSTORE_BASE64"; exit 1; fi
+          for v in KEYSTORE_B64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!v:-}" ]; then echo "Brak sekretu THUMBCAST_${v/B64/BASE64}"; exit 1; fi
+          done
           echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
           echo "THUMBCAST_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
-      # :app czyta podpis z właściwości Gradle (konfiguracja signingConfigs po forku, patrz docs/NEXT-STEPS.md).
+      # :app czyta podpis z właściwości Gradle (signingConfigs.release w app/build.gradle).
       - name: Budowa podpisanego APK
         env:
           ORG_GRADLE_PROJECT_thumbcastKeystoreFile: ${{ env.THUMBCAST_KEYSTORE_FILE }}
           ORG_GRADLE_PROJECT_thumbcastKeystorePassword: ${{ secrets.THUMBCAST_KEYSTORE_PASSWORD }}
           ORG_GRADLE_PROJECT_thumbcastKeyAlias: ${{ secrets.THUMBCAST_KEY_ALIAS }}
           ORG_GRADLE_PROJECT_thumbcastKeyPassword: ${{ secrets.THUMBCAST_KEY_PASSWORD }}
-        run: $GW --stacktrace "$APP_ASSEMBLE_TASK"
+        run: ./gradlew --stacktrace "$APP_ASSEMBLE_TASK"
 
       - name: Zebranie APK i sumy SHA-256
         run: |
