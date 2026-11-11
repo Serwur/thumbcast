@@ -131,6 +131,18 @@ public class PreferenceConfiguration {
     public String language;
     public boolean smallIconMode, multiController, usbDriver, flipFaceButtons;
     public boolean onscreenController;
+    // THUMBCAST:
+    public enum ControlLayer { LEGACY, THUMBCAST }
+    private static final String CONTROL_LAYER_PREF_STRING = "list_control_layer";
+    private static final String THUMBCAST_PROFILE_PREF_STRING = "list_thumbcast_profile";
+    private static final String THUMBCAST_DEBUG_PREF_STRING = "checkbox_thumbcast_debug";
+    private static final String DEFAULT_CONTROL_LAYER = "thumbcast";
+    private static final String DEFAULT_THUMBCAST_PROFILE = "mmo-pad-plus.thumbcast.json";
+
+    public ControlLayer controlLayer;
+    public String thumbcastProfileFile;
+    public boolean thumbcastDebugOverlay;
+    // THUMBCAST END
     public boolean onlyL3R3;
     public boolean showGuideButton;
     public boolean enableHdr;
@@ -579,6 +591,19 @@ public class PreferenceConfiguration {
         config.multiController = prefs.getBoolean(MULTI_CONTROLLER_PREF_STRING, DEFAULT_MULTI_CONTROLLER);
         config.usbDriver = prefs.getBoolean(USB_DRIVER_PREF_SRING, DEFAULT_USB_DRIVER);
         config.onscreenController = prefs.getBoolean(ONSCREEN_CONTROLLER_PREF_STRING, ONSCREEN_CONTROLLER_DEFAULT);
+        // THUMBCAST:
+        String layer = prefs.getString(CONTROL_LAYER_PREF_STRING, DEFAULT_CONTROL_LAYER);
+        config.controlLayer = "legacy".equals(layer) ? ControlLayer.LEGACY : ControlLayer.THUMBCAST;
+        config.thumbcastProfileFile = prefs.getString(THUMBCAST_PROFILE_PREF_STRING, DEFAULT_THUMBCAST_PROFILE);
+        config.thumbcastDebugOverlay = prefs.getBoolean(THUMBCAST_DEBUG_PREF_STRING, false);
+        if (config.controlLayer == ControlLayer.THUMBCAST) {
+            // Upstream ustawia bit 0 maski pada (kontroler nr 0, do którego pisze reportOscState) tylko przy
+            // onscreenController: ControllerHandler.getAttachedControllerMask(), getActiveControllerMask()
+            // (multiController) i Game.onCreate (gamepadMask |= 1). Flaga włącza też landscape
+            // w setPreferredOrientationForCurrentDisplay() i rumble telefonem w ControllerHandler.handleRumble().
+            config.onscreenController = true;
+        }
+        // THUMBCAST END
         config.onlyL3R3 = prefs.getBoolean(ONLY_L3_R3_PREF_STRING, ONLY_L3_R3_DEFAULT);
         config.showGuideButton = prefs.getBoolean(SHOW_GUIDE_BUTTON_PREF_STRING, SHOW_GUIDE_BUTTON_DEFAULT);
         config.enableHdr = prefs.getBoolean(ENABLE_HDR_PREF_STRING, DEFAULT_ENABLE_HDR) && !isShieldAtvFirmwareWithBrokenHdr();

@@ -351,6 +351,26 @@ public class StreamSettings extends Activity {
                 category_gamepad_settings.removePreference(findPreference("seekbar_vibrate_fallback_strength"));
             }
 
+            // THUMBCAST: ustawienia OSC legacy mają sens tylko w trybie legacy, profil tylko w trybie thumbcast.
+            final ListPreference controlLayer = (ListPreference) findPreference("list_control_layer");
+            final Preference thumbcastProfile = findPreference("list_thumbcast_profile");
+            final Preference oscPref = findPreference("checkbox_show_onscreen_controls");
+            final Preference vibrateOscPref = findPreference("checkbox_vibrate_osc");
+            if (controlLayer != null) {
+                Preference.OnPreferenceChangeListener layerListener = (pref, value) -> {
+                    boolean tc = "thumbcast".equals(value);
+                    if (thumbcastProfile != null) thumbcastProfile.setEnabled(tc);
+                    if (oscPref != null) oscPref.setEnabled(!tc);
+                    // Wibracja telefonu przy rumble (vibrateOsc) działa też w trybie Thumbcast, więc nie może zależeć
+                    // od checkbox_show_onscreen_controls (w tym trybie wyszarzonego i zwykle równego false).
+                    if (vibrateOscPref != null) vibrateOscPref.setDependency(tc ? null : "checkbox_show_onscreen_controls");
+                    return true;
+                };
+                layerListener.onPreferenceChange(controlLayer, controlLayer.getValue());
+                controlLayer.setOnPreferenceChangeListener(layerListener);
+            }
+            // THUMBCAST END
+
             Display display = getActivity().getWindowManager().getDefaultDisplay();
             float maxSupportedFps = display.getRefreshRate();
 

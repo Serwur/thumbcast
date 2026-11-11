@@ -107,6 +107,14 @@ android {
         }
     }
 
+    // THUMBCAST: presety z presets/ (walidowane w :control-model) jako assets/presets/ (patches/preferences.patch.md, pkt 6).
+    sourceSets {
+        main {
+            // AGP nie przyjmuje tu Providera, więc katalog podajemy jako File.
+            assets.srcDir layout.buildDirectory.dir("generated/thumbcastAssets").get().asFile
+        }
+    }
+
     packaging {
         resources {
             // BouncyCastle includes duplicate LICENSE.md files
@@ -114,6 +122,14 @@ android {
         }
     }
 }
+
+// THUMBCAST:
+def copyThumbcastPresets = tasks.register('copyThumbcastPresets', Copy) {
+    from(rootProject.file('presets')) { include '*.thumbcast.json' }
+    into layout.buildDirectory.dir('generated/thumbcastAssets/presets')
+}
+tasks.named('preBuild') { dependsOn copyThumbcastPresets }
+// THUMBCAST END
 
 dependencies {
     implementation 'org.bouncycastle:bcprov-jdk18on:1.85.2'

@@ -145,6 +145,34 @@
             android:summary="@string/summary_checkbox_absolute_mouse_mode"
             android:defaultValue="false" />
     </PreferenceCategory>
+    <!-- THUMBCAST: -->
+    <PreferenceCategory
+        android:key="category_thumbcast"
+        android:title="@string/category_thumbcast">
+
+        <ListPreference
+            android:key="list_control_layer"
+            android:title="@string/title_control_layer"
+            android:summary="%s"
+            android:entries="@array/control_layer_names"
+            android:entryValues="@array/control_layer_values"
+            android:defaultValue="thumbcast" />
+
+        <ListPreference
+            android:key="list_thumbcast_profile"
+            android:title="@string/title_thumbcast_profile"
+            android:summary="%s"
+            android:entries="@array/thumbcast_profile_names"
+            android:entryValues="@array/thumbcast_profile_values"
+            android:defaultValue="mmo-pad-plus.thumbcast.json" />
+
+        <CheckBoxPreference
+            android:key="checkbox_thumbcast_debug"
+            android:title="@string/title_thumbcast_debug"
+            android:summary="@string/summary_thumbcast_debug"
+            android:defaultValue="false" />
+    </PreferenceCategory>
+    <!-- THUMBCAST END -->
     <PreferenceCategory android:title="@string/category_on_screen_controls_settings"
         android:key="category_onscreen_controls">
         <CheckBoxPreference

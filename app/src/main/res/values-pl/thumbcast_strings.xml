@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
+<resources>
+    <string name="category_thumbcast">Sterowanie dotykowe</string>
+    <string name="title_control_layer">Warstwa sterowania</string>
+    <string name="control_layer_thumbcast">Thumbcast (multitouch, profile)</string>
+    <string name="control_layer_legacy">Klasyczny kontroler ekranowy</string>
+    <string name="title_thumbcast_profile">Profil sterowania</string>
+    <string name="thumbcast_profile_mmo_pad_plus">MMO – Pad+</string>
+    <string name="thumbcast_profile_mmo_keyboard">MMO – Klawiatura</string>
+    <string name="title_thumbcast_debug">Nakładka debug wejścia</string>
+    <string name="summary_thumbcast_debug">Pokazuje aktywne wskaźniki, wysłane flagi pada i opóźnienie dotyk→wysyłka</string>
+    <string name="thumbcast_profile_error">Nie udało się wczytać profilu, używam klasycznego kontrolera: %1$s</string>
+</resources>

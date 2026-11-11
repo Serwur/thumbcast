@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: tablice preferencji warstwy sterowania (patches/preferences.patch.md, pkt 2). -->
+<resources>
+    <string-array name="control_layer_names">
+        <item>@string/control_layer_thumbcast</item>
+        <item>@string/control_layer_legacy</item>
+    </string-array>
+    <string-array name="control_layer_values" translatable="false">
+        <item>thumbcast</item>
+        <item>legacy</item>
+    </string-array>
+    <string-array name="thumbcast_profile_names">
+        <item>@string/thumbcast_profile_mmo_pad_plus</item>
+        <item>@string/thumbcast_profile_mmo_keyboard</item>
+    </string-array>
+    <string-array name="thumbcast_profile_values" translatable="false">
+        <item>mmo-pad-plus.thumbcast.json</item>
+        <item>mmo-keyboard.thumbcast.json</item>
+    </string-array>
+</resources>
