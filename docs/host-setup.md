@@ -4,7 +4,14 @@ Thumbcast łączy się z dowolnym hostem zgodnym z GameStream: Sunshine (LizardB
 
 ## 1. Instalacja Sunshine
 
-1. Pobierz Sunshine **v2026.914 lub nowszy** ze strony wydań: https://github.com/LizardByte/Sunshine/releases
+1. Pobierz Sunshine **v2026.914 lub nowszy** ze strony wydań: https://github.com/SunshineStream/Sunshine/releases
+   (repo przeniesione z `LizardByte/Sunshine`, stary adres przekierowuje; to samo repo, sprawdzone 11.11.2026).
+   - Windows na zwykłym PC (x86-64): **`Sunshine-Windows-AMD64-installer.msi`**. `-lite.zip` to wersja przenośna bez instalatora i usługi,
+     `-debuginfo.7z` to symbole debugowania (niepotrzebne), `ARM64` tylko dla Windows na ARM; pozostałe pliki są dla Linuksa, macOS i FreeBSD.
+   - Sprawdź sumę przed instalacją (PowerShell): `Get-FileHash .\Sunshine-Windows-AMD64-installer.msi`. Dla v2026.914.233613 SHA-256 to
+     `1d7fed8beecd5889dc7ff14cf9f42d6d38f37c3066c13c6c2a5f4e91847e0ccf` (pole `digest` zasobu w API GitHuba).
+   - Instalator zakłada usługę Windows i reguły zapory. **Nie używaj obrazu Dockera na Windows:** kontener Linuksa (WSL2) nie przechwyci
+     pulpitu Windows ani gry, nie użyje enkodera GPU dla ekranu Windows i nie da grze wirtualnego pada. Obrazy Dockera Sunshine są dla hostów z Linuksem.
 2. Zainstaluj i otwórz web UI (domyślnie `https://localhost:47990`). Ustaw login i hasło administratora.
 3. Sparuj telefon w domu, w tej samej sieci LAN: w Thumbcast wybierz PC, a PIN wpisz w web UI Sunshine (zakładka PIN).
 
@@ -82,7 +89,7 @@ Apollo (fork Sunshine, GPLv3, tylko Windows) tworzy wirtualny ekran dopasowany d
 ## Źródła
 
 - Sunshine, konfiguracja: https://docs.lizardbyte.dev/projects/sunshine/latest/md_docs_2configuration.html
-- Sunshine, wydania: https://github.com/LizardByte/Sunshine/releases (v2026.906.222525: migracja na libvirtualhid)
+- Sunshine, wydania: https://github.com/SunshineStream/Sunshine/releases (v2026.906.222525: migracja na libvirtualhid)
 - libvirtualhid, licencje i platformy: https://docs.lizardbyte.dev/projects/libvirtualhid
 - ViGEmBus (archiwum): https://github.com/nefarius/ViGEmBus
 - Virtual HID Driver, ceny i licencja: https://app.lizardbyte.dev/2026-08-16-introducing-libvirtualhid-and-virtual-hid-driver/

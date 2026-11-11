@@ -28,7 +28,7 @@ PC (Windows / macOS)                         Telefon (Android)
             LAN albo Tailscale (direct)     └───────────────────────────────────┘
 ```
 
-- **Host:** [Sunshine](https://github.com/LizardByte/Sunshine) (GPLv3) albo jego forki Apollo i Vibepollo, zgodne z GameStream. Pad wirtualny w Windows: darmowy ViGEmBus 1.17+ (projekt zarchiwizowany) albo płatny Virtual HID Driver od LizardByte. Konfiguracja: [docs/host-setup.md](docs/host-setup.md), uzasadnienie: [docs/DECISIONS.md](docs/DECISIONS.md).
+- **Host:** [Sunshine](https://github.com/SunshineStream/Sunshine) (GPLv3) albo jego forki Apollo i Vibepollo, zgodne z GameStream. Pad wirtualny w Windows: darmowy ViGEmBus 1.17+ (projekt zarchiwizowany) albo płatny Virtual HID Driver od LizardByte. Konfiguracja: [docs/host-setup.md](docs/host-setup.md), uzasadnienie: [docs/DECISIONS.md](docs/DECISIONS.md).
 - **Klient:** fork upstreamu `moonlight-stream/moonlight-android`. Warstwa streamingu zostaje bez zmian. Wejście dotykowe zastępuje nowa warstwa w Kotlinie:
 
 | Moduł | Typ | Rola |
