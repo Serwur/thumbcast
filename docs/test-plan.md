@@ -51,6 +51,7 @@ Gra: MMO z natywnym Gamepad UI (WoW: Forever). W grze włączone: Enable Gamepad
 | T-08 | Odporność: połączenie telefoniczne, obrót ekranu, przejście Wi-Fi→LTE (reconnect upstreamu), blokada ekranu. | Po każdym zdarzeniu wszystkie wejścia zwolnione (0 „stuck input”). |
 | T-09 | Polityka: fuzzing wejścia (testy właściwości w CI, 10⁵ sekwencji) i ręczny przegląd presetów. | 0 naruszeń; check `policy-tests` zielony; presety bez akordów i zakazanych typów. |
 | T-10 | Tryb bez pada (host H3/H4, profil „MMO – Klawiatura”): ruch WASD, kamera RMB-look, tap, pinch, czat. | Wszystkie akcje działają bez sterownika pada; RMB zwolniony po końcu gestu (0 „stuck input”); wynik Q2 zapisany. |
+| T-11 | Touchpad (profile „Pulpit – Touchpad” i „Big Picture”, pulpit Windows i Steam Big Picture): ruch kursora w bok i w pionie, tap = lewy klik, tap dwoma palcami = prawy klik, przytrzymanie i przeciągnięcie okna, przewijanie dwoma palcami w pionie i w poziomie (np. lista gier, arkusz), w Big Picture obie gałki, ABXY, LB/RB, LT/RT, Widok/Menu i Guide. | Przeciągnięcie w wolnej strefie rusza tylko kursor (nigdy kamera i kursor naraz); oś przewijania nie zmienia się w trakcie gestu; po oderwaniu palców LMB zwolniony (0 „stuck input”); Guide otwiera nakładkę Steam. |
 
 ## 4. Procedura T-03: czy mysz przełącza HUD gry z trybu pada
 

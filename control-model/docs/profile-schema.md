@@ -48,6 +48,26 @@ Wszystkie współrzędne są znormalizowane do zakresu 0..1 względem bezpieczne
 | `longPress` | `enabled` (true), `output` (`"mouse_right_at_point"`), `minMs` (450) | Gdy włączone są oba gesty, `minMs` musi być większe od `tapTarget.maxMs`. Long-press daje jedno wejście **zamiast** tapu. |
 | `pinchZoom` | `enabled` (true), `output` (`"mouse_wheel"`), `pxPerNotch` (40) | `pxPerNotch` > 0 |
 | `edgeSwipeTop` | `enabled` (true), `output` (`"app_menu"`) | Akcja lokalna, nic nie trafia do hosta. |
+| `freeZone` | `"camera"` (domyślnie) \| `"touchpad"` | Właściciel wolnej strefy (od 11.11.2026). Jeden na profil, więc jedno przeciągnięcie nigdy nie daje naraz kamery i ruchu myszy. Profile bez tego pola mają `"camera"`, czyli działają jak dotąd. |
+| `touchpad` | `sensitivity` (1.0), `scrollPxPerNotch` (24) | Używane tylko przy `freeZone = "touchpad"`. `sensitivity` w (0..10]: piksele myszy na piksel palca. `scrollPxPerNotch` 4..400: droga środka dwóch palców na 1 ząbek kółka (120 jednostek). |
+
+### Wolna strefa: `camera` i `touchpad`
+
+`"camera"` to tabela gestów Pad+ z tabeli wyżej: `cameraDrag` w strefie `zone` (połowa ekranu), tap i long-press w punkcie dotyku, pinch, edge swipe.
+
+`"touchpad"` obejmuje całą wolną część ekranu (bez podziału na połowy) i ma stałą tabelę gestów. Pola `cameraDrag` i `pinchZoom` są wtedy ignorowane. Z `tapTarget` i `longPress` liczą się `enabled`, `maxMovePx`, `maxMs` i `minMs`, a pole `output` nie ma znaczenia (klik idzie w miejscu kursora):
+
+| Gest | Wyjście |
+|---|---|
+| 1 palec, przeciągnięcie (ruch > `tapTarget.maxMovePx`) | ruch względny myszy (`touchpad.sensitivity`, reszty ułamkowe są akumulowane) |
+| 1 palec, tap (≤ `maxMovePx`, ≤ `maxMs`) | LMB w miejscu kursora: wciśnięcie i zwolnienie przy podniesieniu palca |
+| 2 palce, tap (oba bez ruchu, od pierwszego DOWN do ostatniego UP ≤ `maxMs` + 100 ms) | RMB w miejscu kursora przy podniesieniu drugiego palca |
+| 1 palec, przytrzymanie ≥ `longPress.minMs` bez ruchu, potem przeciągnięcie | LMB trzymany przez cały dotyk (przeciąganie okien, zaznaczanie), ruch myszy jak wyżej, LMB puszczany przy podniesieniu palca |
+| 2 palce, przeciągnięcie | kółko: oś (pionowa albo pozioma) wybierana raz, na starcie gestu, według większej składowej ruchu; potem tylko ta oś. Kierunek jak na telefonie: palce w dół = treść w dół (kółko w górę), palce w lewo = treść w lewo (kółko w prawo) |
+| pinch | wyłączony |
+| `edgeSwipeTop` | `app_menu`, bez zmian |
+
+Trzeci palec w wolnej strefie nic nie robi i unieważnia tap dwoma palcami. Palec, który dotknie wolnej strefy, gdy inny trzyma LMB (przeciąganie), nic nie robi.
 
 `curve`: `{ "type": "linear" }` (wtedy `exponent` musi wynosić 1, co jest wartością domyślną) albo `{ "type": "power", "exponent": 1.0..3.0 }`.
 
@@ -85,7 +105,7 @@ Pola wspólne dla wszystkich typów:
 
 | Pole | Domyślnie | Reguły |
 |---|---|---|
-| `output` | `{ "pad": "left_stick" }` | Musi to być gałka (`Output.Stick`). W `pad_plus` jedna gałka pada ma jedno źródło: dwie kontrolki `stick` z tą samą gałką albo `right_stick` przy `gestures.cameraDrag.output = "pad_right_stick"` to błąd. |
+| `output` | `{ "pad": "left_stick" }` | Musi to być gałka (`Output.Stick`). W `pad_plus` jedna gałka pada ma jedno źródło: dwie kontrolki `stick` z tą samą gałką albo `right_stick` przy `gestures.freeZone = "camera"` i `gestures.cameraDrag.output = "pad_right_stick"` to błąd. Przy `freeZone = "touchpad"` kamery nie ma, więc prawa gałka jest wolna dla kontrolki (np. preset Big Picture). |
 | `floating` | true | Środek joysticka wypada w miejscu, w którym kciuk dotknął strefy. |
 | `deadzone` | 0.12 | 0..0.5 |
 | `outerDeadzone` | 0.04 | 0..0.5; suma z `deadzone` ≤ 0.9 |
@@ -124,6 +144,8 @@ To samo co `button`, z dwiema różnicami: `behavior` może mieć wartość `"la
 
 `ProfileMigrations.migrate(tree, from, to)` działa na drzewie JSON przed dekodowaniem typowanym. Każdy krok n → n+1 musi ustawić `"schema": n+1`. Schemat starszy niż 1 albo nowszy niż `CURRENT_SCHEMA` jest odrzucany.
 
+Pola `gestures.freeZone` i `gestures.touchpad` (11.11.2026) dodano bez podnoszenia schematu: mają wartości domyślne, więc każdy istniejący plik v1 wczytuje się bez zmian i bez migracji. Starsza wersja aplikacji odrzuci jednak profil, który je zawiera (nieznane pole).
+
 ## Przykład (fragment `presets/mmo-pad-plus.thumbcast.json`)
 
 ```json
@@ -154,9 +176,9 @@ To samo co `button`, z dwiema różnicami: `behavior` może mieć wartość `"la
       "rect": { "x": 0.0, "y": 0.40, "w": 0.35, "h": 0.60 }, "floating": true,
       "deadzone": 0.12, "outerDeadzone": 0.04, "curve": { "type": "linear" } },
     { "id": "lt", "type": "modifier", "label": "LT", "output": { "pad": "LT" }, "behavior": "hold",
-      "rect": { "x": 0.03, "y": 0.25, "w": 0.10, "h": 0.12 } },
+      "rect": { "x": 0.035, "y": 0.256, "w": 0.09, "h": 0.108 } },
     { "id": "a", "type": "button", "label": "Skok", "icon": "jump", "output": { "pad": "A" },
-      "rect": { "x": 0.82, "y": 0.78, "w": 0.08, "h": 0.18 }, "shape": "circle" },
+      "rect": { "x": 0.824, "y": 0.789, "w": 0.072, "h": 0.162 }, "shape": "circle" },
     { "id": "chat", "type": "system", "label": "⌨", "output": { "app": "soft_keyboard" },
       "rect": { "x": 0.09, "y": 0.02, "w": 0.06, "h": 0.09 } }
   ]
@@ -172,6 +194,6 @@ To samo co `button`, z dwiema różnicami: `behavior` może mieć wartość `"la
 { "output": { "pad": ["LB", "RB"] } }                        // tablica w wyjściu
 { "type": "button", "behavior": "latch", ... }               // latch poza modyfikatorem
 { "type": "button", "chord": { "pad": "LB" } }               // akord (nieobsługiwany, także przy allowChords)
-{ "type": "stick", "output": { "pad": "right_stick" } }      // w pad_plus przy kamerze pad_right_stick
+{ "type": "stick", "output": { "pad": "right_stick" } }      // w pad_plus przy freeZone camera i kamerze pad_right_stick
 { "type": "system", "output": { "app": "run_script" } }      // niedozwolona akcja aplikacji
 ```

@@ -78,6 +78,16 @@ data class EdgeSwipe(
     val output: EdgeSwipeOutput = EdgeSwipeOutput.APP_MENU,
 )
 
+/**
+ * Ustawienia touchpada w wolnej strefie (używane tylko przy `GesturesConfig.freeZone = TOUCHPAD`).
+ * sensitivity: piksele myszy na piksel palca; scrollPxPerNotch: droga dwóch palców (px) na 1 ząbek kółka.
+ */
+@Serializable
+data class Touchpad(
+    val sensitivity: Float = 1.0f,
+    val scrollPxPerNotch: Float = 24f,
+)
+
 @Serializable
 data class GesturesConfig(
     val cameraDrag: CameraDrag = CameraDrag(),
@@ -85,6 +95,12 @@ data class GesturesConfig(
     val longPress: LongPress = LongPress(),
     val pinchZoom: PinchZoom = PinchZoom(),
     val edgeSwipeTop: EdgeSwipe = EdgeSwipe(),
+    /**
+     * Właściciel wolnej strefy (11.11.2026). Domyślnie CAMERA, więc profile bez tego pola działają jak dotąd.
+     * Przy TOUCHPAD pola cameraDrag i pinchZoom są ignorowane, a tap i long-press dają klik w miejscu kursora.
+     */
+    val freeZone: FreeZoneMode = FreeZoneMode.CAMERA,
+    val touchpad: Touchpad = Touchpad(),
 )
 
 @Serializable

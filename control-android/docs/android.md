@@ -103,7 +103,7 @@ Wszystko na wątku UI.
 
 Kod upstreamu nie jest w tym repozytorium, więc moduł kompiluje się względem cienkich interfejsów:
 - `HostConnection`: `sendKeyboardInput`, `sendMouseMove`, `sendMousePosition`, `sendMouseButtonDown/Up`,
-  `sendMouseHighResScroll` (sygnatury zweryfikowane z `NvConnection` w upstreamie v12.2, commit b48494cb96bf);
+  `sendMouseHighResScroll`, `sendMouseHighResHScroll` (od 11.11.2026; sygnatury zweryfikowane z `NvConnection` w upstreamie v12.2, commit b48494cb96bf);
 - `HostPadReporter`: `reportOscState(int, short, short, short, short, byte, byte)`;
 - `KeyTranslator`: keycode Androida → kod hosta (w aplikacji przez upstreamowy `KeyboardTranslator`).
 

@@ -8,6 +8,8 @@
     <string name="title_thumbcast_profile">Profil sterowania</string>
     <string name="thumbcast_profile_mmo_pad_plus">MMO – Pad+</string>
     <string name="thumbcast_profile_mmo_keyboard">MMO – Klawiatura</string>
+    <string name="thumbcast_profile_desktop_touchpad">Pulpit – Touchpad</string>
+    <string name="thumbcast_profile_big_picture">Big Picture</string>
     <string name="title_thumbcast_debug">Nakładka debug wejścia</string>
     <string name="summary_thumbcast_debug">Pokazuje aktywne wskaźniki, wysłane flagi pada i opóźnienie dotyk→wysyłka</string>
     <string name="thumbcast_profile_error">Nie udało się wczytać profilu, używam klasycznego kontrolera: %1$s</string>

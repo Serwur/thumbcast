@@ -17,6 +17,62 @@ class ProfileCodecTest {
         val names = TestFixtures.presetFiles().map { it.name }
         assertTrue("mmo-pad-plus.thumbcast.json" in names, "brak presetu Pad+: $names")
         assertTrue("mmo-keyboard.thumbcast.json" in names, "brak presetu Klawiatura: $names")
+        assertTrue("desktop-touchpad.thumbcast.json" in names, "brak presetu Pulpit – Touchpad: $names")
+        assertTrue("big-picture.thumbcast.json" in names, "brak presetu Big Picture: $names")
+    }
+
+    @Test
+    fun desktopTouchpadPresetIsMouseOnly() {
+        val p = ProfileCodec.decode(TestFixtures.readPreset("desktop-touchpad.thumbcast.json")).getOrThrow()
+        assertEquals(FreeZoneMode.TOUCHPAD, p.gestures.freeZone)
+        // Bez kontrolek pada: na hoście nie powstaje wirtualny pad, a cała reszta ekranu to touchpad.
+        assertTrue(p.controls.all { it is SystemControl }, "tylko kontrolki systemowe: ${p.controls.map { it.id }}")
+        assertEquals(setOf(AppActions.MENU, AppActions.SOFT_KEYBOARD), p.controls.map { (it as SystemControl).output.action }.toSet())
+    }
+
+    @Test
+    fun bigPicturePresetHasFullPadAndTouchpad() {
+        val p = ProfileCodec.decode(TestFixtures.readPreset("big-picture.thumbcast.json")).getOrThrow()
+        assertEquals(ProfileMode.PAD_PLUS, p.mode)
+        assertEquals(FreeZoneMode.TOUCHPAD, p.gestures.freeZone)
+        val sticks = p.controls.filterIsInstance<StickControl>()
+        assertEquals(setOf(PadStick.LEFT, PadStick.RIGHT), sticks.map { (it.output as Output.Stick).stick }.toSet())
+        assertTrue(sticks.none { it.floating }, "obie gałki widoczne (stałe)")
+        val buttons = HashSet<PadButton>()
+        val triggers = HashSet<PadTrigger>()
+        for (c in p.controls) {
+            val o = when (c) {
+                is ButtonControl -> c.output
+                is ModifierControl -> c.output
+                else -> null
+            }
+            if (o is Output.Pad) buttons.add(o.button)
+            if (o is Output.Trigger) triggers.add(o.trigger)
+        }
+        val expected = setOf(
+            PadButton.A, PadButton.B, PadButton.X, PadButton.Y, PadButton.UP, PadButton.DOWN, PadButton.LEFT,
+            PadButton.RIGHT, PadButton.LB, PadButton.RB, PadButton.BACK, PadButton.START, PadButton.GUIDE,
+        )
+        assertEquals(expected, buttons)
+        assertEquals(setOf(PadTrigger.LT, PadTrigger.RT), triggers)
+    }
+
+    @Test
+    fun presetsControlsDoNotOverlap() {
+        // Grafiki przycisków nie mogą na siebie nachodzić (strefy gałek pływających mogą).
+        for (f in TestFixtures.presetFiles()) {
+            val p = ProfileCodec.decode(f.readText(Charsets.UTF_8)).getOrThrow()
+            val solid = p.controls.filter { !(it is StickControl && it.floating) }
+            for (i in solid.indices) {
+                for (j in i + 1 until solid.size) {
+                    val a = solid[i].rect
+                    val b = solid[j].rect
+                    val ix = minOf(a.x + a.w, b.x + b.w) - maxOf(a.x, b.x)
+                    val iy = minOf(a.y + a.h, b.y + b.h) - maxOf(a.y, b.y)
+                    assertTrue(ix <= 1e-4f || iy <= 1e-4f, "${f.name}: ${solid[i].id} nachodzi na ${solid[j].id}")
+                }
+            }
+        }
     }
 
     @Test
@@ -68,7 +124,40 @@ class ProfileCodecTest {
         assertEquals(Output.Pad(PadButton.A), a.output)
         assertEquals(Behavior.HOLD, a.behavior)
         assertEquals(null, a.chord)
+        // Profil bez pola freeZone (wszystkie sprzed 11.11.2026) ma kamerę jak dotąd.
+        assertEquals(FreeZoneMode.CAMERA, p.gestures.freeZone)
+        assertEquals(Touchpad(), p.gestures.touchpad)
     }
+
+    @Test
+    fun touchpadFreeZoneDecodesAndRoundTrips() {
+        val json = TestFixtures.MINIMAL_JSON.replace(
+            "\"mode\": \"pad_plus\",",
+            "\"mode\": \"pad_plus\", \"gestures\": { \"freeZone\": \"touchpad\", " +
+                "\"touchpad\": { \"sensitivity\": 1.4, \"scrollPxPerNotch\": 30 } },",
+        )
+        val p = ProfileCodec.decode(json).getOrThrow()
+        assertEquals(FreeZoneMode.TOUCHPAD, p.gestures.freeZone)
+        assertEquals(Touchpad(1.4f, 30f), p.gestures.touchpad)
+        val text = ProfileCodec.encode(p)
+        assertTrue(text.contains("\"freeZone\": \"touchpad\""), text)
+        assertEquals(p, ProfileCodec.decode(text).getOrThrow())
+    }
+
+    @Test
+    fun rejectsUnknownFreeZone() = assertRejected(
+        TestFixtures.MINIMAL_JSON.replace("\"mode\": \"pad_plus\",", "\"mode\": \"pad_plus\", \"gestures\": { \"freeZone\": \"both\" },"),
+        "nieznana wartość freeZone",
+    )
+
+    @Test
+    fun rejectsUnknownTouchpadField() = assertRejected(
+        TestFixtures.MINIMAL_JSON.replace(
+            "\"mode\": \"pad_plus\",",
+            "\"mode\": \"pad_plus\", \"gestures\": { \"freeZone\": \"touchpad\", \"touchpad\": { \"autoClick\": true } },",
+        ),
+        "nieznane pole touchpada",
+    )
 
     @Test
     fun outputVariantsRoundTrip() {

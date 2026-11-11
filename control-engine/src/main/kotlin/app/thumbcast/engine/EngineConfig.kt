@@ -1,6 +1,7 @@
 package app.thumbcast.engine
 
 import app.thumbcast.model.CurveType
+import app.thumbcast.model.FreeZoneMode
 import app.thumbcast.model.GestureZone
 import app.thumbcast.model.Output
 import app.thumbcast.model.PadStick
@@ -90,7 +91,17 @@ data class EngineTuning(
     /** Mnożnik px palca → jednostki myszy w KBM (dodatkowo do sensitivity). */
     val kbmMouseScale: Float = 1.0f,
     /** Bezpiecznik: maksymalna liczba ząbków kółka z jednego zdarzenia. */
-    val maxNotchesPerEvent: Int = 10
+    val maxNotchesPerEvent: Int = 10,
+    /** Touchpad: tap dwoma palcami ma od pierwszego DOWN do ostatniego UP najwyżej tap.maxMs + tyle ms. */
+    val twoFingerTapExtraMs: Long = 100L
+)
+
+/** Ustawienia touchpada (`gestures.touchpad`), używane przy [EngineConfig.freeZone] = TOUCHPAD. */
+data class TouchpadSpec(
+    /** Piksele myszy na piksel palca. */
+    val sensitivity: Float = 1.0f,
+    /** Droga środka dwóch palców (px) na 1 ząbek kółka (120 jednostek). */
+    val scrollPxPerNotch: Float = 24f
 )
 
 data class EngineConfig(
@@ -104,5 +115,8 @@ data class EngineConfig(
     val edgeSwipe: EdgeSwipeConfig,
     /** Kolejność = z-order: późniejsza kontrolka leży wyżej. */
     val controls: List<ControlSpec>,
-    val tuning: EngineTuning = EngineTuning()
+    val tuning: EngineTuning = EngineTuning(),
+    /** Właściciel wolnej strefy: kamera (Pad+) albo touchpad. Jeden na profil. */
+    val freeZone: FreeZoneMode = FreeZoneMode.CAMERA,
+    val touchpad: TouchpadSpec = TouchpadSpec()
 )

@@ -44,6 +44,7 @@ class OverlaySnapshotTest {
         override fun mouseButton(button: MouseBtn, down: Boolean) {}
         override fun mousePosition(x: Int, y: Int, refWidth: Int, refHeight: Int) {}
         override fun mouseWheel(highResDelta: Int) {}
+        override fun mouseHScroll(highResDelta: Int) {}
         override fun app(action: String) {}
     }
 

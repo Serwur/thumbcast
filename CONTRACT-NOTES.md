@@ -69,6 +69,7 @@ Autor: agent MODEL, 2026-11-07. Pliki: `control-model/**`, `presets/*.thumbcast.
 - `StickControl` ma też pola `sprintLock` (z przykładu) i `icon`. Wszystkie pola poza `id`/`rect` mają wartości domyślne, a `label` domyślnie wynosi `null`.
 - `ButtonControl` ma też `icon` i opcjonalne `chord: Output?`, domyślnie `null`. **Od 11.11.2026 walidator odrzuca każdy akord, także przy `global.allowChords == true`** (komunikat z fragmentem `ProfileValidator.ERR_CHORD_UNSUPPORTED`, patrz FAIR_PLAY.md). Pola `chord` i `allowChords` zostają w schemacie bez migracji.
 - Od 11.11.2026 w trybie `PAD_PLUS` jedna gałka pada może mieć tylko jedno źródło. Walidator odrzuca dwie kontrolki `stick` z tym samym `output` oraz `stick` z `right_stick` przy `gestures.cameraDrag.output = PAD_RIGHT_STICK` (komunikat z fragmentem `ProfileValidator.ERR_STICK_AXIS_CONFLICT`). W `KEYBOARD_MOUSE` reguła nie obowiązuje.
+- Od 11.11.2026 `GesturesConfig` ma pola `freeZone: FreeZoneMode = CAMERA` (`"camera"` | `"touchpad"`) i `touchpad: Touchpad(sensitivity = 1.0, scrollPxPerNotch = 24)`, dodane bez podnoszenia schematu (wartości domyślne). Przy `TOUCHPAD` kamera nie istnieje, więc `cameraDrag.output = PAD_RIGHT_STICK` nie zajmuje prawej gałki (walidator dopuszcza wtedy kontrolkę `stick` z `right_stick`). Walidator: `touchpad.sensitivity` w (0..10], `touchpad.scrollPxPerNotch` 4..400. Tabela gestów touchpada: `control-model/docs/profile-schema.md`.
 - `ModifierControl(id, rect, label, output, behavior, shape, icon)`: wyjście musi być modyfikatorem (`LT`/`RT`/`LB`/`RB` albo klawisz `SHIFT`/`CTRL`/`ALT`).
 - `SystemControl(id, rect, label, output: Output.App, shape, icon)`: pole `output` ma typ zawężony do `Output.App`.
 - `AppActions.ALL = {"menu", "soft_keyboard", "toggle_overlay"}`. `KeyCodes.ALL` to `A`–`Z`, `0`–`9`, `F1`–`F12`, `SHIFT`, `CTRL`, `ALT`, `SPACE`, `ESC`, `TAB`, `ENTER`, `-`, `=` oraz strzałki `UP`, `DOWN`, `LEFT`, `RIGHT`. Mapowanie tych nazw na kody VK hosta należy do ANDROID.
@@ -126,6 +127,16 @@ Autor: agent ENGINE, 2026-11-07. Pliki: `control-engine/**`. Typy z kontraktu (`
 - Opcjonalny interfejs `EmitCauseListener` (`onEmitCause(cause: EmitCause?)`). Jeśli `InputSink` go implementuje, przed każdym wywołaniem metody sinka dostaje przyczynę (cykl, akcja dotyku, `timeMs`, `pointerId`, wiązanie). Używa go `FakeInputSink`, przyda się też overlayowi debug. Nie jest wymagany.
 - `InputEngine.visualState(): EngineVisualState` (11.11.2026): stan do rysowania, tylko do odczytu (palec → kontrolka, HOLD, LATCH, gałki). Overlay ANDROID rysuje i wibruje wyłącznie na jego podstawie, bez własnego hit testu. Opis: `control-engine/docs/engine.md`, sekcja „Stan wizualny”.
 - `InputEngine.violationCount`, `InputEngine.padSnapshot()`, `InputEngine.activeProfile`, konstruktor `InputEngine(config: EngineConfig, profile, sink, clock, viewport)` (testy, przyszły „tryb testu” edytora).
+
+### Wolna strefa: kamera albo touchpad (11.11.2026)
+- `EngineConfig.freeZone` (z `gestures.freeZone`) wybiera `FreeZoneGestures`: `GestureArbiter` (kamera, jak dotąd) albo `TouchpadGestures` (ruch kursora, tap = LMB, tap dwoma palcami = RMB, przytrzymanie = LMB trzymany do UP, dwa palce = kółko pionowe albo poziome z blokadą osi). Tabela i uzasadnienie: `control-engine/docs/engine.md`. Polityka bez zmian i bez nowych wyjątków.
+- `InputEngine` w MOVE najpierw aktualizuje pozycje wszystkich palców zdarzenia, potem woła rozpoznawacze (dotąd robił to palec po palcu). Sumy pinch się nie zmieniają; zmienia się tylko to, który palec zdarzenia dostaje wyjście.
+- Overlay ANDROID nie musi nic zmieniać: profil z `freeZone = touchpad` działa przez to samo `onTouch`/`onTick`.
+
+### Zmiana kontraktu 11.11.2026: kółko poziome
+- `InputSink.mouseHScroll(highResDelta: Int)`: nowa metoda abstrakcyjna (bez domyślnej implementacji, żeby żaden sink nie gubił po cichu przewijania). 120 = 1 ząbek, dodatnie = w prawo. `mouseWheel` bez zmian (dodatnie = w górę).
+- W silniku efekt `HWheel(delta)` (obok `Wheel`). `OutputMapper` wysyła go tylko przy `delta != 0`. Dla `ActionPolicy` jest to wciśnięcie bez trwałego stanu, tak jak `Wheel`: wymaga przyczyny, palca w zdarzeniu i żywego palca, a w cyklu TICK jest odrzucane (R7).
+- ANDROID: `HostConnection.sendMouseHighResHScroll(scrollAmount: Short)` = upstreamowe `NvConnection.sendMouseHighResHScroll(short)` (`public void`, sprawdzone w `app/src/main/java/com/limelight/nvstream/NvConnection.java`). `MouseSink.mouseHScroll` obcina do zakresu `Short` i pomija zero; `CompositeInputSink.mouseHScroll` deleguje do `MouseSink`. `HostConnectionImpl` (`:app`) deleguje 1:1.
 
 ### Semantyka, na której mogą polegać inni
 - **Retransmisji stanu pada silnik NIE robi** (odpowiedź na pytanie ANDROID). `padState` jest wysyłany tylko przy zmianie, a retransmisję 25/50/75 ms zostawiamy w `HostPadReporterImpl` (upstream). Nie wyłączać jej.

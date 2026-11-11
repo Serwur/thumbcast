@@ -8,6 +8,8 @@
     <string name="title_thumbcast_profile">Control profile</string>
     <string name="thumbcast_profile_mmo_pad_plus">MMO – Pad+</string>
     <string name="thumbcast_profile_mmo_keyboard">MMO – Keyboard</string>
+    <string name="thumbcast_profile_desktop_touchpad">Desktop – Touchpad</string>
+    <string name="thumbcast_profile_big_picture">Big Picture</string>
     <string name="title_thumbcast_debug">Input debug overlay</string>
     <string name="summary_thumbcast_debug">Shows active pointers, sent pad flags and touch-to-send latency</string>
     <string name="thumbcast_profile_error">Control profile could not be loaded, using classic controller: %1$s</string>

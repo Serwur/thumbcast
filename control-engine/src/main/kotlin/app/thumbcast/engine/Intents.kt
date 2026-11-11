@@ -27,8 +27,11 @@ data class MouseMove(val dx: Int, val dy: Int) : OutputEffect
 
 data class MouseAt(val x: Int, val y: Int, val refWidth: Int, val refHeight: Int) : OutputEffect
 
-/** 120 = 1 ząbek. */
+/** Kółko pionowe: 120 = 1 ząbek, dodatnie = w górę (od użytkownika). */
 data class Wheel(val delta: Int) : OutputEffect
+
+/** Kółko poziome: 120 = 1 ząbek, dodatnie = w prawo. */
+data class HWheel(val delta: Int) : OutputEffect
 
 data class AppAction(val action: String) : OutputEffect
 
@@ -79,6 +82,7 @@ object Effects {
         is MouseMove -> e.dx != 0 || e.dy != 0
         is MouseAt -> true
         is Wheel -> e.delta != 0
+        is HWheel -> e.delta != 0
         is AppAction -> true
         else -> isHolding(e)
     }

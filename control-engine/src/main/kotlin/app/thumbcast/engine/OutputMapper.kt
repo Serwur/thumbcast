@@ -92,6 +92,9 @@ class OutputMapper(private val sink: InputSink) {
             is Wheel -> {
                 if (effect.delta != 0) sink.mouseWheel(effect.delta)
             }
+            is HWheel -> {
+                if (effect.delta != 0) sink.mouseHScroll(effect.delta)
+            }
             is AppAction -> sink.app(effect.action)
         }
     }

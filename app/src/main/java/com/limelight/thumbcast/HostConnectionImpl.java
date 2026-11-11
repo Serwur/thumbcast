@@ -2,8 +2,8 @@ package com.limelight.thumbcast;
 
 // NOWY PLIK wstawiany do upstreamu moonlight-android (moduł :app).
 // Delegacja 1:1 fasady HostConnection (:control-android) do NvConnection.
-// Sygnatury NvConnection zweryfikowane z upstreamem v12.2 (commit b48494cb96bf): wszystkie sześć
-// metod jest `public void`, bez `throws`, z dokładnie takimi parametrami (short/byte).
+// Sygnatury NvConnection zweryfikowane z upstreamem v12.2 (commit b48494cb96bf): wszystkie siedem
+// metod (w tym sendMouseHighResHScroll, dodana 11.11.2026) jest `public void`, bez `throws`, z dokładnie takimi parametrami (short/byte).
 
 import com.limelight.nvstream.NvConnection;
 
@@ -45,5 +45,10 @@ public final class HostConnectionImpl implements HostConnection {
     @Override
     public void sendMouseHighResScroll(short scrollAmount) {
         conn.sendMouseHighResScroll(scrollAmount);
+    }
+
+    @Override
+    public void sendMouseHighResHScroll(short scrollAmount) {
+        conn.sendMouseHighResHScroll(scrollAmount);
     }
 }

@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "id": "7d3a1f52-2b6e-4c19-a8d4-5e0b9c7f1a03",
+  "name": "Pulpit – Touchpad",
+  "tags": { "use": "desktop", "preset": "desktop-touchpad" },
+  "mode": "keyboard_mouse",
+  "reference": { "aspect": "20:9", "unit": "dp-normalized" },
+  "handedness": "right",
+  "global": {
+    "opacity": 0.5,
+    "haptics": { "enabled": true, "strength": 0.5, "onPress": "tick", "onRelease": "none" },
+    "slideToPress": false,
+    "autoHideOnGamepad": false,
+    "allowChords": false
+  },
+  "gestures": {
+    "cameraDrag": { "zone": "right_free", "output": "mouse_look",
+                    "sensitivity": 1.0, "curve": { "type": "linear" },
+                    "deadzonePx": 4, "invertY": false, "maxDeflection": 1.0, "decayMs": 0 },
+    "tapTarget":  { "enabled": true, "output": "mouse_left_at_point", "maxMovePx": 12, "maxMs": 220 },
+    "longPress":  { "enabled": true, "output": "mouse_right_at_point", "minMs": 450 },
+    "pinchZoom":  { "enabled": false, "output": "mouse_wheel", "pxPerNotch": 40 },
+    "edgeSwipeTop": { "enabled": true, "output": "app_menu" },
+    "freeZone": "touchpad",
+    "touchpad": { "sensitivity": 1.3, "scrollPxPerNotch": 24 }
+  },
+  "controls": [
+    { "id": "app_menu", "type": "system", "label": "☰", "output": { "app": "menu" },
+      "rect": { "x": 0.02, "y": 0.02, "w": 0.05, "h": 0.09 } },
+    { "id": "chat", "type": "system", "label": "⌨", "output": { "app": "soft_keyboard" },
+      "rect": { "x": 0.08, "y": 0.02, "w": 0.05, "h": 0.09 } }
+  ]
+}

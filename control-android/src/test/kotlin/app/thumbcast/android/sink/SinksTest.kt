@@ -175,6 +175,16 @@ class SinksTest {
         assertEquals(listOf("scroll -240", "mdown 3", "mup 3"), conn.calls)
     }
 
+    @Test
+    fun mouseSinkHorizontalWheelIsClampedAndSkipsZero() {
+        val conn = RecordingHostConnection()
+        val sink = MouseSink(conn)
+        sink.mouseHScroll(0)
+        sink.mouseHScroll(120)
+        sink.mouseHScroll(-100000)
+        assertEquals(listOf("hscroll 120", "hscroll -32768"), conn.calls)
+    }
+
     // ---------------- CompositeInputSink ----------------
 
     @Test
@@ -191,6 +201,22 @@ class SinksTest {
         composite.app("soft_keyboard")
         assertEquals(listOf("soft_keyboard"), actions)
         assertTrue(conn.calls.isEmpty())
+        assertTrue(rep.calls.isEmpty())
+    }
+
+    @Test
+    fun compositeRoutesBothWheelsToMouse() {
+        val conn = RecordingHostConnection()
+        val rep = RecordingPadReporter()
+        val composite = CompositeInputSink(
+            PadSink(rep),
+            KeyboardSink(conn, WindowsVkKeyTranslator),
+            MouseSink(conn),
+            AppActionHandler { },
+        )
+        composite.mouseWheel(120)
+        composite.mouseHScroll(-60)
+        assertEquals(listOf("scroll 120", "hscroll -60"), conn.calls)
         assertTrue(rep.calls.isEmpty())
     }
 

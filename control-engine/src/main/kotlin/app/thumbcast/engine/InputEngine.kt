@@ -23,7 +23,7 @@ class InputEngine(profile: Profile, sink: InputSink, private val clock: Clock, v
     private var hitTest: HitTest = HitTest(config.controls, viewport, config.leftHanded, tuning)
     private var sticks: HashMap<String, StickRecognizer> = HashMap()
     private var buttons: HashMap<String, ButtonRecognizer> = HashMap()
-    private var gestures: GestureArbiter = GestureArbiter(config, viewport, hitTest.screenBounds, policy)
+    private var gestures: FreeZoneGestures = FreeZoneGestures.create(config, viewport, hitTest.screenBounds, policy)
     private var lastEventTimeMs: Long = Long.MIN_VALUE
 
     init {
@@ -141,8 +141,14 @@ class InputEngine(profile: Profile, sink: InputSink, private val clock: Clock, v
     }
 
     private fun handleMove(e: TouchEvent) {
+        // Najpierw pozycje wszystkich palców zdarzenia, potem rozpoznawacze: gesty dwóch palców (pinch, przewijanie
+        // touchpada) widzą spójny stan zdarzenia, a nie jeden palec już przesunięty i drugi jeszcze stary.
+        val updated = ArrayList<TrackedPointer>()
         for (tp in e.pointers) {
             val p = tracker.update(tp.id, tp.x, tp.y, e.timeMs) ?: continue
+            updated.add(p)
+        }
+        for (p in updated) {
             val owner = p.owner
             if (owner is ControlOwner) {
                 controlMove(owner.controlId, p)
@@ -235,7 +241,7 @@ class InputEngine(profile: Profile, sink: InputSink, private val clock: Clock, v
         }
         sticks = ns
         buttons = nb
-        gestures = GestureArbiter(config, currentViewport, hitTest.screenBounds, policy)
+        gestures = FreeZoneGestures.create(config, currentViewport, hitTest.screenBounds, policy)
     }
 
     private fun resetRecognizers() {

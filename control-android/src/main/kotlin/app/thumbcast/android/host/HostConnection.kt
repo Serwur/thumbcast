@@ -4,7 +4,7 @@ package app.thumbcast.android.host
  * Fasada wysyłania klawiatury i myszy do hosta.
  *
  * Sygnatury odzwierciedlają metody `com.limelight.nvstream.NvConnection` z upstreamu
- * (zweryfikowane na tagu v12.2 = commit b48494cb96bf, 12.09.2026; wszystkie sześć metod ma
+ * (zweryfikowane na tagu v12.2 = commit b48494cb96bf, 12.09.2026; wszystkie siedem metod ma
  * dokładnie te nazwy, kolejność i typy parametrów, wszystkie `public void`, bez `throws`).
  * Implementacja w `patches/` (`HostConnectionImpl`) to więc czysta delegacja 1:1.
  *
@@ -27,8 +27,15 @@ interface HostConnection {
     /** Odpowiednik `NvConnection.sendMouseButtonUp(byte mouseButton)`. */
     fun sendMouseButtonUp(mouseButton: Byte)
 
-    /** Odpowiednik `NvConnection.sendMouseHighResScroll(short scrollAmount)`; 120 = 1 ząbek. */
+    /** Odpowiednik `NvConnection.sendMouseHighResScroll(short scrollAmount)`; 120 = 1 ząbek, dodatnie = w górę. */
     fun sendMouseHighResScroll(scrollAmount: Short)
+
+    /**
+     * Odpowiednik `NvConnection.sendMouseHighResHScroll(short scrollAmount)`: kółko poziome, 120 = 1 ząbek,
+     * dodatnie = w prawo. Dodane 11.11.2026 (przewijanie dwoma palcami w trybie touchpada); metoda
+     * upstreamu sprawdzona w `app/src/main/java/com/limelight/nvstream/NvConnection.java` (`public void`).
+     */
+    fun sendMouseHighResHScroll(scrollAmount: Short)
 }
 
 /**

@@ -335,16 +335,16 @@ index 70701041..2ee1bed8 100644
  
 diff --git a/app/src/main/java/com/limelight/thumbcast/HostConnectionImpl.java b/app/src/main/java/com/limelight/thumbcast/HostConnectionImpl.java
 new file mode 100644
-index 00000000..22332941
+index 00000000..ffdd2a88
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/HostConnectionImpl.java
-@@ -0,0 +1,49 @@
+@@ -0,0 +1,54 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK wstawiany do upstreamu moonlight-android (moduł :app).
 +// Delegacja 1:1 fasady HostConnection (:control-android) do NvConnection.
-+// Sygnatury NvConnection zweryfikowane z upstreamem v12.2 (commit b48494cb96bf): wszystkie sześć
-+// metod jest `public void`, bez `throws`, z dokładnie takimi parametrami (short/byte).
++// Sygnatury NvConnection zweryfikowane z upstreamem v12.2 (commit b48494cb96bf): wszystkie siedem
++// metod (w tym sendMouseHighResHScroll, dodana 11.11.2026) jest `public void`, bez `throws`, z dokładnie takimi parametrami (short/byte).
 +
 +import com.limelight.nvstream.NvConnection;
 +
@@ -386,6 +386,11 @@ index 00000000..22332941
 +    @Override
 +    public void sendMouseHighResScroll(short scrollAmount) {
 +        conn.sendMouseHighResScroll(scrollAmount);
++    }
++
++    @Override
++    public void sendMouseHighResHScroll(short scrollAmount) {
++        conn.sendMouseHighResHScroll(scrollAmount);
 +    }
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/HostPadReporterImpl.java b/app/src/main/java/com/limelight/thumbcast/HostPadReporterImpl.java
@@ -1014,10 +1019,10 @@ index 00000000..ffa9fcc4
 +}
 diff --git a/app/src/main/res/values-pl/thumbcast_strings.xml b/app/src/main/res/values-pl/thumbcast_strings.xml
 new file mode 100644
-index 00000000..ac2bd282
+index 00000000..e77a6aaf
 --- /dev/null
 +++ b/app/src/main/res/values-pl/thumbcast_strings.xml
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,30 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -1028,6 +1033,8 @@ index 00000000..ac2bd282
 +    <string name="title_thumbcast_profile">Profil sterowania</string>
 +    <string name="thumbcast_profile_mmo_pad_plus">MMO – Pad+</string>
 +    <string name="thumbcast_profile_mmo_keyboard">MMO – Klawiatura</string>
++    <string name="thumbcast_profile_desktop_touchpad">Pulpit – Touchpad</string>
++    <string name="thumbcast_profile_big_picture">Big Picture</string>
 +    <string name="title_thumbcast_debug">Nakładka debug wejścia</string>
 +    <string name="summary_thumbcast_debug">Pokazuje aktywne wskaźniki, wysłane flagi pada i opóźnienie dotyk→wysyłka</string>
 +    <string name="thumbcast_profile_error">Nie udało się wczytać profilu, używam klasycznego kontrolera: %1$s</string>
@@ -1048,10 +1055,10 @@ index 00000000..ac2bd282
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_arrays.xml b/app/src/main/res/values/thumbcast_arrays.xml
 new file mode 100644
-index 00000000..f7171266
+index 00000000..d641f5bb
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_arrays.xml
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,41 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: tablice preferencji warstwy sterowania (patches/preferences.patch.md, pkt 2). -->
 +<resources>
@@ -1066,10 +1073,14 @@ index 00000000..f7171266
 +    <string-array name="thumbcast_profile_names">
 +        <item>@string/thumbcast_profile_mmo_pad_plus</item>
 +        <item>@string/thumbcast_profile_mmo_keyboard</item>
++        <item>@string/thumbcast_profile_desktop_touchpad</item>
++        <item>@string/thumbcast_profile_big_picture</item>
 +    </string-array>
 +    <string-array name="thumbcast_profile_values" translatable="false">
 +        <item>mmo-pad-plus.thumbcast.json</item>
 +        <item>mmo-keyboard.thumbcast.json</item>
++        <item>desktop-touchpad.thumbcast.json</item>
++        <item>big-picture.thumbcast.json</item>
 +    </string-array>
 +    <!-- Rozmiar kontrolek (ThumbcastSettings.SCALE_PERCENTS, domyślnie 85). -->
 +    <string-array name="thumbcast_control_scale_names" translatable="false">
@@ -1091,10 +1102,10 @@ index 00000000..f7171266
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_strings.xml b/app/src/main/res/values/thumbcast_strings.xml
 new file mode 100644
-index 00000000..cb9bacb8
+index 00000000..5a8e0678
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_strings.xml
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,30 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -1105,6 +1116,8 @@ index 00000000..cb9bacb8
 +    <string name="title_thumbcast_profile">Control profile</string>
 +    <string name="thumbcast_profile_mmo_pad_plus">MMO – Pad+</string>
 +    <string name="thumbcast_profile_mmo_keyboard">MMO – Keyboard</string>
++    <string name="thumbcast_profile_desktop_touchpad">Desktop – Touchpad</string>
++    <string name="thumbcast_profile_big_picture">Big Picture</string>
 +    <string name="title_thumbcast_debug">Input debug overlay</string>
 +    <string name="summary_thumbcast_debug">Shows active pointers, sent pad flags and touch-to-send latency</string>
 +    <string name="thumbcast_profile_error">Control profile could not be loaded, using classic controller: %1$s</string>

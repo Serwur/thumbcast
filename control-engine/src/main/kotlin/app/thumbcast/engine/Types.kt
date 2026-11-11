@@ -29,8 +29,13 @@ interface InputSink {
     fun mouseButton(button: MouseBtn, down: Boolean)
     /** Pozycja w układzie wideo (refWidth x refHeight). */
     fun mousePosition(x: Int, y: Int, refWidth: Int, refHeight: Int)
-    /** 120 = 1 ząbek kółka. */
+    /** Kółko pionowe: 120 = 1 ząbek, dodatnie = w górę. */
     fun mouseWheel(highResDelta: Int)
+    /**
+     * Kółko poziome: 120 = 1 ząbek, dodatnie = w prawo. Rozszerzenie kontraktu z 11.11.2026
+     * (przewijanie dwoma palcami w trybie touchpada; CONTRACT-NOTES.md, ENGINE).
+     */
+    fun mouseHScroll(highResDelta: Int)
     fun app(action: String)
 }
 
