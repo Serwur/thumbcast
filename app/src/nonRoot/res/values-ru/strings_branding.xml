@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-ru/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast тестирует ваше сетевое подключение, чтобы определить, заблокированы ли нужные порты.
+\n
+\nЭто может занять некоторое время…</string>
+    <string name="nettest_text_success">Ваша сеть не блокирует Thumbcast. Если у вас всё ещё есть проблемы с соединением, проверьте настройки брандмауэра на компьютере.\n\nЕсли вы пытаетесь транслировать через интернет, установите Moonlight Internet Hosting Tool на ваш компьютер и запустите установленный Internet Streaming Tester, чтобы проверить Интернет-соединение на вашем компьютере.</string>
+    <string name="nettest_text_failure">Похоже, что текущее сетевое подключение вашего устройства блокирует Thumbcast. Трансляция через Интернет может не работать при подключении к этой сети.\n\nСледующие сетевые порты были заблокированы:\n</string>
+    <string name="nettest_text_blocked">Текущее сетевое соединение вашего устройства блокирует Thumbcast. Потоковая передача через Интернет может не работать при подключении к этой сети.</string>
+    <string name="message_decoding_error">Thumbcast произошел сбой из-за несовместимости с видеодекодером этого устройства. Попробуйте изменить настройки потоковой передачи, если сбои продолжаются.</string>
+    <string name="summary_seekbar_deadzone">Некоторые игры могут принудительно увеличить мёртвую зону вместо указанной в Thumbcast.</string>
+    <string name="summary_checkbox_usb_bind_all">Заставляет USB драйвер Thumbcast взять на себя работу со всеми поддерживаемыми Xbox геймпадами</string>
+    <string name="summary_language_list">Язык, который будет использоваться в Thumbcast</string>
+</resources>

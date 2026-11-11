@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-hu/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">A Thumbcast teszteli a hálózati kapcsolatot, hogy megállapítsa, nem blokkoltak-e szükséges portokat.\n\nEz eltarthat néhány másodpercig…</string>
+    <string name="nettest_text_success">Úgy tűnik, a hálózatod nem blokkolja a Thumbcastot. Ha továbbra is problémáid vannak a csatlakozással, ellenőrizd a számítógép tűzfalbeállításait.\n\nHa az interneten keresztül szeretnél streamelni, telepítsd a Moonlight Internet Hosting Toolt a számítógépedre, és futtassd a mellékelt Internet Streaming Testert a számítógép internetkapcsolatának ellenőrzéséhez.</string>
+    <string name="nettest_text_failure">Úgy tűnik, hogy az eszköz jelenlegi hálózati kapcsolata blokkolja a Thumbcast-ot. Előfordulhat, hogy az interneten keresztüli streamelés nem működik, ha csatlakozik ehhez a hálózathoz.\n\nA következő hálózati portokat blokkolták:\n</string>
+    <string name="nettest_text_blocked">Az eszköz jelenlegi hálózati kapcsolata blokkolja a Thumbcast-ot. Előfordulhat, hogy az interneten keresztüli streamelés nem működik, ha csatlakozik ehhez a hálózathoz.</string>
+    <string name="message_decoding_error">A Thumbcast összeomlott az eszköz videódekóderével való inkompatibilitás miatt. Próbáld meg módosítani a streamelési beállításokat, ha az összeomlások továbbra is fennállnak.</string>
+    <string name="summary_seekbar_deadzone">Megjegyzés: Egyes játékok nagyobb holtteret kényszeríthetnek ki, mint amire a Thumbcast be van állítva.</string>
+    <string name="summary_checkbox_usb_bind_all">A Thumbcast USB-illesztőprogramjának használata az összes támogatott játékvezérlőhöz, még akkor is, ha natív Xbox-vezérlő támogatás van jelen</string>
+    <string name="summary_language_list">A Thumbcast-hoz használt nyelv</string>
+</resources>

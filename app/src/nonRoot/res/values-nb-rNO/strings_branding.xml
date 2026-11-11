@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-nb-rNO/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast tester din nettverksforbindelse for å fastsette hvorvidt NVIDIA GameStream er blokkert.
+\n
+\nDette kan ta noen sekunder …</string>
+    <string name="nettest_text_success">Det ser ikke ut til at nettverket ditt blokkerer Thumbcast. Hvis du fremdeles har problemer bør du sjekke PC-ens brannmursinnstillinger.
+\n
+\nHvis du prøver å strømme over Internett, kan du installere Moonlight Internett-vertstjeningsverktøyet på din PC og kjøre den inkluderte Internett-strømmingstesteren for å sjekke PC-ens tilkobling til Internett.</string>
+    <string name="nettest_text_failure">Nettverkstilkoblingen på din enhet ser ut til å blokkere Thumbcast. Strømming over Internett vil muligens ikke fungere når tilkoblet gjennom dette nettverket.
+\n
+\nFølgende nettverksporter ble blokkert:
+\n</string>
+    <string name="nettest_text_blocked">Nettverkstilkoblingen på din enhet ser ut til å blokkere Thumbcast. Strømming over Internett vil muligens ikke fungere tilkoblet gjennom dette nettverket.</string>
+    <string name="message_decoding_error">Thumbcast har krasjet som følge av inkompatibilitet med denne enhetens videodekoder. Prøv å justere strømmingsinnstillingene hvis problemet vedvarer.</string>
+    <string name="summary_checkbox_usb_bind_all">Bruk Thumbcast sin USB-driver for alle støttede spillkontrollere, selv når systemspesifikk kontrollerstøtte er tilgjengelig</string>
+    <string name="summary_language_list">Språk brukt i Thumbcast</string>
+</resources>

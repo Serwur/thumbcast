@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: TYMCZASOWY znak aplikacji (placeholder do czasu właściwego projektu graficznego).
+     Punkt dotyku z dwoma kręgami fali: ogólny symbol dotyku, bez znaków towarowych.
+     Rysunek mieści się w bezpiecznej strefie ikony adaptacyjnej (koło r=33 w siatce 108x108).
+     Używany jako foreground i monochrome w mipmap-anydpi-v26/ic_launcher.xml. Patrz docs/branding.md. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- zewnętrzny krąg fali -->
+    <path
+        android:pathData="M28,54 a26,26 0 1,0 52,0 a26,26 0 1,0 -52,0"
+        android:strokeColor="#FFFFFF"
+        android:strokeAlpha="0.55"
+        android:strokeWidth="3" />
+    <!-- wewnętrzny krąg fali -->
+    <path
+        android:pathData="M37,54 a17,17 0 1,0 34,0 a17,17 0 1,0 -34,0"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4" />
+    <!-- punkt dotyku -->
+    <path
+        android:pathData="M46,54 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 z"
+        android:fillColor="#FFFFFF" />
+</vector>

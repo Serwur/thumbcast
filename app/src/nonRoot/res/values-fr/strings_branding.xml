@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-fr/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast teste votre connexion réseau pour déterminer si les ports requis sont bloqués.
+\n
+\nCela peut prendre quelques secondes…</string>
+    <string name="nettest_text_success">Votre réseau ne semble pas bloquer Thumbcast. Si vous avez encore des difficultés à vous connecter, vérifiez les paramètres du pare-feu de votre PC.
+\n
+\nSi vous essayez de streamer depuis Internet, installez l\'outil Moonlight Internet Hosting Tool sur votre PC et exécutez le testeur de streaming Internet inclus pour vérifier la connexion Internet de votre PC.</string>
+    <string name="nettest_text_failure">La connexion réseau actuelle de votre appareil semble bloquer Thumbcast. Le streaming sur Internet peut ne pas fonctionner lorsque vous êtes connecté à ce réseau.
+\n
+\nLes ports réseau suivants ont été bloqués :
+\n</string>
+    <string name="nettest_text_blocked">La connexion réseau actuelle de votre appareil bloque Thumbcast. Le streaming sur Internet peut ne pas fonctionner lorsque vous êtes connecté à ce réseau.</string>
+    <string name="message_decoding_error">Thumbcast a planté en raison d\'une incompatibilité avec le décodeur vidéo de cet appareil. Essayez d\'ajuster les paramètres de streaming si les plantages continuent.</string>
+    <string name="summary_seekbar_deadzone">Remarque : Certains jeux peuvent imposer une zone morte plus grande que celle que Thumbcast est configuré pour utiliser.</string>
+    <string name="summary_checkbox_usb_bind_all">Utiliser le pilote USB de Thumbcast pour toutes les manettes prises en charge, même si l\'appareil supporte nativement celles-ci</string>
+    <string name="summary_language_list">Langue à utiliser pour Thumbcast</string>
+</resources>

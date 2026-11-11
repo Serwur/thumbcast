@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: nadpisuje app/src/main/res/drawable/app_icon.png (logo upstreamu). Kod upstreamu
+     v12.2 się do niego nie odwołuje, ale plik trafiałby do APK. Zastępujemy go TYMCZASOWĄ ikoną
+     (drawable/thumbcast_launcher_legacy.xml). Patrz docs/branding.md. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/thumbcast_launcher_legacy"
+    android:inset="0dp" />

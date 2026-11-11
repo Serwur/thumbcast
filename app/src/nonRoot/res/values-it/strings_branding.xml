@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-it/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast sta testando la tua connessione di rete per controllare se ogni porta richiesta sia bloccata.
+\n
+\nPotrebbero volerci alcuni secondi…</string>
+    <string name="nettest_text_success">La tua rete non sembra bloccare Thumbcast. Se hai ancora problemi di connessione, controlla le impostazioni del firewall del PC.
+\n
+\nSe stai cercando di trasmettere via Internet, installa il Moonlight Internet Hosting Tool sul tuo PC ed avvia il Test per la trasmissione via Internet incluso per controllare la connessione ad Internet del tuo PC.</string>
+    <string name="nettest_text_failure">Sembra che l\'attuale connessione di rete del tuo dispositivo stia bloccando Thumbcast. Trasmettere via Internet potrebbe non funzionare mentre sei connesso a questa rete.
+\n
+\nQueste porte di rete sono bloccate:
+\n</string>
+    <string name="nettest_text_blocked">L\'attuale connessione di rete del tuo dispositivo sta bloccando Thumbcast. Trasmettere via Internet potrebbe non funzionare mentre sei connesso a questa rete.</string>
+    <string name="message_decoding_error">Thumbcast ha smesso di funzionare per colpa di un problema al decodificatore video di questo dispositivo. Prova a modificare le impostazioni di stream se il problema persiste.</string>
+    <string name="summary_seekbar_deadzone">Nota: Alcuni giochi possono imporre una deadzone più grande di quella che Thumbcast è configurato per utilizzare.</string>
+    <string name="summary_checkbox_usb_bind_all">Forza i driver USB di Thumbcast di assumere il controllo su tutti i controller Xbox supportati</string>
+    <string name="summary_language_list">Lingua da usare in Thumbcast</string>
+</resources>

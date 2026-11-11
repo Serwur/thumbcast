@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: nadpisania tekstów upstreamu (app/src/main/res/values/strings.xml), w których
+     „Moonlight” oznaczało tę aplikację. Aplikacja nazywa się Thumbcast i nie może udawać
+     oficjalnej aplikacji Moonlight (docs/naming.md, zasada 2). Plik upstreamu zostaje bez zmian,
+     żeby nie generować konfliktów przy scalaniu; flavor nonRoot ma pierwszeństwo przed main.
+     Atrybucja („serwery projektu Moonlight”, „Moonlight Internet Hosting Tool”) zostaje.
+     Pisane ręcznie; inne lokalizacje generuje tools/branding/gen_locale_overrides.py.
+     Audyt i decyzje: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast is testing your network connection to determine if any required ports are blocked.\n\nThis may take a few seconds…</string>
+    <string name="nettest_text_success">Your network does not appear to be blocking Thumbcast. If you still have trouble connecting, check your PC\'s firewall settings.\n\nIf you are trying to stream over the Internet, install the Moonlight Internet Hosting Tool on your PC and run the included Internet Streaming Tester to check your PC\'s Internet connection.</string>
+    <!-- THUMBCAST: test łączy się z serwerami projektu Moonlight (ServerHelper.CONNECTION_TEST_SERVER), więc mówimy to wprost. -->
+    <string name="nettest_text_inconclusive">The network test could not be performed because none of the Moonlight project\'s connection testing servers were reachable. Check your Internet connection or try again later.</string>
+    <string name="nettest_text_failure">Your device\'s current network connection seems to be blocking Thumbcast. Streaming over the Internet may not work while connected to this network.\n\nThe following network ports were blocked:\n</string>
+    <string name="nettest_text_blocked">Your device\'s current network connection is blocking Thumbcast. Streaming over the Internet may not work while connected to this network.</string>
+    <string name="message_decoding_error">Thumbcast has crashed due to an incompatibility with this device\'s video decoder. Try adjusting the streaming settings if the crashes continue.</string>
+    <string name="summary_seekbar_deadzone">Note: Some games can enforce a larger deadzone than what Thumbcast is configured to use.</string>
+    <string name="summary_checkbox_usb_bind_all">Use Thumbcast\'s USB driver for all supported gamepads, even if native Xbox controller support is present</string>
+    <string name="summary_language_list">Language to use for Thumbcast</string>
+    <string name="local_network_rationale">Thumbcast requires local network permissions to communicate with nearby hosts</string>
+</resources>

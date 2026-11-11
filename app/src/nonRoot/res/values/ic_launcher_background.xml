@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: nadpisuje kolor tła ikony upstreamu (app/src/main/res/values/ic_launcher_background.xml).
+     TYMCZASOWY kolor do czasu właściwego projektu graficznego. Patrz docs/branding.md. -->
+<resources>
+    <color name="ic_launcher_background">#1D6B5F</color>
+</resources>

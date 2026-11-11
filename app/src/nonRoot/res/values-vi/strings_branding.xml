@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-vi/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast đang thử nghiệm kết nối mạng của bạn để xác định xem NVIDIA GameStream có bị chặn không.
+\n
+\nViệc này có thể sẽ mất một vài giây…</string>
+    <string name="nettest_text_success">Mạng của bạn có vẻ là không chặn Thumbcast. Nếu bạn vẫn gặp rắc rối trong việc kết nối, hãy kiểm tra cài đặt tường lửa của PC.
+\n
+\nNếu bạn đang cố stream qua Internet, hãy cài đặt Moonlight Internet Hosting Tool trên PC và chạy Internet Streaming Tester được bao gồm trong đó để kiểm tra kết nối Internet của PC.</string>
+    <string name="nettest_text_failure">Kết nối mạng hiện tại của thiết bị có vẻ là đang chặn Thumbcast. Việc stream qua Internet có thể sẽ không được khi đang kết nối đến mạng này.
+\n
+\nCác cổng mạng sau bị chặn:
+\n</string>
+    <string name="nettest_text_blocked">Kết nối mạng hiện tại của thiết bị đang chặn Thumbcast. Việc stream qua Internet có thể sẽ không được khi đang kết nối đến mạng này.</string>
+    <string name="message_decoding_error">Thumbcast đã bị dừng đột ngột vì một sự không tương thích với trình giải mã video của thiết bị này. Hãy chắc chắn là GeForce Experience được cập nhật lên phiên bản mới nhất trên PC. Hãy thử điều chỉnh cài đặt stream nếu việc dừng đột ngột vẫn tiếp tục.</string>
+    <string name="summary_checkbox_usb_bind_all">Sử dụng driver USB của Thumbcast cho tất cả tay cầm điều khiển được hỗ trợ, kể cả nếu có hỗ trợ tay cầm điều khiển Xbox</string>
+    <string name="summary_language_list">Ngôn ngữ để sử dụng cho Thumbcast</string>
+</resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-uk/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast перевіряє ваше мережеве з’єднання, щоб визначити, чи заблоковані необхідні порти.
+\n
+\nЦе може зайняти кілька секунд…</string>
+    <string name="nettest_text_success">Схоже що ваша мережа не блокує Thumbcast. Якщо у вас й надалі проблеми з підключенням, перевірте налаштування брандмауера.
+\n
+\nЯкщо ви намагаєтеся транслювати через Інтернет, встановіть на своєму пристрої Moonlight Internet Hosting Tool, та запустіть випробування мережі щоб перевірити ваше з\'єднання до Інтернету.</string>
+    <string name="nettest_text_failure">Поточне мережеве з’єднання вашого пристрою блокує Thumbcast. Трансляції через Інтернет можуть не працювати на цієї мережі.
+\n
+\nНаступні мережеві порти були заблоковані:
+\n</string>
+    <string name="nettest_text_blocked">Поточне мережеве з’єднання вашого пристрою блокує Thumbcast. Трансляції через Інтернет можуть не працювати на цієї мережі.</string>
+    <string name="message_decoding_error">Thumbcast аварійно завершив роботу через несумісність із відеодекодером цього пристрою. Спробуйте налаштувати параметри потокового передавання, якщо збої триватимуть.</string>
+    <string name="summary_seekbar_deadzone">Примітка: Деякі ігри можуть встановлювати більшу мертву зону, ніж та, на яку налаштовано Thumbcast.</string>
+    <string name="summary_checkbox_usb_bind_all">Використовувати USB драйвер Thumbcast для усіх підтриманих контролерів, навіть якщо існує рідна підтримка</string>
+    <string name="summary_language_list">Мова, яка буде використовуватися в Thumbcast</string>
+</resources>

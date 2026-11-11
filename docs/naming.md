@@ -4,6 +4,7 @@
 
 1. **Bez znaków towarowych gry i wydawcy** w nazwie aplikacji, `applicationId`, nazwach pakietów, zasobach, ikonach i grafikach: „WoW”, „Warcraft”, „Azeroth”, „Blizzard”, „Hearth-” (Hearthstone), ikony klas, fonty gry.
 2. **Bez „Moonlight”** w nazwie i zasobach, żeby nie mylić z oficjalnym projektem. Wolno napisać w opisie „bazuje na Moonlight (GPLv3)”.
+   Audyt tekstów, ikon i baneru upstreamu oraz nadpisania w `app/src/nonRoot/res/`: [`docs/branding.md`](branding.md).
 3. Gra może pojawić się w README i dokumentacji wyłącznie jako opis zgodności (nominative use): „zgodne z grami z natywną obsługą pada, np. …”. Nigdy w nazwie, ikonie, tytule ani krótkim opisie w sklepie.
 4. Presety nazywamy gatunkowo: „MMO – Pad+”, „MMO – Klawiatura”, „Akcja 3D”.
 5. Etykiety przycisków: neutralne („Skok”, „Akcja”, „Mapa”) albo nazwy przycisków pada (A, B, LT). Glyphy Xbox rysujemy sami jako proste litery w kółku, bez logotypów.

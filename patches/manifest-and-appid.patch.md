@@ -97,6 +97,9 @@ mają w nazwie pakietu `limelight` (upstream), nie „Moonlight”, więc zasada
   Manifest ma też baner TV (`android:banner`): podmienić lub usunąć.
 - Teksty „Moonlight” w UI upstreamu (np. tytuły ekranów, `HelpActivity`) zostawić w MVP, jeśli są atrybucją,
   a zmienić te, które sugerują, że to oficjalna aplikacja Moonlight. Atrybucja w NOTICE (SCAFFOLD).
+- **Stan (11.11.2026):** zrobione inaczej niż wyżej: zamiast usuwać ikony i edytować `strings.xml` upstreamu
+  nadpisujemy je zasobami flavoru w `app/src/nonRoot/res/` (mniej konfliktów przy rebase). Ikona i baner TV to
+  placeholdery. Audyt, decyzje i weryfikacja: `docs/branding.md`.
 
 ## 4. ProGuard/R8
 

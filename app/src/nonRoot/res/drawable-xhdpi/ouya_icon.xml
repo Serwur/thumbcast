@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: nadpisuje app/src/main/res/drawable-xhdpi/ouya_icon.png (baner upstreamu z napisem
+     „Moonlight Game Streaming” dla konsoli OUYA). OUYA czyta ten plik po ścieżce .png, więc po
+     nadpisaniu nie zobaczy baneru; platforma jest martwa, a nie chcemy wysyłać cudzego logo.
+     TYMCZASOWO wskazuje na baner TV (drawable-xhdpi/atv_banner.xml). Patrz docs/branding.md. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/atv_banner"
+    android:inset="0dp" />

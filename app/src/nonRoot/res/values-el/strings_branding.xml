@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-el/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Το Thumbcast δοκιμάζει τη σύνδεση δικτύου σας για να διαπιστώσει εάν κάποια θύρα είναι αποκλεισμένη.
+\n
+\n
+\nΑυτό μπορεί να πάρει μερικά δευτερόλεπτα…</string>
+    <string name="nettest_text_success">Το δίκτυό σας δεν φαίνεται να μπλοκάρει το Thumbcast. Αν εξακολουθείτε να έχετε πρόβλημα σύνδεσης, ελέγξτε τις ρυθμίσεις του τείχους προστασίας του υπολογιστή σας.
+\n
+\nΕάν προσπαθείτε να κάνετε streaming μέσω του Διαδικτύου, εγκαταστήστε το Moonlight Internet Hosting Tool στον υπολογιστή σας και εκτελέστε το συμπεριλαμβανόμενο Internet Streaming Tester για να ελέγξετε τη σύνδεση του υπολογιστή σας στο Διαδίκτυο.</string>
+    <string name="nettest_text_failure">Η τρέχουσα σύνδεση δικτύου της συσκευής σας φαίνεται να εμποδίζει το Thumbcast. Η ροή μέσω του Internet ενδέχεται να μην λειτουργεί ενώ είστε συνδεδεμένοι σε αυτό το δίκτυο.
+\n
+\nΟι ακόλουθες θύρες δικτύου αποκλείστηκαν:
+\n</string>
+    <string name="nettest_text_blocked">Η τρέχουσα σύνδεση δικτύου της συσκευής σας εμποδίζει το Thumbcast. Η ροή μέσω του Internet ενδέχεται να μην λειτουργεί ενώ είστε συνδεδεμένοι σε αυτό το δίκτυο.</string>
+    <string name="message_decoding_error">Το Thumbcast κατέρρευσε λόγω ασυμβατότητας με τον αποκωδικοποιητή βίντεο αυτής της συσκευής. Βεβαιωθείτε ότι το GeForce Experience έχει ενημερωθεί στην τελευταία έκδοση στον υπολογιστή σας. Δοκιμάστε να προσαρμόσετε τις ρυθμίσεις ροής, εάν οι καταρρεύσεις συνεχίζονται.</string>
+    <string name="summary_checkbox_usb_bind_all">Χρησιμοποιήστε το πρόγραμμα οδήγησης USB του Thumbcast για όλα τα υποστηριζόμενα gamepad, ακόμα και αν υπάρχει υποστήριξη εγγενούς ελεγκτή Xbox</string>
+    <string name="summary_language_list">Γλώσσα που χρησιμοποιείται για το Thumbcast</string>
+</resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-de/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast testet Ihre Netzwerkverbindung, um festzustellen, ob benötigte Ports blockiert sind.
+\n
+\nDies kann einige Sekunden dauern…</string>
+    <string name="nettest_text_success">Dein Netzwerk scheint Thumbcast nicht zu blockieren. Wenn du weiterhin Probleme mit der Verbindung hast, überprüfe die Firewall-Einstellungen deines Hosts
+\n
+\nWenn du versuchst, über das Internet zu streamen, installiere das Moonlight Internet Hosting Tool auf deinem Host und führe den mitgelieferten Internet-Streaming-Tester aus, um die Internetverbindung des Hosts zu überprüfen.</string>
+    <string name="nettest_text_failure">Die aktuelle Netzwerkverbindung deines Geräts scheint Thumbcast zu blockieren. Das Streaming über das Internet funktioniert möglicherweise nicht, während du mit diesem Netzwerk verbunden bist.
+\n
+\nFolgende Netzwerkports wurden blockiert:
+\n</string>
+    <string name="nettest_text_blocked">Die aktuelle Netzwerkverbindung deines Geräts blockiert Thumbcast. Das Streaming über das Internet funktioniert möglicherweise nicht, während du mit diesem Netzwerk verbunden bist.</string>
+    <string name="message_decoding_error">Thumbcast ist wegen einer Inkompatibilität zu dem Video Dekodierer deines Gerätes abgestürzt. Sollten weiterhin Abstürze auftreten, ändere deine Streaming Einstellungen.</string>
+    <string name="summary_seekbar_deadzone">Hinweis: Einige Spiele können eine größere Controller-Totzone erzwingen als die, die in Thumbcast konfiguriert ist.</string>
+    <string name="summary_checkbox_usb_bind_all">Erzwingt die Verwendung von Thumbcasts USB Treiber für alle Xbox kompatiblen Controller</string>
+    <string name="summary_language_list">Sprache die Thumbcast verwenden soll</string>
+</resources>

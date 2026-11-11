@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-ja/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast はポートがブロックされていないか確かめるためネットワーク接続をてすとしています。
+\n
+\n少々お待ちください…</string>
+    <string name="nettest_text_success">ネットワークは Thumbcast をブロックしていません。接続に問題があるようでしたらコンピュータのファイアーウォールの設定を確認してください。
+\n
+\nインターネット上でゲームをストリームする場合は Moonlight Internet Hosting Tool をインストールして付属のInternet Streaming Tester をはしらせコンピュータの接続を確認してください。</string>
+    <string name="nettest_text_failure">デバイスの設定が Thumbcast をブロックしているようです。このネットワークに接続している間ストリーミングが使えないかもしれません。
+\n
+\n次のネットワークポートがブロックされています:
+\n</string>
+    <string name="nettest_text_blocked">デバイスの設定が Thumbcast をブロックしているようです。このネットワークに接続している間ストリーミングが使えないかもしれません。</string>
+    <string name="message_decoding_error">このデバイスのビデオデコーダーが Thumbcast と非対応なため Thumbcast がクラッシュしました。クラッシュが継続するようでしたらストリームの設定を変更してください。</string>
+    <string name="summary_language_list">Thumbcastで使用する言語</string>
+    <string name="error_manager_not_running">ComputerManagerサービスが動作していません。しばらく待つか、Thumbcastを再起動してください</string>
+</resources>

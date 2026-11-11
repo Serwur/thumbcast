@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: nadpisuje baner Android TV upstreamu app/src/main/res/drawable-xhdpi/atv_banner.png
+     (android:banner w manifeście). Ten sam kwalifikator i nazwa, więc flavor wygrywa.
+     TYMCZASOWY baner 320x180 px (160x90 dp) bez napisu, do czasu właściwego projektu graficznego.
+     Patrz docs/branding.md. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="160dp"
+    android:height="90dp"
+    android:viewportWidth="160"
+    android:viewportHeight="90">
+    <path
+        android:pathData="M0,0 h160 v90 h-160 z"
+        android:fillColor="#1D6B5F" />
+    <path
+        android:pathData="M58,45 a22,22 0 1,0 44,0 a22,22 0 1,0 -44,0"
+        android:strokeColor="#FFFFFF"
+        android:strokeAlpha="0.55"
+        android:strokeWidth="2.5" />
+    <path
+        android:pathData="M66,45 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5" />
+    <path
+        android:pathData="M73,45 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 z"
+        android:fillColor="#FFFFFF" />
+</vector>
