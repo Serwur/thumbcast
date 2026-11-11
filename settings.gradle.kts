@@ -1,12 +1,8 @@
 // Thumbcast: ustawienia wielomodułowego buildu.
 //
-// Stan obecny (pre-alpha, przed forkiem): tylko nowe moduły Thumbcast.
-// Po forku upstreamu moonlight-stream/moonlight-android (patrz docs/NEXT-STEPS.md)
-// dochodzi moduł :app z upstreamu. Rekomendowany wariant to scalenie:
-// repo Thumbcast powstaje jako fork upstreamu, a te moduły są dodane obok katalogu app/.
-// Wtedy upstreamowy settings.gradle (Groovy) usuwamy i odkomentowujemy include(":app") poniżej.
-// Wariant alternatywny (submoduł git z upstreamem w np. upstream/) wymaga
-// project(":app").projectDir = file("upstream/app") i jest trudniejszy przy rebase.
+// Repo = historia upstreamu moonlight-stream/moonlight-android (scalona od v12.2, 11.11.2026)
+// + moduły Thumbcast obok katalogu app/. Upstreamowe settings.gradle i build.gradle (Groovy)
+// są usunięte; repozytoria z ich allprojects {} (w tym jitpack.io) są tutaj.
 
 pluginManagement {
     repositories {
@@ -23,14 +19,16 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
-    // PREFER_SETTINGS zamiast FAIL_ON_PROJECT_REPOS, bo upstream deklaruje repozytoria w allprojects {}
-    // (m.in. jitpack.io). Po scaleniu przenieść je tutaj i rozważyć FAIL_ON_PROJECT_REPOS.
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    // Upstreamowy allprojects {} jest usunięty, żaden moduł nie deklaruje własnych repozytoriów.
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
-        // Upstream używa jitpack.io (build.gradle upstreamu, [Z:7]). Odkomentować po scaleniu z :app.
-        // maven { url = uri("https://jitpack.io") }
+        // :app upstreamu: com.github.cgutman:ShieldControllerExtensions jest tylko na jitpack.io.
+        maven {
+            url = uri("https://jitpack.io")
+            content { includeGroup("com.github.cgutman") }
+        }
     }
 }
 
@@ -43,8 +41,8 @@ include(":control-engine")
 // Biblioteka Androida: ThumbcastOverlay i adaptery InputSink (agent ANDROID).
 include(":control-android")
 
-// Po forku: moduł aplikacji z upstreamu (Game.java z hookami z patches/).
-// include(":app")
+// Moduł aplikacji z upstreamu (Game.java z hookami z patches/).
+include(":app")
 
 // Etap E2 (plan sekcja 5.1): edytor układu w Compose.
 // include(":control-editor")

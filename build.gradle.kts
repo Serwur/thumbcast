@@ -2,9 +2,9 @@
 // Pluginy deklarujemy tu z "apply false", żeby wszystkie moduły dzieliły jeden classloader
 // (AGP i Kotlin Gradle Plugin w tej samej wersji w całym buildzie).
 //
-// Po scaleniu z upstreamem: upstreamowy build.gradle (Groovy, buildscript { classpath AGP })
-// zastępujemy tym plikiem. :app może dalej używać "apply plugin: 'com.android.application'",
-// bo plugin jest na classpath dzięki deklaracji poniżej.
+// Upstreamowy build.gradle (Groovy, buildscript { classpath AGP 9.4.0 }) jest zastąpiony tym plikiem.
+// :app dalej używa "apply plugin: 'com.android.application'", bo plugin jest na classpath
+// dzięki deklaracji poniżej.
 
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 

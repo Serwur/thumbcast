@@ -34,3 +34,15 @@ Thumbs.db
 *.log
 *.hprof
 docs/tests/raw/
+
+# Z upstreamu (moonlight-android v12.2)
+output.json
+output-metadata.json
+out/
+*.class
+bin/
+gen/
+.classpath
+.project
+**/jniLibs
+app/.externalNativeBuild/
