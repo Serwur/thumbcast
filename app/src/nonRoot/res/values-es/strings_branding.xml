@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-es/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast está probando tu conexión a la red para determinar si algún puerto necesario está bloqueado.
+\n
+\nEsto puede tardar unos segundos…</string>
+    <string name="nettest_text_success">Tu red parece no estar bloqueando Thumbcast. Si aun tienes problemas de conexión, comprueba la configuración del firewall de tu PC.
+\n
+\nSi estas intentado transmitir mediante Internet, instala en tu pc la Moonlight Internet Hosting Tool y ejecuta el Internet Streaming Tester incluido para comprobar la conexión de tu PC a internet.</string>
+    <string name="nettest_text_failure">La actual conexión de red de tu dispositivo parece estar bloqueando Thumbcast. La Transmisión mediante Internet puede no funcionar mientras estes conectado a esta red.
+\n
+\nSe han bloqueado los siguientes puertos de red:
+\n</string>
+    <string name="nettest_text_blocked">La conexión de red actual de tu dispositivo esta bloqueando Thumbcast. La Transmisión mediante Internet puede no funcionar mientras estés conectado a esta red.</string>
+    <string name="message_decoding_error">Thumbcast se ha bloqueado debido a una incompatibilidad con el descodificador de vídeo de este dispositivo. Intenta ajustar la configuración de streaming si los bloqueos continúan.</string>
+    <string name="summary_seekbar_deadzone">Nota: Algunos juegos pueden forzar una zona muerta mayor a la que Thumbcast esta configurada a usar.</string>
+    <string name="summary_checkbox_usb_bind_all">Usar el controlador de USB de Thumbcast para todos los mandos soportados, incluso si el control de Xbox se encuentra presente</string>
+    <string name="summary_language_list">Idioma a usar por Thumbcast</string>
+</resources>

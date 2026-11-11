@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-zh-rTW/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast 正在測試您的網路連線以確認必要連接埠是否被封鎖。
+\n
+\n可能需要等待一些時間…</string>
+    <string name="nettest_text_success">您的網路似乎沒有封鎖 Thumbcast。如果仍然無法連線，請檢查您電腦的防火牆設定。
+\n
+\n如果您是嘗試透過網際網路串流，請在您的電腦上安裝 Moonlight Internet Hosting Tool，然後執行裡面的 Internet Streaming Tester 來檢查電腦的網際網路連線。</string>
+    <string name="nettest_text_failure">您裝置目前的網路連線似乎封鎖了 Thumbcast。連線到該網路時可能無法透過網際網路串流。
+\n
+\n以下網路通訊埠被封鎖：
+\n</string>
+    <string name="nettest_text_blocked">您裝置目前的網路連線封鎖了 Thumbcast。連線到該網路時可能無法透過網際網路串流。</string>
+    <string name="message_decoding_error">由於與這個裝置的視訊解碼器不相容，Thumbcast 已當機。若當機持續，請嘗試調整串流設定。</string>
+    <string name="summary_seekbar_deadzone">注意：有些遊戲可以強制執行一個比 Thumbcast 設定大的死區。</string>
+    <string name="summary_checkbox_usb_bind_all">強制 Thumbcast 的 USB 驅動程式接管所有受支援的原生 Xbox 控制器</string>
+    <string name="summary_language_list">選擇 Thumbcast 顯示的語言</string>
+</resources>

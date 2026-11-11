@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: nadpisuje rastrowy foreground ikony upstreamu app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png,
+     żeby nie trafił do APK (zasób o tej samej nazwie i kwalifikatorze z flavoru wygrywa).
+     Nasza ikona adaptacyjna używa @drawable/thumbcast_launcher_foreground. Patrz docs/branding.md. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/thumbcast_launcher_foreground"
+    android:inset="0dp" />

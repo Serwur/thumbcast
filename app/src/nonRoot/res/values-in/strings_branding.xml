@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-in/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast sedang menguji koneksi jaringan untuk mencari tahu apakah jalur diblokir.
+\n
+\nIni mungkin membutuhkan beberapa saat…</string>
+    <string name="nettest_text_success">Jaringan Anda sepertinya tidak memblokir Thumbcast. Jika Anda masih mengalami masalah menghubungkan, cek pengaturan firewall komputer Anda.
+\n
+\nJika anda mencoba stream lewat internet, install Moonlight Internet Hosting Tool pada komputer anda dan jalankan Internet Streaming Tester untuk mengecek koneksi Internet komputer Anda.</string>
+    <string name="nettest_text_failure">Koneksi jaringan perangkat anda sepertinya memblokir Thumbcast. Streaming lewat Internet mungkin tidak bekerja ketika terhubung dengan jaringan ini.
+\n
+\nPort-port ini telah diblokir:
+\n</string>
+    <string name="nettest_text_blocked">Koneksi jaringan perangkat anda memblokir Thumbcast. Streaming lewat Internet mungkin tidak bekerja ketika terhubung dengan jaringan ini.</string>
+    <string name="message_decoding_error">Thumbcast telah berhenti bekerja dikarenakan inkompatibilitas dengan dekoder video perangkat ini. Coba ganti pengaturan stream jika masih berlanjut.</string>
+    <string name="summary_seekbar_deadzone">Catatan: Beberapa game dapat menerapkan zona mati yang lebih besar daripada yang dikonfigurasi untuk digunakan oleh Thumbcast.</string>
+    <string name="summary_checkbox_usb_bind_all">Gunakan driver USB Thumbcast untuk semua gamepad yang didukung, meskipun ada dukungan pengontrol Xbox asli</string>
+    <string name="summary_language_list">Bahasa yang digunakan untuk Thumbcast</string>
+</resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-zh-rCN/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast正在测试你的网络连接，请确保所需端口没有被屏蔽。
+\n
+\n这可能需要几秒钟……</string>
+    <string name="nettest_text_success">您的网络似乎没有屏蔽Thumbcast。如果您仍然无法连接，请检查您的电脑的防火墙设置。
+\n
+\n如果您想通过互联网进行流媒体传输，请在您的电脑上安装Moonlight互联网主机工具，并运行附带的互联网流媒体测试器来检查您的电脑的互联网连接。</string>
+    <string name="nettest_text_failure">您设备的当前网络似乎正在阻止Thumbcast。连接到该网络时，可能无法通过互联网串流。
+\n
+\n以下网络端口被阻止：
+\n</string>
+    <string name="nettest_text_blocked">您设备当前的网络连接拦截了Thumbcast。连接到该网络时可能无法通过互联网串流。</string>
+    <string name="message_decoding_error">由于与该设备的视频解码器不兼容，Thumbcast已崩溃。如果崩溃继续，请尝试调整串流设置。</string>
+    <string name="summary_seekbar_deadzone">注意：有些游戏可以执行一个比Thumbcast摇杆配置的更大的盲区。</string>
+    <string name="summary_checkbox_usb_bind_all"> 强制Thumbcast的USB驱动接管所有受支持的Xbox手柄 </string>
+    <string name="summary_language_list"> 选择Thumbcast显示的语言 </string>
+</resources>

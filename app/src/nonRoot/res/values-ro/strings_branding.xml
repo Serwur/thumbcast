@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-ro/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="message_decoding_error">Thumbcast s-a închis în mod neașteptat datorită unei incompatibilități cu decodorul video al acestui dispozitiv. Asigură-te ca folosești ultima versiune de GFE. Dacă problema persistă, ajustează setările de streaming.</string>
+    <string name="summary_checkbox_usb_bind_all">Forțează driverul USB Thumbcast să preia toate controllerele Xbox suportate</string>
+    <string name="summary_language_list">Limba folosită de către Thumbcast</string>
+</resources>

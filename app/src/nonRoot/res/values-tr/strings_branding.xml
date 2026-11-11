@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-tr/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast, gerekli bağlantı noktalarının engellenmediğini belirlemek için ağ bağlantınızı test ediyor.
+\n
+\nBu bir kaç saniye sürebilir…</string>
+    <string name="nettest_text_success">Ağınız Thumbcast\'ı engelliyor gibi görünmüyor. Bağlanmakta hala sorun yaşıyorsanız, bilgisayarınızın güvenlik duvarı ayarlarını kontrol edin.
+\n
+\nİnternet üzerinden yayın yapmaya çalışıyorsanız, Moonlight İnternet Barındırma Aracını bilgisayarınıza yükleyin ve bilgisayarınızın internet bağlantısını kontrol etmek için birlikte verilen İnternet Akış Test Cihazını çalıştırın.</string>
+    <string name="nettest_text_failure">Cihazınızın mevcut ağ bağlantısı Thumbcast\'ı engelliyor gibi görünüyor. Bu ağa bağlıyken İnternet üzerinden yayın akışı çalışmayabilir.
+\n
+\nAşağıdaki ağ bağlantı noktaları engellenmiş:
+\n</string>
+    <string name="nettest_text_blocked">Cihazınızın mevcut ağ bağlantısı Thumbcast\'ı engelliyor. Bu ağa bağlıyken internet üzerinden yayın akışı çalışmayabilir.</string>
+    <string name="message_decoding_error">Thumbcast, bu cihazın video kod çözücüsüyle uyumsuzluk nedeniyle çöktü. Kilitlenmeler devam ederse akış ayarlarını değiştirmeyi deneyin.</string>
+    <string name="summary_seekbar_deadzone">Not: Bazı oyunlar Thumbcast\'ın kullanmak üzere yapılandırıldığından daha büyük bir ölü bölge uygulayabilir.</string>
+    <string name="summary_checkbox_usb_bind_all">Yerel Xbox oyun kumandası desteği mevcut olsa bile desteklenen tüm oyun kumandaları için Thumbcast\'ın USB sürücüsünü kullan</string>
+    <string name="summary_language_list">Thumbcast için kullanılacak olan dil</string>
+</resources>

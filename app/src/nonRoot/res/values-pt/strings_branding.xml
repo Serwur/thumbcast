@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
+     Nadpisuje teksty upstreamu (app/src/main/res/values-pt/strings.xml), w których „Moonlight”
+     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
+     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
+<resources>
+    <string name="nettest_text_waiting">Thumbcast está testando sua conexão com a rede para determinar se o NVIDIA GameStream está bloqueado.
+\n
+\nEste processo pode demorar alguns segundos…</string>
+    <string name="nettest_text_success">A sua rede não parece estar a bloquear o Thumbcast. Se ainda tiver problemas a se conectar, verifique as configurações de firewall do seu PC.
+\n
+\nSe estiver a tentar transmitir pela Internet, instale o Moonlight Internet Hosting Tool no seu PC e execute o Internet Streaming Tester para verificar a conexão com a Internet do seu PC.</string>
+    <string name="nettest_text_failure">A conexão de rede atual do seu aparelho parece estar a bloquear o Thumbcast. A transmissão pela Internet pode não funcionar enquanto estiver conectado a esta rede.
+\n
+\nAs seguintes portas de rede estão bloqueadas:
+\n</string>
+    <string name="nettest_text_blocked">A conexão de rede atual do seu aparelho está a bloquear o Thumbcast. A transmissão pela Internet pode não funcionar enquanto estiver conectado a esta rede.</string>
+    <string name="message_decoding_error">Thumbcast crashou devido a uma incompatibilidade com o decodificador de vídeo deste aparelho. Certifique-se de que o GeForce Experience esteja atualizado à versão mais recente no seu PC. Tente ajustar as configurações de transmissão se as falhas continuarem.</string>
+    <string name="summary_seekbar_deadzone">Nota: Alguns jogos podem impor uma zona morta maior do que o Thumbcast está configurado para usar.</string>
+    <string name="summary_checkbox_usb_bind_all">Use o driver USB do Thumbcast para todos os gamepads suportados, mesmo se houver suporte nativo ao controle Xbox</string>
+    <string name="summary_language_list">Idioma para ser usado no Thumbcast</string>
+</resources>
