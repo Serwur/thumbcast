@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="editor_load_failed">Cannot open the layout: %1$s</string>
+    <string name="editor_missing_profile">No layout to edit.</string>
+
+    <string name="editor_undo">Undo</string>
+    <string name="editor_redo">Redo</string>
+    <string name="editor_save">Save</string>
+    <string name="editor_close">Close</string>
+    <string name="editor_panel_show">Edit</string>
+    <string name="editor_panel_hide">Hide panel</string>
+    <string name="editor_panel_swap">Move panel to the other side</string>
+
+    <string name="editor_section_layout">Layout</string>
+    <string name="editor_profile_name">Profile name</string>
+    <string name="editor_opacity">Opacity: %1$d%%</string>
+    <string name="editor_snap" formatted="false">Snap to 1% grid</string>
+    <string name="editor_mirror">Mirror layout (left/right)</string>
+
+    <string name="editor_section_add">Add control</string>
+    <string name="editor_kind_button">Button</string>
+    <string name="editor_kind_stick">Stick</string>
+    <string name="editor_kind_modifier">Modifier</string>
+    <string name="editor_kind_system">System</string>
+
+    <string name="editor_section_selected">Selected: %1$s</string>
+    <string name="editor_nothing_selected">Tap a control to select it. Drag to move, drag the corner handle or pinch to resize.</string>
+    <string name="editor_duplicate">Duplicate</string>
+    <string name="editor_delete">Delete</string>
+    <string name="editor_label">Label</string>
+    <string name="editor_label_hint">Empty = output name</string>
+    <string name="editor_size">Size: %1$d%%</string>
+    <string name="editor_output">Output</string>
+    <string name="editor_shape">Shape</string>
+    <string name="editor_behavior">Behavior</string>
+    <string name="editor_behavior_hold">Hold</string>
+    <string name="editor_behavior_latch">Latch</string>
+    <string name="editor_floating">Floating (appears under the thumb)</string>
+    <string name="editor_deadzone">Dead zone: %1$d%%</string>
+    <string name="editor_sprint_lock">Sprint lock (full tilt beyond the edge)</string>
+    <string name="editor_chord_warning">This button has a chord from an imported file. Chords are not supported (one touch = one input).</string>
+    <string name="editor_chord_remove">Remove chord</string>
+
+    <string name="editor_shape_circle">Circle</string>
+    <string name="editor_shape_rounded">Rounded</string>
+    <string name="editor_shape_rect">Rectangle</string>
+
+    <string name="editor_group_pad">Gamepad</string>
+    <string name="editor_group_trigger">Triggers</string>
+    <string name="editor_group_key">Keys</string>
+    <string name="editor_group_mouse">Mouse</string>
+    <string name="editor_group_stick">Stick</string>
+    <string name="editor_group_app">App action</string>
+
+    <string name="editor_stick_left">Left stick</string>
+    <string name="editor_stick_right">Right stick</string>
+    <string name="editor_app_menu">Menu</string>
+    <string name="editor_app_soft_keyboard">Keyboard</string>
+    <string name="editor_app_toggle_overlay">Hide controls</string>
+
+    <plurals name="editor_problems">
+        <item quantity="one">%1$d problem</item>
+        <item quantity="other">%1$d problems</item>
+    </plurals>
+    <string name="editor_no_problems">No problems</string>
+    <string name="editor_errors_title">Fix before saving</string>
+    <string name="editor_ok">OK</string>
+
+    <string name="editor_discard_title">Discard changes?</string>
+    <string name="editor_discard_message">The layout has unsaved changes.</string>
+    <string name="editor_discard">Discard</string>
+    <string name="editor_keep_editing">Keep editing</string>
+</resources>

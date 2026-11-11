@@ -127,15 +127,15 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      # Android Lint dla :control-android. Lint :app jest w jobie app-build (ten sam setup co build APK).
+      # Android Lint dla :control-android i :control-editor. Lint :app jest w jobie app-build (ten sam setup co build APK).
       # ktlint/detekt (plan sekcja 3) dodać po wpisaniu ich wersji do libs.versions.toml.
-      # Testy jednostkowe :control-android (JUnit 4, bez Robolectric) wymagają SDK Androida, więc są tu,
+      # Testy jednostkowe :control-android i :control-editor (JUnit 4, bez Robolectric) wymagają SDK Androida, więc są tu,
       # a nie w wymaganym jobie jvm-tests.
-      - name: Testy jednostkowe :control-android
-        run: ./gradlew --stacktrace :control-android:testDebugUnitTest
+      - name: Testy jednostkowe :control-android i :control-editor
+        run: ./gradlew --stacktrace :control-android:testDebugUnitTest :control-editor:testDebugUnitTest
 
       - name: Android Lint
-        run: ./gradlew --stacktrace :control-android:lint
+        run: ./gradlew --stacktrace :control-android:lint :control-editor:lint
 
       - name: Strażnik nazw i zakazanych zależności
         run: |
@@ -158,6 +158,8 @@ jobs:
             **/build/reports/lint-results*.*
             control-android/build/reports/tests/
             control-android/build/test-results/
+            control-editor/build/reports/tests/
+            control-editor/build/test-results/
           if-no-files-found: ignore
           retention-days: 14
 

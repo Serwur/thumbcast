@@ -3,6 +3,9 @@
 Zweryfikowane na upstreamie v12.2 (commit `b48494cb96bff23d8886c4775cc4f39a1075495d`, 12.09.2026).
 Opis zmian krok po kroku (nie `git diff`; patrz uwaga w `Game.java.patch.md`).
 
+> Stan po 11.11.2026 różni się od kroków poniżej: wybór profilu to `Preference` otwierająca `ProfileLibraryActivity`
+> (bez tablic `thumbcast_profile_*`), domyślny profil `gamepad-xbox.thumbcast.json`, domyślny rozmiar 100%. Pewny stan: `0001-thumbcast.diff`.
+
 Co sprawdzono:
 - `res/xml/preferences.xml`: korzeń `<PreferenceScreen>` z `xmlns:android` i `xmlns:seekbar`. Kategorie w kolejności:
   `category_basic_settings`, (audio, bez klucza), `category_gamepad_settings`, `category_input_settings`,

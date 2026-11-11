@@ -44,5 +44,5 @@ include(":control-android")
 // Moduł aplikacji z upstreamu (Game.java z hookami z patches/).
 include(":app")
 
-// Etap E2 (plan sekcja 5.1): edytor układu w Compose.
-// include(":control-editor")
+// Etap E2 (plan sekcja 5.1): edytor układu w Compose (LayoutEditorActivity).
+include(":control-editor")

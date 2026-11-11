@@ -6,6 +6,8 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 - `control-model` (JVM): profil JSON, walidacja, migracje. Zakazane typy: sequence, macro, repeat, turbo, delay, toggle_auto.
 - `control-engine` (JVM): `InputEngine`, rozpoznawanie gestów, `ActionPolicy`. Wszystkie wyjścia idą przez politykę. Szczegóły: `control-engine/docs/engine.md`.
 - `control-android`: `ThumbcastOverlay` i adaptery. Retransmisja stanu pada (25/50/75 ms) jest tylko w `HostPadReporterImpl`, silnik jej nie robi.
+  Biblioteka profili (`library/ProfileRepository`, import/eksport) i `EditorContract`; opis `docs/profiles.md`.
+- `control-editor` (Compose): `LayoutEditorActivity`, edytor układu (od 11.11.2026). Opis: `control-editor/docs/editor.md`.
 - `patches/`: opisy zmian w `:app` (`*.patch.md`) i pewny diff `0001-thumbcast.diff` (`git diff v12.2 -- app/`). Od 11.11.2026 nałożone w `app/` (bloki `THUMBCAST`).
 
 ## Zasady

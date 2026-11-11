@@ -1,5 +1,5 @@
 diff --git a/app/build.gradle b/app/build.gradle
-index c9cc3e47..9a5709d6 100644
+index c9cc3e47..7d0d3c73 100644
 --- a/app/build.gradle
 +++ b/app/build.gradle
 @@ -8,7 +8,8 @@ android {
@@ -143,14 +143,69 @@ index c9cc3e47..9a5709d6 100644
  dependencies {
      implementation 'org.bouncycastle:bcprov-jdk18on:1.85.2'
      implementation 'org.bouncycastle:bcpkix-jdk18on:1.85'
-@@ -150,4 +140,7 @@ dependencies {
+@@ -150,4 +140,9 @@ dependencies {
      implementation 'com.github.cgutman:ShieldControllerExtensions:1.0.1'
  
      coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 +
 +    // THUMBCAST: warstwa dotyku (dociąga :control-engine i :control-model).
 +    implementation project(':control-android')
++    // THUMBCAST: edytor układu kontrolek (LayoutEditorActivity, Compose).
++    implementation project(':control-editor')
  }
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index d916899e..3b65fdbf 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -133,6 +133,48 @@
+             <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
+             <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
+         </activity>
++        <!-- THUMBCAST: biblioteka profili; przyjmuje udostępnione i otwierane pliki .thumbcast.json
++             (import zawsze z walidacją i ekranem potwierdzenia, docs/profiles.md). -->
++        <activity
++            android:name=".thumbcast.ProfileLibraryActivity"
++            android:exported="true"
++            android:resizeableActivity="true"
++            android:enableOnBackInvokedCallback="true"
++            android:label="@string/thumbcast_library_title"
++            android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection">
++            <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
++            <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
++
++            <intent-filter>
++                <action android:name="android.intent.action.SEND" />
++                <category android:name="android.intent.category.DEFAULT" />
++                <data android:mimeType="application/json" />
++            </intent-filter>
++            <intent-filter>
++                <action android:name="android.intent.action.VIEW" />
++                <category android:name="android.intent.category.DEFAULT" />
++                <data android:scheme="content" />
++                <data android:mimeType="application/json" />
++            </intent-filter>
++            <!-- Menedżery plików często podają application/octet-stream: dopasowanie po rozszerzeniu
++                 (kilka wzorców, bo pathPattern nie cofa się po wcześniejszych kropkach w ścieżce). -->
++            <intent-filter>
++                <action android:name="android.intent.action.VIEW" />
++                <category android:name="android.intent.category.DEFAULT" />
++                <data android:scheme="content" />
++                <data android:host="*" />
++                <data android:mimeType="*/*" />
++                <data android:pathPattern=".*\\.thumbcast\\.json" />
++                <data android:pathPattern=".*\\..*\\.thumbcast\\.json" />
++                <data android:pathPattern=".*\\..*\\..*\\.thumbcast\\.json" />
++            </intent-filter>
++        </activity>
++        <provider
++            android:name=".thumbcast.ProfileShareProvider"
++            android:authorities="${applicationId}.profiles"
++            android:exported="false"
++            android:grantUriPermissions="true" />
++        <!-- THUMBCAST END -->
+         <activity
+             android:name=".preferences.AddComputerManually"
+             android:resizeableActivity="true"
 diff --git a/app/src/main/java/com/limelight/Game.java b/app/src/main/java/com/limelight/Game.java
 index 8d369b3e..a10f9eba 100644
 --- a/app/src/main/java/com/limelight/Game.java
@@ -254,7 +309,7 @@ index 8d369b3e..a10f9eba 100644
              updatePipAutoEnter();
  
 diff --git a/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java b/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java
-index 8ed01e36..fbf6c6e7 100644
+index 8ed01e36..1985674b 100644
 --- a/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java
 +++ b/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java
 @@ -131,6 +131,18 @@ public class PreferenceConfiguration {
@@ -267,7 +322,7 @@ index 8ed01e36..fbf6c6e7 100644
 +    private static final String THUMBCAST_PROFILE_PREF_STRING = "list_thumbcast_profile";
 +    private static final String THUMBCAST_DEBUG_PREF_STRING = "checkbox_thumbcast_debug";
 +    private static final String DEFAULT_CONTROL_LAYER = "thumbcast";
-+    private static final String DEFAULT_THUMBCAST_PROFILE = "mmo-pad-plus.thumbcast.json";
++    private static final String DEFAULT_THUMBCAST_PROFILE = "gamepad-xbox.thumbcast.json";
 +
 +    public ControlLayer controlLayer;
 +    public String thumbcastProfileFile;
@@ -297,10 +352,38 @@ index 8ed01e36..fbf6c6e7 100644
          config.showGuideButton = prefs.getBoolean(SHOW_GUIDE_BUTTON_PREF_STRING, SHOW_GUIDE_BUTTON_DEFAULT);
          config.enableHdr = prefs.getBoolean(ENABLE_HDR_PREF_STRING, DEFAULT_ENABLE_HDR) && !isShieldAtvFirmwareWithBrokenHdr();
 diff --git a/app/src/main/java/com/limelight/preferences/StreamSettings.java b/app/src/main/java/com/limelight/preferences/StreamSettings.java
-index 70701041..2ee1bed8 100644
+index 70701041..94ffc29e 100644
 --- a/app/src/main/java/com/limelight/preferences/StreamSettings.java
 +++ b/app/src/main/java/com/limelight/preferences/StreamSettings.java
-@@ -351,6 +351,32 @@ public class StreamSettings extends Activity {
+@@ -31,6 +31,9 @@ import com.limelight.LimeLog;
+ import com.limelight.PcView;
+ import com.limelight.R;
+ import com.limelight.binding.video.MediaCodecHelper;
++// THUMBCAST:
++import com.limelight.thumbcast.ProfileLibraryActivity;
++// THUMBCAST END
+ import com.limelight.utils.Dialog;
+ import com.limelight.utils.UiHelper;
+ 
+@@ -263,6 +266,17 @@ public class StreamSettings extends Activity {
+                     .apply();
+         }
+ 
++        // THUMBCAST: podsumowanie = nazwa aktywnego profilu (odświeżane po powrocie z biblioteki).
++        @Override
++        public void onResume() {
++            super.onResume();
++            Preference thumbcastProfile = findPreference("list_thumbcast_profile");
++            if (thumbcastProfile != null) {
++                thumbcastProfile.setSummary(ProfileLibraryActivity.activeProfileName(getActivity()));
++            }
++        }
++        // THUMBCAST END
++
+         @Override
+         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+             View view = super.onCreateView(inflater, container, savedInstanceState);
+@@ -351,6 +365,39 @@ public class StreamSettings extends Activity {
                  category_gamepad_settings.removePreference(findPreference("seekbar_vibrate_fallback_strength"));
              }
  
@@ -327,6 +410,13 @@ index 70701041..2ee1bed8 100644
 +                };
 +                layerListener.onPreferenceChange(controlLayer, controlLayer.getValue());
 +                controlLayer.setOnPreferenceChangeListener(layerListener);
++            }
++            if (thumbcastProfile != null) {
++                // Wybór profilu w bibliotece (ta sama preferencja, wartość = nazwa pliku).
++                thumbcastProfile.setOnPreferenceClickListener(pref -> {
++                    startActivity(new Intent(getActivity(), ProfileLibraryActivity.class));
++                    return true;
++                });
 +            }
 +            // THUMBCAST END
 +
@@ -479,6 +569,855 @@ index 00000000..6711a759
 +        controllerHandler.reportOscState(buttons, lsX, lsY, rsX, rsY, lt, rt);
 +    }
 +}
+diff --git a/app/src/main/java/com/limelight/thumbcast/ProfileLibraryActivity.java b/app/src/main/java/com/limelight/thumbcast/ProfileLibraryActivity.java
+new file mode 100644
+index 00000000..4a609bb1
+--- /dev/null
++++ b/app/src/main/java/com/limelight/thumbcast/ProfileLibraryActivity.java
+@@ -0,0 +1,713 @@
++package com.limelight.thumbcast;
++
++// NOWY PLIK (moduł :app). Biblioteka profili sterowania: presety wbudowane i profile użytkownika,
++// wybór aktywnego (preferencja list_thumbcast_profile = nazwa pliku), edycja (kontrakt EditorContract),
++// duplikat, zmiana nazwy, eksport (SAF), udostępnianie (ProfileShareProvider), usuwanie, import z pliku,
++// ze schowka i z udostępnionego pliku/tekstu. Logika plików: ProfileRepository (:control-android).
++// Opis formatu i kontraktu edytora: docs/profiles.md.
++
++import android.app.Activity;
++import android.app.AlertDialog;
++import android.content.ActivityNotFoundException;
++import android.content.ClipData;
++import android.content.ClipboardManager;
++import android.content.Context;
++import android.content.Intent;
++import android.content.SharedPreferences;
++import android.net.Uri;
++import android.os.Build;
++import android.os.Bundle;
++import android.preference.PreferenceManager;
++import android.text.InputType;
++import android.view.LayoutInflater;
++import android.view.View;
++import android.view.ViewGroup;
++import android.widget.BaseAdapter;
++import android.widget.EditText;
++import android.widget.FrameLayout;
++import android.widget.ListView;
++import android.widget.RadioButton;
++import android.widget.TextView;
++import android.widget.Toast;
++
++import com.limelight.R;
++import com.limelight.utils.UiHelper;
++
++import java.io.IOException;
++import java.io.InputStream;
++import java.io.OutputStream;
++import java.nio.charset.StandardCharsets;
++import java.util.ArrayList;
++import java.util.List;
++import java.util.concurrent.ExecutorService;
++import java.util.concurrent.Executors;
++
++import app.thumbcast.android.EditorContract;
++import app.thumbcast.android.library.ImportPreview;
++import app.thumbcast.android.library.ProfileEntry;
++import app.thumbcast.android.library.ProfileLibraryException;
++import app.thumbcast.android.library.ProfileRepository;
++import app.thumbcast.model.ProfileMode;
++
++public class ProfileLibraryActivity extends Activity {
++
++    /** Ten sam klucz co dawny ListPreference; wartość = nazwa pliku profilu (ThumbcastProfiles). */
++    public static final String PREF_PROFILE = "list_thumbcast_profile";
++
++    private static final int REQ_EDIT = 1;
++    private static final int REQ_EXPORT = 2;
++    private static final int REQ_IMPORT_FILE = 3;
++
++    private static final String STATE_EDIT_FILE = "thumbcast.editFile";
++    private static final String STATE_EDIT_SELECT = "thumbcast.editSelect";
++    private static final String STATE_EXPORT_FILE = "thumbcast.exportFile";
++
++    private static final int MAX_ERROR_LINES = 8;
++
++    private final ExecutorService io = Executors.newSingleThreadExecutor();
++
++    private ProfileRepository repo;
++    private SharedPreferences prefs;
++    private LibraryAdapter adapter;
++
++    private String pendingEditFile;
++    private boolean pendingEditSelect;
++    private String pendingExportFile;
++
++    // ---------- API dla ustawień ----------
++
++    /** Nazwa pliku aktywnego profilu (domyślny preset, gdy preferencji nie ustawiono). */
++    public static String activeProfileFile(Context context) {
++        return PreferenceManager.getDefaultSharedPreferences(context)
++                .getString(PREF_PROFILE, ProfileRepository.DEFAULT_PRESET);
++    }
++
++    /** Podsumowanie preferencji w ustawieniach: nazwa wyświetlana aktywnego profilu. */
++    public static String activeProfileName(Context context) {
++        String file = activeProfileFile(context);
++        ProfileEntry entry = ProfileRepository.create(context).entry(file);
++        return entry != null ? entry.getName() : file;
++    }
++
++    // ---------- cykl życia ----------
++
++    @Override
++    protected void onCreate(Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++
++        UiHelper.setLocale(this);
++        setContentView(R.layout.activity_thumbcast_profile_library);
++        UiHelper.notifyNewRootView(this);
++
++        repo = ProfileRepository.create(this);
++        prefs = PreferenceManager.getDefaultSharedPreferences(this);
++
++        ListView list = findViewById(R.id.thumbcast_library_list);
++        UiHelper.applyStatusBarPadding(list);
++        adapter = new LibraryAdapter();
++        list.setAdapter(adapter);
++        list.setOnItemClickListener((parent, view, position, id) -> {
++            Object item = adapter.getItem(position);
++            if (item instanceof ProfileEntry) {
++                showActions((ProfileEntry) item);
++            }
++        });
++
++        findViewById(R.id.thumbcast_library_import_file).setOnClickListener(v -> pickImportFile());
++        findViewById(R.id.thumbcast_library_import_clipboard).setOnClickListener(v -> importFromClipboard());
++
++        if (savedInstanceState != null) {
++            pendingEditFile = savedInstanceState.getString(STATE_EDIT_FILE);
++            pendingEditSelect = savedInstanceState.getBoolean(STATE_EDIT_SELECT);
++            pendingExportFile = savedInstanceState.getString(STATE_EXPORT_FILE);
++        } else {
++            handleIncomingIntent(getIntent());
++        }
++    }
++
++    @Override
++    protected void onResume() {
++        super.onResume();
++        refresh();
++    }
++
++    @Override
++    protected void onSaveInstanceState(Bundle outState) {
++        super.onSaveInstanceState(outState);
++        outState.putString(STATE_EDIT_FILE, pendingEditFile);
++        outState.putBoolean(STATE_EDIT_SELECT, pendingEditSelect);
++        outState.putString(STATE_EXPORT_FILE, pendingExportFile);
++    }
++
++    @Override
++    protected void onDestroy() {
++        io.shutdownNow();
++        super.onDestroy();
++    }
++
++    @Override
++    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
++        super.onActivityResult(requestCode, resultCode, data);
++        switch (requestCode) {
++            case REQ_EDIT:
++                onEditResult(resultCode, data);
++                break;
++            case REQ_EXPORT:
++                if (resultCode == RESULT_OK && data != null && data.getData() != null && pendingExportFile != null) {
++                    writeExport(pendingExportFile, data.getData());
++                }
++                pendingExportFile = null;
++                break;
++            case REQ_IMPORT_FILE:
++                if (resultCode == RESULT_OK && data != null && data.getData() != null) {
++                    importFromUri(data.getData());
++                }
++                break;
++            default:
++                break;
++        }
++    }
++
++    private void refresh() {
++        String active = activeProfileFile(this);
++        List<ProfileEntry> presets = repo.listPresets();
++        List<ProfileEntry> user = repo.listUser();
++        // Aktywny plik zniknął (np. usunięty poza aplikacją): pokazujemy domyślny preset jako aktywny.
++        if (!repo.exists(active)) {
++            active = ProfileRepository.DEFAULT_PRESET;
++        }
++        adapter.setData(presets, user, active);
++    }
++
++    // ---------- akcje na profilu ----------
++
++    private void showActions(final ProfileEntry entry) {
++        final List<String> labels = new ArrayList<>();
++        final List<Runnable> actions = new ArrayList<>();
++        boolean isActive = entry.getFileName().equals(adapter.activeFile);
++
++        if (entry.isValid()) {
++            if (!isActive) {
++                labels.add(getString(R.string.thumbcast_library_action_select));
++                actions.add(() -> select(entry));
++            }
++            labels.add(getString(R.string.thumbcast_library_action_edit));
++            actions.add(() -> edit(entry, isActive));
++            labels.add(getString(R.string.thumbcast_library_action_duplicate));
++            actions.add(() -> duplicate(entry));
++            if (!entry.getBuiltIn()) {
++                labels.add(getString(R.string.thumbcast_library_action_rename));
++                actions.add(() -> rename(entry));
++            }
++            labels.add(getString(R.string.thumbcast_library_action_export));
++            actions.add(() -> startExport(entry));
++            labels.add(getString(R.string.thumbcast_library_action_share));
++            actions.add(() -> share(entry));
++        }
++        if (!entry.getBuiltIn()) {
++            labels.add(getString(R.string.thumbcast_library_action_delete));
++            actions.add(() -> confirmDelete(entry, isActive));
++        }
++        if (actions.isEmpty()) {
++            return;
++        }
++
++        new AlertDialog.Builder(this)
++                .setTitle(entry.getName())
++                .setItems(labels.toArray(new String[0]), (dialog, which) -> actions.get(which).run())
++                .show();
++    }
++
++    private void select(ProfileEntry entry) {
++        selectFile(entry.getFileName());
++        Toast.makeText(this, getString(R.string.thumbcast_library_selected, entry.getName()), Toast.LENGTH_SHORT).show();
++    }
++
++    private void selectFile(String fileName) {
++        prefs.edit().putString(PREF_PROFILE, fileName).apply();
++        refresh();
++    }
++
++    private Intent editorIntent() {
++        return new Intent().setClassName(this, EditorContract.ACTIVITY_CLASS);
++    }
++
++    private void edit(ProfileEntry entry, boolean wasActive) {
++        Intent intent = editorIntent();
++        // Dopóki modułu edytora nie ma w APK, komunikat zamiast crasha (i bez tworzenia kopii presetu).
++        if (intent.resolveActivity(getPackageManager()) == null) {
++            Toast.makeText(this, R.string.thumbcast_library_editor_unavailable, Toast.LENGTH_LONG).show();
++            return;
++        }
++        try {
++            String target = entry.getFileName();
++            boolean selectAfter = false;
++            if (entry.getBuiltIn()) {
++                // Preset jest tylko do odczytu: edytor dostaje kopię użytkownika.
++                target = repo.duplicate(target, getString(R.string.thumbcast_library_copy_suffix));
++                selectAfter = wasActive;
++                refresh();
++            }
++            intent.putExtra(EditorContract.EXTRA_PROFILE_JSON, repo.exportText(target));
++            pendingEditFile = target;
++            pendingEditSelect = selectAfter;
++            startActivityForResult(intent, REQ_EDIT);
++        } catch (ProfileLibraryException e) {
++            showError(R.string.thumbcast_library_error, e);
++        } catch (ActivityNotFoundException e) {
++            pendingEditFile = null;
++            Toast.makeText(this, R.string.thumbcast_library_editor_unavailable, Toast.LENGTH_LONG).show();
++        }
++    }
++
++    private void onEditResult(int resultCode, Intent data) {
++        String target = pendingEditFile;
++        boolean selectAfter = pendingEditSelect;
++        pendingEditFile = null;
++        pendingEditSelect = false;
++        if (target == null || resultCode != RESULT_OK || data == null) {
++            return;
++        }
++        String json = data.getStringExtra(EditorContract.EXTRA_PROFILE_JSON);
++        if (json == null) {
++            return;
++        }
++        try {
++            repo.updateFromText(target, json);
++            if (selectAfter) {
++                selectFile(target);
++            } else {
++                refresh();
++            }
++            Toast.makeText(this, R.string.thumbcast_library_saved, Toast.LENGTH_SHORT).show();
++        } catch (ProfileLibraryException e) {
++            showError(R.string.thumbcast_library_edit_failed, e);
++        }
++    }
++
++    private void duplicate(ProfileEntry entry) {
++        try {
++            String file = repo.duplicate(entry.getFileName(), getString(R.string.thumbcast_library_copy_suffix));
++            refresh();
++            ProfileEntry copy = repo.entry(file);
++            Toast.makeText(this, getString(R.string.thumbcast_library_duplicated,
++                    copy != null ? copy.getName() : file), Toast.LENGTH_SHORT).show();
++        } catch (ProfileLibraryException e) {
++            showError(R.string.thumbcast_library_error, e);
++        }
++    }
++
++    private void rename(final ProfileEntry entry) {
++        final EditText input = new EditText(this);
++        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
++        input.setSingleLine(true);
++        input.setText(entry.getName());
++        input.setSelection(input.getText().length());
++        FrameLayout container = new FrameLayout(this);
++        int pad = (int) (20 * getResources().getDisplayMetrics().density);
++        container.setPadding(pad, pad / 2, pad, 0);
++        container.addView(input);
++
++        new AlertDialog.Builder(this)
++                .setTitle(R.string.thumbcast_library_rename_title)
++                .setView(container)
++                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
++                    try {
++                        repo.rename(entry.getFileName(), input.getText().toString());
++                        refresh();
++                    } catch (ProfileLibraryException e) {
++                        showError(R.string.thumbcast_library_error, e);
++                    }
++                })
++                .setNegativeButton(android.R.string.cancel, null)
++                .show();
++    }
++
++    private void confirmDelete(final ProfileEntry entry, final boolean wasActive) {
++        new AlertDialog.Builder(this)
++                .setTitle(R.string.thumbcast_library_delete_title)
++                .setMessage(getString(R.string.thumbcast_library_delete_message, entry.getName()))
++                .setPositiveButton(R.string.thumbcast_library_action_delete, (dialog, which) -> {
++                    try {
++                        repo.delete(entry.getFileName());
++                        if (wasActive) {
++                            // Usunięcie aktywnego profilu: wracamy do domyślnego presetu.
++                            selectFile(ProfileRepository.DEFAULT_PRESET);
++                            Toast.makeText(this, R.string.thumbcast_library_deleted_active, Toast.LENGTH_LONG).show();
++                        } else {
++                            refresh();
++                            Toast.makeText(this, R.string.thumbcast_library_deleted, Toast.LENGTH_SHORT).show();
++                        }
++                    } catch (ProfileLibraryException e) {
++                        showError(R.string.thumbcast_library_error, e);
++                    }
++                })
++                .setNegativeButton(android.R.string.cancel, null)
++                .show();
++    }
++
++    // ---------- eksport i udostępnianie ----------
++
++    private void startExport(ProfileEntry entry) {
++        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
++                .addCategory(Intent.CATEGORY_OPENABLE)
++                .setType(ProfileRepository.MIME_TYPE)
++                .putExtra(Intent.EXTRA_TITLE, ProfileRepository.suggestedFileName(entry.getName()));
++        try {
++            pendingExportFile = entry.getFileName();
++            startActivityForResult(intent, REQ_EXPORT);
++        } catch (ActivityNotFoundException e) {
++            pendingExportFile = null;
++            Toast.makeText(this, R.string.thumbcast_library_no_file_picker, Toast.LENGTH_LONG).show();
++        }
++    }
++
++    private void writeExport(final String fileName, final Uri uri) {
++        final String text;
++        try {
++            text = repo.exportText(fileName);
++        } catch (ProfileLibraryException e) {
++            showError(R.string.thumbcast_library_error, e);
++            return;
++        }
++        io.execute(() -> {
++            String error = null;
++            try (OutputStream out = openForWrite(uri)) {
++                if (out == null) {
++                    throw new IOException("null stream");
++                }
++                out.write(text.getBytes(StandardCharsets.UTF_8));
++            } catch (IOException | SecurityException e) {
++                error = e.getMessage() != null ? e.getMessage() : e.toString();
++            }
++            final String finalError = error;
++            runOnUiThread(() -> {
++                if (isFinishing() || isDestroyed()) {
++                    return;
++                }
++                if (finalError == null) {
++                    Toast.makeText(this, R.string.thumbcast_library_exported, Toast.LENGTH_SHORT).show();
++                } else {
++                    Toast.makeText(this, getString(R.string.thumbcast_library_export_failed, finalError),
++                            Toast.LENGTH_LONG).show();
++                }
++            });
++        });
++    }
++
++    private OutputStream openForWrite(Uri uri) throws IOException {
++        try {
++            // "wt" obcina istniejący plik; nie każdy dostawca go obsługuje.
++            return getContentResolver().openOutputStream(uri, "wt");
++        } catch (IllegalArgumentException | IOException e) {
++            return getContentResolver().openOutputStream(uri, "w");
++        }
++    }
++
++    private void share(ProfileEntry entry) {
++        try {
++            String text = repo.exportText(entry.getFileName());
++            String name = ProfileRepository.suggestedFileName(entry.getName());
++            Uri uri = ProfileShareProvider.writeShareFile(this, name, text);
++            Intent send = new Intent(Intent.ACTION_SEND)
++                    .setType(ProfileRepository.MIME_TYPE)
++                    .putExtra(Intent.EXTRA_STREAM, uri)
++                    .putExtra(Intent.EXTRA_SUBJECT, entry.getName())
++                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
++            send.setClipData(ClipData.newRawUri(name, uri));
++            startActivity(Intent.createChooser(send, getString(R.string.thumbcast_library_share_title)));
++        } catch (ProfileLibraryException e) {
++            showError(R.string.thumbcast_library_error, e);
++        } catch (IOException | ActivityNotFoundException e) {
++            Toast.makeText(this, getString(R.string.thumbcast_library_export_failed, String.valueOf(e.getMessage())),
++                    Toast.LENGTH_LONG).show();
++        }
++    }
++
++    // ---------- import ----------
++
++    private void pickImportFile() {
++        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
++                .addCategory(Intent.CATEGORY_OPENABLE)
++                .setType("*/*")
++                .putExtra(Intent.EXTRA_MIME_TYPES,
++                        new String[]{ProfileRepository.MIME_TYPE, "application/octet-stream", "text/plain"});
++        try {
++            startActivityForResult(intent, REQ_IMPORT_FILE);
++        } catch (ActivityNotFoundException e) {
++            Toast.makeText(this, R.string.thumbcast_library_no_file_picker, Toast.LENGTH_LONG).show();
++        }
++    }
++
++    private void importFromClipboard() {
++        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
++        ClipData clip = cm != null ? cm.getPrimaryClip() : null;
++        CharSequence text = null;
++        if (clip != null && clip.getItemCount() > 0) {
++            text = clip.getItemAt(0).getText();
++        }
++        if (text == null || text.toString().trim().isEmpty()) {
++            Toast.makeText(this, R.string.thumbcast_library_clipboard_empty, Toast.LENGTH_SHORT).show();
++            return;
++        }
++        importFromText(text.toString());
++    }
++
++    private void handleIncomingIntent(Intent intent) {
++        if (intent == null || intent.getAction() == null) {
++            return;
++        }
++        String action = intent.getAction();
++        if (Intent.ACTION_SEND.equals(action)) {
++            Uri stream = getStreamExtra(intent);
++            if (stream != null) {
++                importFromUri(stream);
++                return;
++            }
++            CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
++            if (text != null) {
++                importFromText(text.toString());
++            }
++        } else if (Intent.ACTION_VIEW.equals(action) && intent.getData() != null) {
++            importFromUri(intent.getData());
++        }
++    }
++
++    @SuppressWarnings("deprecation")
++    private static Uri getStreamExtra(Intent intent) {
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
++            return intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri.class);
++        }
++        return intent.getParcelableExtra(Intent.EXTRA_STREAM);
++    }
++
++    private void importFromText(String text) {
++        try {
++            showImportConfirmation(repo.prepareImport(text));
++        } catch (ProfileLibraryException e) {
++            showError(R.string.thumbcast_library_import_failed, e);
++        }
++    }
++
++    private void importFromUri(final Uri uri) {
++        // Tylko content:// (SAF, udostępnianie). file:// mógłby wskazywać prywatne pliki aplikacji.
++        if (!"content".equals(uri.getScheme())) {
++            showErrorMessage(R.string.thumbcast_library_import_failed, getString(R.string.thumbcast_library_err_io));
++            return;
++        }
++        io.execute(() -> {
++            ImportPreview preview = null;
++            ProfileLibraryException failure = null;
++            String ioError = null;
++            try (InputStream in = getContentResolver().openInputStream(uri)) {
++                if (in == null) {
++                    throw new IOException("null stream");
++                }
++                preview = repo.prepareImport(ProfileRepository.readLimited(in));
++            } catch (ProfileLibraryException e) {
++                failure = e;
++            } catch (IOException | SecurityException | IllegalArgumentException e) {
++                ioError = e.getMessage() != null ? e.getMessage() : e.toString();
++            }
++            final ImportPreview p = preview;
++            final ProfileLibraryException f = failure;
++            final String ioMsg = ioError;
++            runOnUiThread(() -> {
++                if (isFinishing() || isDestroyed()) {
++                    return;
++                }
++                if (p != null) {
++                    showImportConfirmation(p);
++                } else if (f != null) {
++                    showError(R.string.thumbcast_library_import_failed, f);
++                } else {
++                    showErrorMessage(R.string.thumbcast_library_import_failed,
++                            getString(R.string.thumbcast_library_err_io) + "\n" + ioMsg);
++                }
++            });
++        });
++    }
++
++    private void showImportConfirmation(final ImportPreview preview) {
++        StringBuilder message = new StringBuilder(getString(R.string.thumbcast_library_import_details,
++                preview.getName(), preview.getControlCount(), modeLabel(preview.getMode())));
++        if (preview.getIdChanged()) {
++            message.append("\n\n").append(getString(R.string.thumbcast_library_import_new_id));
++        }
++        new AlertDialog.Builder(this)
++                .setTitle(R.string.thumbcast_library_import_title)
++                .setMessage(message)
++                .setPositiveButton(R.string.thumbcast_library_import_confirm, (d, w) -> commitImport(preview, false))
++                .setNeutralButton(R.string.thumbcast_library_import_confirm_use, (d, w) -> commitImport(preview, true))
++                .setNegativeButton(android.R.string.cancel, null)
++                .show();
++    }
++
++    private void commitImport(ImportPreview preview, boolean use) {
++        try {
++            String file = repo.commitImport(preview);
++            if (use) {
++                selectFile(file);
++            } else {
++                refresh();
++            }
++            Toast.makeText(this, getString(R.string.thumbcast_library_imported, preview.getName()),
++                    Toast.LENGTH_SHORT).show();
++        } catch (ProfileLibraryException e) {
++            showError(R.string.thumbcast_library_import_failed, e);
++        }
++    }
++
++    // ---------- komunikaty ----------
++
++    private String modeLabel(ProfileMode mode) {
++        if (mode == null) {
++            return "?";
++        }
++        switch (mode) {
++            case KEYBOARD_MOUSE:
++                return getString(R.string.thumbcast_library_mode_keyboard_mouse);
++            case PAD_PLUS:
++            default:
++                return getString(R.string.thumbcast_library_mode_pad_plus);
++        }
++    }
++
++    private String reasonText(ProfileLibraryException e) {
++        switch (e.getReason()) {
++            case TOO_LARGE:
++                return getString(R.string.thumbcast_library_err_too_large, ProfileRepository.MAX_IMPORT_BYTES / 1024);
++            case NOT_UTF8:
++                return getString(R.string.thumbcast_library_err_not_utf8);
++            case INVALID_PROFILE: {
++                StringBuilder sb = new StringBuilder(getString(R.string.thumbcast_library_err_invalid));
++                List<String> details = e.getDetails();
++                for (int i = 0; i < details.size() && i < MAX_ERROR_LINES; i++) {
++                    sb.append("\n• ").append(details.get(i));
++                }
++                if (details.size() > MAX_ERROR_LINES) {
++                    sb.append("\n…");
++                }
++                return sb.toString();
++            }
++            case NOT_FOUND:
++                return getString(R.string.thumbcast_library_err_not_found);
++            case BUILT_IN_READ_ONLY:
++                return getString(R.string.thumbcast_library_err_read_only);
++            case INVALID_NAME:
++                return getString(R.string.thumbcast_library_err_name, ProfileRepository.MAX_NAME_LENGTH);
++            case INVALID_ID:
++                return getString(R.string.thumbcast_library_err_id);
++            case IO:
++            default:
++                return getString(R.string.thumbcast_library_err_io);
++        }
++    }
++
++    private void showError(int titleRes, ProfileLibraryException e) {
++        showErrorMessage(titleRes, reasonText(e));
++    }
++
++    private void showErrorMessage(int titleRes, String message) {
++        new AlertDialog.Builder(this)
++                .setTitle(titleRes)
++                .setMessage(message)
++                .setPositiveButton(android.R.string.ok, null)
++                .show();
++    }
++
++    // ---------- lista ----------
++
++    private final class LibraryAdapter extends BaseAdapter {
++        private static final int TYPE_HEADER = 0;
++        private static final int TYPE_PROFILE = 1;
++
++        private final List<Object> items = new ArrayList<>();
++        String activeFile;
++
++        void setData(List<ProfileEntry> presets, List<ProfileEntry> user, String active) {
++            items.clear();
++            activeFile = active;
++            items.add(getString(R.string.thumbcast_library_section_builtin));
++            items.addAll(presets);
++            items.add(getString(R.string.thumbcast_library_section_user));
++            if (user.isEmpty()) {
++                items.add(getString(R.string.thumbcast_library_empty_user));
++            } else {
++                items.addAll(user);
++            }
++            notifyDataSetChanged();
++        }
++
++        @Override
++        public int getCount() {
++            return items.size();
++        }
++
++        @Override
++        public Object getItem(int position) {
++            return items.get(position);
++        }
++
++        @Override
++        public long getItemId(int position) {
++            return position;
++        }
++
++        @Override
++        public int getViewTypeCount() {
++            return 2;
++        }
++
++        @Override
++        public int getItemViewType(int position) {
++            return items.get(position) instanceof ProfileEntry ? TYPE_PROFILE : TYPE_HEADER;
++        }
++
++        @Override
++        public boolean isEnabled(int position) {
++            return getItemViewType(position) == TYPE_PROFILE;
++        }
++
++        @Override
++        public boolean areAllItemsEnabled() {
++            return false;
++        }
++
++        @Override
++        public View getView(int position, View convertView, ViewGroup parent) {
++            LayoutInflater inflater = LayoutInflater.from(ProfileLibraryActivity.this);
++            Object item = items.get(position);
++            if (!(item instanceof ProfileEntry)) {
++                TextView header = convertView instanceof TextView ? (TextView) convertView
++                        : (TextView) inflater.inflate(R.layout.thumbcast_profile_header, parent, false);
++                header.setText((String) item);
++                return header;
++            }
++
++            View row = convertView != null ? convertView
++                    : inflater.inflate(R.layout.thumbcast_profile_item, parent, false);
++            ProfileEntry entry = (ProfileEntry) item;
++            RadioButton active = row.findViewById(R.id.thumbcast_profile_active);
++            TextView name = row.findViewById(R.id.thumbcast_profile_name);
++            TextView details = row.findViewById(R.id.thumbcast_profile_details);
++
++            boolean isActive = entry.getFileName().equals(activeFile);
++            active.setChecked(isActive);
++            name.setText(entry.getName());
++            if (entry.isValid()) {
++                String kind = getString(entry.getBuiltIn() ? R.string.thumbcast_library_builtin
++                        : R.string.thumbcast_library_custom);
++                String controls = getResources().getQuantityString(R.plurals.thumbcast_library_controls,
++                        entry.getControlCount(), entry.getControlCount());
++                details.setText(kind + " · " + modeLabel(entry.getMode()) + " · " + controls);
++            } else {
++                details.setText(getString(R.string.thumbcast_library_invalid, entry.getError()));
++            }
++            row.setContentDescription(isActive
++                    ? getString(R.string.thumbcast_library_active_description, entry.getName())
++                    : entry.getName());
++            return row;
++        }
++    }
++}
+diff --git a/app/src/main/java/com/limelight/thumbcast/ProfileShareProvider.java b/app/src/main/java/com/limelight/thumbcast/ProfileShareProvider.java
+new file mode 100644
+index 00000000..cc81a5fb
+--- /dev/null
++++ b/app/src/main/java/com/limelight/thumbcast/ProfileShareProvider.java
+@@ -0,0 +1,124 @@
++package com.limelight.thumbcast;
++
++// NOWY PLIK (moduł :app). Minimalny odpowiednik androidx FileProvider dla udostępniania profili:
++// :app nie ma zależności AndroidX (upstream), a potrzebny jest tylko odczyt plików z jednego katalogu.
++// Serwuje wyłącznie cacheDir/shared_profiles/<nazwa>.thumbcast.json, tylko do odczytu, bez eksportu
++// (dostęp tylko przez FLAG_GRANT_READ_URI_PERMISSION w intencji ACTION_SEND).
++
++import android.content.ContentProvider;
++import android.content.ContentValues;
++import android.content.Context;
++import android.database.Cursor;
++import android.database.MatrixCursor;
++import android.net.Uri;
++import android.os.ParcelFileDescriptor;
++import android.provider.OpenableColumns;
++
++import java.io.File;
++import java.io.FileNotFoundException;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.nio.charset.StandardCharsets;
++
++import app.thumbcast.android.library.ProfileRepository;
++
++public class ProfileShareProvider extends ContentProvider {
++
++    private static final String SHARED_DIR = "shared_profiles";
++
++    public static String authority(Context context) {
++        return context.getPackageName() + ".profiles";
++    }
++
++    /**
++     * Zapisuje tekst profilu do katalogu udostępniania (stare pliki są usuwane) i zwraca content:// URI.
++     */
++    public static Uri writeShareFile(Context context, String fileName, String text) throws IOException {
++        File dir = new File(context.getCacheDir(), SHARED_DIR);
++        if (!dir.isDirectory() && !dir.mkdirs()) {
++            throw new IOException("cannot create " + dir);
++        }
++        File[] old = dir.listFiles();
++        if (old != null) {
++            for (File f : old) {
++                //noinspection ResultOfMethodCallIgnored
++                f.delete();
++            }
++        }
++        File out = new File(dir, fileName);
++        try (FileOutputStream os = new FileOutputStream(out)) {
++            os.write(text.getBytes(StandardCharsets.UTF_8));
++        }
++        return new Uri.Builder().scheme("content").authority(authority(context)).appendPath(fileName).build();
++    }
++
++    private File fileFor(Uri uri) throws FileNotFoundException {
++        String name = uri.getLastPathSegment();
++        if (name == null || uri.getPathSegments().size() != 1 || !ProfileRepository.isSafeFileName(name)) {
++            throw new FileNotFoundException("invalid uri");
++        }
++        //noinspection ConstantConditions
++        File dir = new File(getContext().getCacheDir(), SHARED_DIR);
++        File f = new File(dir, name);
++        if (!f.isFile()) {
++            throw new FileNotFoundException(name);
++        }
++        return f;
++    }
++
++    @Override
++    public boolean onCreate() {
++        return true;
++    }
++
++    @Override
++    public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
++        if (mode != null && !"r".equals(mode)) {
++            throw new SecurityException("read-only");
++        }
++        return ParcelFileDescriptor.open(fileFor(uri), ParcelFileDescriptor.MODE_READ_ONLY);
++    }
++
++    @Override
++    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
++        File f;
++        try {
++            f = fileFor(uri);
++        } catch (FileNotFoundException e) {
++            return null;
++        }
++        String[] cols = projection != null ? projection
++                : new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
++        MatrixCursor cursor = new MatrixCursor(cols, 1);
++        Object[] row = new Object[cols.length];
++        for (int i = 0; i < cols.length; i++) {
++            if (OpenableColumns.DISPLAY_NAME.equals(cols[i])) {
++                row[i] = f.getName();
++            } else if (OpenableColumns.SIZE.equals(cols[i])) {
++                row[i] = f.length();
++            }
++        }
++        cursor.addRow(row);
++        return cursor;
++    }
++
++    @Override
++    public String getType(Uri uri) {
++        return ProfileRepository.MIME_TYPE;
++    }
++
++    @Override
++    public Uri insert(Uri uri, ContentValues values) {
++        throw new UnsupportedOperationException("read-only");
++    }
++
++    @Override
++    public int delete(Uri uri, String selection, String[] selectionArgs) {
++        throw new UnsupportedOperationException("read-only");
++    }
++
++    @Override
++    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
++        throw new UnsupportedOperationException("read-only");
++    }
++}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastKeyTranslator.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastKeyTranslator.java
 new file mode 100644
 index 00000000..056ba4cc
@@ -515,12 +1454,513 @@ index 00000000..056ba4cc
 +        return translator.translate(androidKeyCode, -1);
 +    }
 +}
+diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuModel.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuModel.java
+new file mode 100644
+index 00000000..c8101011
+--- /dev/null
++++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuModel.java
+@@ -0,0 +1,130 @@
++package com.limelight.thumbcast;
++
++// NOWY PLIK (moduł :app). Pozycje menu w grze (etykiety i akcje) bez widoku: ThumbcastMenuView je tylko rysuje,
++// ThumbcastSession dostarcza stan i wykonuje akcje. Kolejność pozycji jak w dawnym AlertDialog.
++
++import com.limelight.R;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++
++final class ThumbcastMenuModel {
++
++    /** Teksty z zasobów (Context.getString), żeby model nie zależał od widoku. */
++    interface Strings {
++        String get(int resId, Object... formatArgs);
++    }
++
++    /** Stan i akcje sesji, które menu pokazuje i wywołuje. */
++    interface Target {
++        void disconnect();
++
++        boolean areControlsHidden();
++
++        void toggleControls();
++
++        /** Klawiatura ekranowa; wołane po zamknięciu menu. */
++        void toggleKeyboard();
++
++        int getScalePercent();
++
++        /** Zmiana na żywo (overlay przelicza układ, menu zostaje otwarte). */
++        void setScalePercent(int percent);
++
++        boolean isHideOnGamepad();
++
++        void setHideOnGamepad(boolean hide);
++    }
++
++    enum Kind {
++        /** Wiersz-przycisk: jedna akcja. */
++        BUTTON,
++        /** Wiersz z etykietą i przyciskami − / +. */
++        STEPPER
++    }
++
++    enum Style { NORMAL, DESTRUCTIVE, PRIMARY }
++
++    static final class Item {
++        final Kind kind;
++        final Style style;
++        final String label;
++        /** BUTTON: true = najpierw zamknij menu, potem akcja; false = menu zostaje i odświeża etykiety. */
++        final boolean closesMenu;
++        /** BUTTON: akcja. */
++        final Runnable action;
++        /** STEPPER: krok w dół / w górę; null = przycisk nieaktywny (koniec zakresu). */
++        final Runnable decrease;
++        final Runnable increase;
++
++        private Item(Kind kind, Style style, String label, boolean closesMenu, Runnable action,
++                     Runnable decrease, Runnable increase) {
++            this.kind = kind;
++            this.style = style;
++            this.label = label;
++            this.closesMenu = closesMenu;
++            this.action = action;
++            this.decrease = decrease;
++            this.increase = increase;
++        }
++
++        static Item button(Style style, String label, boolean closesMenu, Runnable action) {
++            return new Item(Kind.BUTTON, style, label, closesMenu, action, null, null);
++        }
++
++        static Item stepper(String label, Runnable decrease, Runnable increase) {
++            return new Item(Kind.STEPPER, Style.NORMAL, label, false, null, decrease, increase);
++        }
++    }
++
++    private ThumbcastMenuModel() {
++    }
++
++    /** Pozycje menu dla bieżącego stanu. Po każdej akcji, która nie zamyka menu, sesja buduje listę od nowa. */
++    static List<Item> build(Strings s, final Target t) {
++        List<Item> items = new ArrayList<>();
++        items.add(Item.button(Style.DESTRUCTIVE, s.get(R.string.thumbcast_menu_disconnect), true, t::disconnect));
++        items.add(Item.button(Style.NORMAL, s.get(t.areControlsHidden()
++                ? R.string.thumbcast_menu_show_controls : R.string.thumbcast_menu_hide_controls),
++                true, t::toggleControls));
++        items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_keyboard), true, t::toggleKeyboard));
++
++        final int percent = t.getScalePercent();
++        final int smaller = stepScale(percent, -1);
++        final int larger = stepScale(percent, +1);
++        items.add(Item.stepper(s.get(R.string.thumbcast_menu_control_size, percent),
++                smaller != percent ? () -> t.setScalePercent(smaller) : null,
++                larger != percent ? () -> t.setScalePercent(larger) : null));
++
++        final boolean hide = t.isHideOnGamepad();
++        items.add(Item.button(Style.NORMAL, s.get(hide
++                ? R.string.thumbcast_menu_hide_on_gamepad_on : R.string.thumbcast_menu_hide_on_gamepad_off),
++                false, () -> t.setHideOnGamepad(!hide)));
++        items.add(Item.button(Style.PRIMARY, s.get(R.string.thumbcast_menu_resume), true, () -> { }));
++        return Collections.unmodifiableList(items);
++    }
++
++    /**
++     * Następna wartość z {@link ThumbcastSettings#SCALE_PERCENTS} w kierunku {@code direction} (-1 lub +1).
++     * Wartość spoza listy (np. 90 z ręcznie zmienionych preferencji) idzie do najbliższej w tym kierunku.
++     * Na końcu zakresu zwraca {@code current}.
++     */
++    static int stepScale(int current, int direction) {
++        int[] values = ThumbcastSettings.SCALE_PERCENTS;
++        if (direction > 0) {
++            for (int v : values) {
++                if (v > current) {
++                    return v;
++                }
++            }
++        } else if (direction < 0) {
++            for (int i = values.length - 1; i >= 0; i--) {
++                if (values[i] < current) {
++                    return values[i];
++                }
++            }
++        }
++        return current;
++    }
++}
+diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuView.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuView.java
+new file mode 100644
+index 00000000..0062942d
+--- /dev/null
++++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuView.java
+@@ -0,0 +1,359 @@
++package com.limelight.thumbcast;
++
++// NOWY PLIK (moduł :app). Menu w grze jako widok w oknie aktywności, nie osobne okno (AlertDialog).
++// Dialog z FLAG_NOT_FOCUSABLE i skopiowanymi flagami UI aktywności rozjeżdżał na Androidzie 16
++// (edge-to-edge, immersive) miejsce rysowania i obszar dotyku: tap w pozycję trafiał w pozycję niżej.
++//
++// Widok leży w tym samym FrameLayout co StreamView i overlay, jako ostatnie dziecko (na wierzchu,
++// pierwszy dostaje dotyk). Przyciemnione tło na cały ekran konsumuje każdy dotyk, więc overlay pod nim
++// nic nie dostaje; tap w tło = „Wróć do gry”. Panel boczny (przy krawędzi END) na pełną wysokość,
++// przewijany, wiersze min. 52 dp. Żaden element nie bierze fokusu: StreamView go zachowuje
++// (klawiatura ekranowa i klawisze trafiają tam jak bez menu).
++
++import android.annotation.SuppressLint;
++import android.content.Context;
++import android.content.res.TypedArray;
++import android.graphics.Typeface;
++import android.graphics.drawable.ColorDrawable;
++import android.graphics.drawable.Drawable;
++import android.os.Build;
++import android.util.TypedValue;
++import android.view.Gravity;
++import android.view.View;
++import android.view.WindowInsets;
++import android.view.accessibility.AccessibilityNodeInfo;
++import android.widget.Button;
++import android.widget.FrameLayout;
++import android.widget.LinearLayout;
++import android.widget.ScrollView;
++import android.widget.TextView;
++
++import com.limelight.R;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++
++/** Tworzony tylko z kodu (ThumbcastSession), nie z XML: jeden konstruktor z listenerem. */
++@SuppressLint("ViewConstructor")
++public final class ThumbcastMenuView extends FrameLayout {
++
++    interface Listener {
++        /** Kliknięta akcja pozycji ({@code item.action}, {@code item.decrease} albo {@code item.increase}). */
++        void onMenuAction(ThumbcastMenuModel.Item item, Runnable action);
++
++        /** Tap w przyciemnione tło. */
++        void onDismissRequested();
++    }
++
++    private static final int SCRIM_COLOR = 0x99000000;
++    private static final int PANEL_COLOR = 0xF2202124;
++    private static final int TEXT_COLOR = 0xFFFFFFFF;
++    private static final int TITLE_COLOR = 0xB3FFFFFF;
++    private static final int DESTRUCTIVE_COLOR = 0xFFFF8A80;
++    private static final int PRIMARY_COLOR = 0xFF8AB4F8;
++    private static final float DISABLED_ALPHA = 0.35f;
++
++    /** Wiersz i przyciski − / +: powyżej minimum 48 dp celu dotyku. */
++    private static final int ROW_MIN_HEIGHT_DP = 52;
++    private static final int STEP_BUTTON_DP = 56;
++    private static final int PANEL_MIN_WIDTH_DP = 280;
++    private static final int PANEL_MAX_WIDTH_DP = 420;
++    private static final float PANEL_WIDTH_FRACTION = 0.42f;
++    /** Pas tła widoczny zawsze obok panelu (wąski ekran w pionie): jest gdzie tapnąć, żeby wrócić. */
++    private static final int MIN_SCRIM_DP = 56;
++    private static final int PADDING_DP = 8;
++    private static final int ROW_PADDING_DP = 20;
++
++    private final Listener listener;
++    private final FrameLayout panel;
++    private final ScrollView scroll;
++    private final LinearLayout list;
++    private final float density;
++    /** Wiersze pozycji (po tytule); indeks = indeks w {@link #items}. */
++    private final List<View> rows = new ArrayList<>();
++    private List<ThumbcastMenuModel.Item> items = Collections.emptyList();
++    private int insetLeft;
++    private int insetTop;
++    private int insetRight;
++    private int insetBottom;
++
++    ThumbcastMenuView(Context context, Listener listener) {
++        super(context);
++        this.listener = listener;
++        this.density = getResources().getDisplayMetrics().density;
++
++        setBackgroundColor(SCRIM_COLOR);
++        setFocusable(View.NOT_FOCUSABLE);
++        setClickable(true);
++        setContentDescription(context.getString(R.string.thumbcast_menu_resume));
++        setOnClickListener(v -> listener.onDismissRequested());
++
++        panel = new FrameLayout(context);
++        panel.setBackgroundColor(PANEL_COLOR);
++        // Klikalny panel zjada tapy między wierszami, żeby nie trafiały w tło (zamknięcie).
++        panel.setClickable(true);
++        panel.setFocusable(View.NOT_FOCUSABLE);
++        panel.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
++        addView(panel, new LayoutParams(dp(PANEL_MIN_WIDTH_DP), LayoutParams.MATCH_PARENT, Gravity.END));
++
++        scroll = new ScrollView(context);
++        scroll.setFocusable(View.NOT_FOCUSABLE);
++        scroll.setFillViewport(true);
++        scroll.setClipToPadding(false);
++        panel.addView(scroll, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
++
++        list = new LinearLayout(context);
++        list.setOrientation(LinearLayout.VERTICAL);
++        scroll.addView(list, new ScrollView.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
++
++        TextView title = new TextView(context);
++        title.setText(R.string.thumbcast_menu_title);
++        title.setTextColor(TITLE_COLOR);
++        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
++        title.setTypeface(Typeface.DEFAULT_BOLD);
++        title.setGravity(Gravity.CENTER_VERTICAL);
++        title.setMinHeight(dp(44));
++        title.setPadding(dp(ROW_PADDING_DP), 0, dp(ROW_PADDING_DP), 0);
++        list.addView(title, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
++
++        updatePadding();
++    }
++
++    /** Pokazuje pozycje; przy tej samej strukturze tylko odświeża wiersze (przewinięcie zostaje). */
++    void bind(List<ThumbcastMenuModel.Item> newItems) {
++        boolean sameShape = newItems.size() == items.size();
++        for (int i = 0; sameShape && i < newItems.size(); i++) {
++            sameShape = newItems.get(i).kind == items.get(i).kind;
++        }
++        items = newItems;
++        if (!sameShape) {
++            for (View row : rows) {
++                list.removeView(row);
++            }
++            rows.clear();
++            for (int i = 0; i < newItems.size(); i++) {
++                View row = newItems.get(i).kind == ThumbcastMenuModel.Kind.STEPPER ? createStepperRow(i) : createButtonRow(i);
++                rows.add(row);
++                list.addView(row, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
++            }
++        }
++        for (int i = 0; i < newItems.size(); i++) {
++            updateRow(rows.get(i), newItems.get(i));
++        }
++    }
++
++    /** Na górę listy (każde otwarcie menu zaczyna od pierwszej pozycji). */
++    void scrollToTop() {
++        scroll.scrollTo(0, 0);
++    }
++
++    // =====================================================================================
++    // Wiersze
++    // =====================================================================================
++
++    private View createButtonRow(final int index) {
++        TextView row = newRowLabel();
++        row.setClickable(true);
++        row.setBackground(themeDrawable(android.R.attr.selectableItemBackground));
++        row.setOnClickListener(v -> fire(index, Which.ACTION));
++        markAsButton(row);
++        return row;
++    }
++
++    private View createStepperRow(final int index) {
++        LinearLayout row = new LinearLayout(getContext());
++        row.setOrientation(LinearLayout.HORIZONTAL);
++        row.setGravity(Gravity.CENTER_VERTICAL);
++        row.setPaddingRelative(0, 0, dp(PADDING_DP), 0);
++
++        TextView label = newRowLabel();
++        row.addView(label, new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
++        row.addView(newStepButton(R.string.thumbcast_menu_scale_minus, R.string.thumbcast_menu_scale_decrease,
++                v -> fire(index, Which.DECREASE)), new LinearLayout.LayoutParams(dp(STEP_BUTTON_DP), dp(STEP_BUTTON_DP)));
++        row.addView(newStepButton(R.string.thumbcast_menu_scale_plus, R.string.thumbcast_menu_scale_increase,
++                v -> fire(index, Which.INCREASE)), new LinearLayout.LayoutParams(dp(STEP_BUTTON_DP), dp(STEP_BUTTON_DP)));
++        return row;
++    }
++
++    private void updateRow(View row, ThumbcastMenuModel.Item item) {
++        if (item.kind == ThumbcastMenuModel.Kind.STEPPER) {
++            LinearLayout r = (LinearLayout) row;
++            ((TextView) r.getChildAt(0)).setText(item.label);
++            setStepEnabled(r.getChildAt(1), item.decrease != null);
++            setStepEnabled(r.getChildAt(2), item.increase != null);
++        } else {
++            TextView t = (TextView) row;
++            t.setText(item.label);
++            t.setTextColor(colorFor(item.style));
++            t.setTypeface(item.style == ThumbcastMenuModel.Style.PRIMARY ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
++        }
++    }
++
++    private enum Which { ACTION, DECREASE, INCREASE }
++
++    private void fire(int index, Which which) {
++        if (index >= items.size()) {
++            return;
++        }
++        ThumbcastMenuModel.Item item = items.get(index);
++        Runnable action;
++        switch (which) {
++            case DECREASE:
++                action = item.decrease;
++                break;
++            case INCREASE:
++                action = item.increase;
++                break;
++            default:
++                action = item.action;
++                break;
++        }
++        if (action != null) {
++            listener.onMenuAction(item, action);
++        }
++    }
++
++    private TextView newRowLabel() {
++        TextView t = new TextView(getContext());
++        t.setFocusable(View.NOT_FOCUSABLE);
++        t.setTextColor(TEXT_COLOR);
++        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
++        t.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
++        t.setMinHeight(dp(ROW_MIN_HEIGHT_DP));
++        t.setPadding(dp(ROW_PADDING_DP), dp(PADDING_DP), dp(ROW_PADDING_DP), dp(PADDING_DP));
++        return t;
++    }
++
++    private TextView newStepButton(int textRes, int descriptionRes, View.OnClickListener onClick) {
++        TextView b = new TextView(getContext());
++        b.setFocusable(View.NOT_FOCUSABLE);
++        b.setClickable(true);
++        b.setText(textRes);
++        b.setContentDescription(getContext().getString(descriptionRes));
++        b.setTextColor(TEXT_COLOR);
++        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24);
++        b.setGravity(Gravity.CENTER);
++        b.setBackground(themeDrawable(android.R.attr.selectableItemBackgroundBorderless));
++        b.setOnClickListener(onClick);
++        markAsButton(b);
++        return b;
++    }
++
++    private static void setStepEnabled(View b, boolean enabled) {
++        b.setEnabled(enabled);
++        b.setAlpha(enabled ? 1f : DISABLED_ALPHA);
++    }
++
++    private static int colorFor(ThumbcastMenuModel.Style style) {
++        switch (style) {
++            case DESTRUCTIVE:
++                return DESTRUCTIVE_COLOR;
++            case PRIMARY:
++                return PRIMARY_COLOR;
++            default:
++                return TEXT_COLOR;
++        }
++    }
++
++    /** TalkBack czyta wiersz jako przycisk. */
++    private static void markAsButton(View v) {
++        v.setAccessibilityDelegate(new View.AccessibilityDelegate() {
++            @Override
++            public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfo info) {
++                super.onInitializeAccessibilityNodeInfo(host, info);
++                info.setClassName(Button.class.getName());
++            }
++        });
++    }
++
++    private Drawable themeDrawable(int attr) {
++        TypedArray a = getContext().obtainStyledAttributes(new int[]{attr});
++        try {
++            Drawable d = a.getDrawable(0);
++            return d != null ? d : new ColorDrawable(0);
++        } finally {
++            a.recycle();
++        }
++    }
++
++    // =====================================================================================
++    // Rozmiar panelu i wcięcia (wycięcie ekranu, paski systemowe poza trybem immersive)
++    // =====================================================================================
++
++    @Override
++    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
++        int width = MeasureSpec.getSize(widthMeasureSpec);
++        int wanted = Math.round(width * PANEL_WIDTH_FRACTION);
++        wanted = Math.max(dp(PANEL_MIN_WIDTH_DP), Math.min(dp(PANEL_MAX_WIDTH_DP), wanted));
++        wanted = Math.min(wanted, width - dp(MIN_SCRIM_DP));
++        LayoutParams lp = (LayoutParams) panel.getLayoutParams();
++        lp.width = Math.max(0, wanted);
++        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
++    }
++
++    @Override
++    protected void onAttachedToWindow() {
++        super.onAttachedToWindow();
++        WindowInsets insets = getRootWindowInsets();
++        if (insets != null) {
++            applyInsets(insets);
++        }
++    }
++
++    @Override
++    public WindowInsets onApplyWindowInsets(WindowInsets insets) {
++        applyInsets(insets);
++        return insets;
++    }
++
++    @SuppressWarnings("deprecation")
++    private void applyInsets(WindowInsets insets) {
++        int l;
++        int t;
++        int r;
++        int b;
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
++            android.graphics.Insets i = insets.getInsets(
++                    WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
++            l = i.left;
++            t = i.top;
++            r = i.right;
++            b = i.bottom;
++        } else {
++            l = insets.getSystemWindowInsetLeft();
++            t = insets.getSystemWindowInsetTop();
++            r = insets.getSystemWindowInsetRight();
++            b = insets.getSystemWindowInsetBottom();
++            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && insets.getDisplayCutout() != null) {
++                l = Math.max(l, insets.getDisplayCutout().getSafeInsetLeft());
++                t = Math.max(t, insets.getDisplayCutout().getSafeInsetTop());
++                r = Math.max(r, insets.getDisplayCutout().getSafeInsetRight());
++                b = Math.max(b, insets.getDisplayCutout().getSafeInsetBottom());
++            }
++        }
++        if (l != insetLeft || t != insetTop || r != insetRight || b != insetBottom) {
++            insetLeft = l;
++            insetTop = t;
++            insetRight = r;
++            insetBottom = b;
++            updatePadding();
++        }
++    }
++
++    /** Treść panelu omija wcięcie po stronie krawędzi ekranu; tło panelu sięga do krawędzi. */
++    private void updatePadding() {
++        boolean rtl = getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
++        int edge = rtl ? insetLeft : insetRight;
++        int base = dp(PADDING_DP);
++        if (rtl) {
++            scroll.setPadding(base + edge, base + insetTop, base, base + insetBottom);
++        } else {
++            scroll.setPadding(base, base + insetTop, base + edge, base + insetBottom);
++        }
++    }
++
++    private int dp(int value) {
++        return Math.round(value * density);
++    }
++}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
 new file mode 100644
-index 00000000..8dc4518c
+index 00000000..492e6d75
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
-@@ -0,0 +1,429 @@
+@@ -0,0 +1,425 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Cała logika Thumbcast w aktywności Game: Game trzyma jedno pole
@@ -528,11 +1968,11 @@ index 00000000..8dc4518c
 +//
 +// Sesja odpowiada za: wczytanie profilu (błąd = null, Game tworzy wtedy VirtualController), rozmiar
 +// kontrolek (ScaleTransform), overlay nad StreamView, prostokąt wideo, HostPadReporterImpl, akcje
-+// aplikacji (Command: mapa akcja -> Runnable), menu w grze (☰, gest od górnej krawędzi, systemowy Back),
++// aplikacji (Command: mapa akcja -> Runnable), menu w grze (☰, gest od górnej krawędzi, systemowy Back;
++// widok ThumbcastMenuView nad overlayem, pozycje w ThumbcastMenuModel),
 +// ukrywanie kontrolek przy podłączonym padzie, PiP i sprzątanie.
 +
 +import android.app.Activity;
-+import android.app.AlertDialog;
 +import android.content.Context;
 +import android.hardware.input.InputManager;
 +import android.os.Build;
@@ -540,8 +1980,6 @@ index 00000000..8dc4518c
 +import android.os.Looper;
 +import android.view.InputDevice;
 +import android.view.View;
-+import android.view.Window;
-+import android.view.WindowManager;
 +import android.widget.FrameLayout;
 +import android.widget.Toast;
 +
@@ -553,10 +1991,8 @@ index 00000000..8dc4518c
 +import com.limelight.preferences.PreferenceConfiguration;
 +import com.limelight.ui.GameGestures;
 +
-+import java.util.ArrayList;
 +import java.util.Collections;
 +import java.util.HashMap;
-+import java.util.List;
 +import java.util.Map;
 +
 +import app.thumbcast.android.ThumbcastOverlayFactory;
@@ -576,10 +2012,6 @@ index 00000000..8dc4518c
 +        void disconnect();
 +    }
 +
-+    /** Klawiatura ekranowa po zamknięciu menu: okno aktywności musi najpierw odzyskać fokus. */
-+    private static final long KEYBOARD_AFTER_DIALOG_MS = 200;
-+    private static final int DIALOG_THEME = android.R.style.Theme_DeviceDefault_Dialog_Alert;
-+
 +    private final Activity activity;
 +    private final Host host;
 +    private final ThumbcastSettings settings;
@@ -596,9 +2028,10 @@ index 00000000..8dc4518c
 +    private boolean gamepadConnected;
 +    /** Wybór z menu / akcji toggle_overlay; null = reguła automatyczna (pad + ustawienie). */
 +    private Boolean manualHidden;
-+    private AlertDialog dialog;
-+    private Runnable afterDialog;
-+    private long afterDialogDelayMs;
++    /** Rodzic StreamView: overlay i menu są jego ostatnimi dziećmi. */
++    private final FrameLayout overlayParent;
++    /** Tworzony przy pierwszym otwarciu; pokazany = dodany do {@link #overlayParent}. */
++    private ThumbcastMenuView menuView;
 +    private boolean destroyed;
 +
 +    private final InputManager.InputDeviceListener deviceListener = new InputManager.InputDeviceListener() {
@@ -673,9 +2106,9 @@ index 00000000..8dc4518c
 +                padReporter,
 +                this::onAppAction,
 +                new ThumbcastKeyTranslator(keyboardTranslator));
-+        FrameLayout parent = (FrameLayout) streamView.getParent();
++        overlayParent = (FrameLayout) streamView.getParent();
 +        // Ostatnie dziecko FrameLayout jest rysowane na wierzchu i pierwsze dostaje dotyk.
-+        parent.addView(overlay, new FrameLayout.LayoutParams(
++        overlayParent.addView(overlay, new FrameLayout.LayoutParams(
 +                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 +        overlay.setDebugEnabled(prefConfig.thumbcastDebugOverlay);
 +        overlay.setStreamResolution(prefConfig.width, prefConfig.height);
@@ -701,12 +2134,16 @@ index 00000000..8dc4518c
 +        return !destroyed;
 +    }
 +
-+    /** Systemowy Back (przycisk lub gest): zamiast wyjścia otwiera menu. true = obsłużone. */
++    /** Systemowy Back (przycisk lub gest): zamiast wyjścia otwiera menu, a przy otwartym je zamyka. true = obsłużone. */
 +    public boolean onBackPressed() {
 +        if (destroyed) {
 +            return false;
 +        }
-+        showMenu();
++        if (isMenuShown()) {
++            hideMenu();
++        } else {
++            showMenu();
++        }
 +        return true;
 +    }
 +
@@ -714,7 +2151,7 @@ index 00000000..8dc4518c
 +    public void onPictureInPictureChanged(boolean inPip) {
 +        if (inPip) {
 +            overlay.releaseAll();
-+            dismissDialog();
++            hideMenu();
 +            overlay.setVisibility(View.GONE);
 +        } else {
 +            overlay.setVisibility(View.VISIBLE);
@@ -726,7 +2163,7 @@ index 00000000..8dc4518c
 +        overlay.releaseAll();
 +    }
 +
-+    /** onDestroy: bez zaległych retransmisji, listenerów i okien. */
++    /** onDestroy: bez zaległych retransmisji, listenerów i menu. */
 +    public void onDestroy() {
 +        destroyed = true;
 +        padReporter.cancelPending();
@@ -734,7 +2171,7 @@ index 00000000..8dc4518c
 +        if (inputManager != null) {
 +            inputManager.unregisterInputDeviceListener(deviceListener);
 +        }
-+        dismissDialog();
++        hideMenu();
 +    }
 +
 +    // =====================================================================================
@@ -778,6 +2215,8 @@ index 00000000..8dc4518c
 +    private void applyControlsHidden() {
 +        boolean hidden = manualHidden != null ? manualHidden : (hideOnGamepad && gamepadConnected);
 +        overlay.setControlsHidden(hidden);
++        // Pad podłączony/odłączony przy otwartym menu: etykieta Ukryj/Pokaż przyciski.
++        refreshMenu();
 +    }
 +
 +    private void refreshGamepadState() {
@@ -837,125 +2276,122 @@ index 00000000..8dc4518c
 +    }
 +
 +    // =====================================================================================
-+    // Menu w grze
++    // Menu w grze (widok nad overlayem w oknie aktywności, bez osobnego okna)
 +    // =====================================================================================
++
++    private boolean isMenuShown() {
++        return menuView != null && menuView.getParent() != null;
++    }
 +
 +    private void showMenu() {
 +        if (destroyed || activity.isFinishing()) {
 +            return;
 +        }
-+        // Palce schodzą z overlaya na okno dialogu: nic nie może zostać wciśnięte na hoście.
++        // Nic nie może zostać wciśnięte na hoście. Palce, które jeszcze leżą na overlayu, po releaseAll
++        // nie są śledzone (translator ignoruje ich MOVE), a nowe trafiają w menu, które konsumuje każdy dotyk.
 +        overlay.releaseAll();
-+        dismissDialog();
-+
-+        final List<CharSequence> labels = new ArrayList<>();
-+        final List<Runnable> actions = new ArrayList<>();
-+        final List<Long> delays = new ArrayList<>();
-+        addItem(labels, actions, delays, activity.getString(R.string.thumbcast_menu_disconnect), host::disconnect, 0);
-+        addItem(labels, actions, delays, activity.getString(overlay.getControlsHidden()
-+                ? R.string.thumbcast_menu_show_controls : R.string.thumbcast_menu_hide_controls),
-+                this::toggleControls, 0);
-+        addItem(labels, actions, delays, activity.getString(R.string.thumbcast_menu_keyboard),
-+                host::toggleKeyboard, KEYBOARD_AFTER_DIALOG_MS);
-+        addItem(labels, actions, delays, activity.getString(R.string.thumbcast_menu_control_size, scalePercent),
-+                this::showScaleDialog, 0);
-+        addItem(labels, actions, delays, activity.getString(hideOnGamepad
-+                ? R.string.thumbcast_menu_hide_on_gamepad_on : R.string.thumbcast_menu_hide_on_gamepad_off),
-+                () -> setHideOnGamepad(!hideOnGamepad), 0);
-+
-+        AlertDialog d = new AlertDialog.Builder(activity, DIALOG_THEME)
-+                .setTitle(R.string.thumbcast_menu_title)
-+                .setItems(labels.toArray(new CharSequence[0]), (di, which) -> {
-+                    afterDialog = actions.get(which);
-+                    afterDialogDelayMs = delays.get(which);
-+                })
-+                .setNegativeButton(R.string.thumbcast_menu_resume, null)
-+                .create();
-+        show(d);
-+    }
-+
-+    private static void addItem(List<CharSequence> labels, List<Runnable> actions, List<Long> delays,
-+                                CharSequence label, Runnable action, long delayMs) {
-+        labels.add(label);
-+        actions.add(action);
-+        delays.add(delayMs);
-+    }
-+
-+    private void showScaleDialog() {
-+        if (destroyed || activity.isFinishing()) {
-+            return;
++        if (menuView == null) {
++            menuView = new ThumbcastMenuView(activity, menuListener);
 +        }
-+        final int[] values = ThumbcastSettings.SCALE_PERCENTS;
-+        CharSequence[] labels = new CharSequence[values.length];
-+        int checked = -1;
-+        for (int i = 0; i < values.length; i++) {
-+            labels[i] = activity.getString(R.string.thumbcast_percent, values[i]);
-+            if (values[i] == scalePercent) {
-+                checked = i;
++        if (menuView.getParent() == null) {
++            // Ostatnie dziecko: rysowane nad overlayem i pierwsze w kolejce dotyku.
++            overlayParent.addView(menuView, new FrameLayout.LayoutParams(
++                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
++            menuView.scrollToTop();
++        }
++        refreshMenu();
++    }
++
++    /** Zamknięcie bez akcji (Wróć do gry, tap w tło, Back, PiP, onDestroy). */
++    private void hideMenu() {
++        if (isMenuShown()) {
++            overlayParent.removeView(menuView);
++        }
++    }
++
++    private void refreshMenu() {
++        if (isMenuShown()) {
++            menuView.bind(ThumbcastMenuModel.build(this::menuString, menuTarget));
++        }
++    }
++
++    private String menuString(int resId, Object... args) {
++        return args.length == 0 ? activity.getString(resId) : activity.getString(resId, args);
++    }
++
++    private final ThumbcastMenuView.Listener menuListener = new ThumbcastMenuView.Listener() {
++        @Override
++        public void onMenuAction(ThumbcastMenuModel.Item item, Runnable action) {
++            if (destroyed || !isMenuShown()) {
++                return;
 +            }
-+        }
-+        AlertDialog d = new AlertDialog.Builder(activity, DIALOG_THEME)
-+                .setTitle(R.string.title_thumbcast_control_scale)
-+                .setSingleChoiceItems(labels, checked, (di, which) -> {
-+                    final int percent = values[which];
-+                    afterDialog = () -> applyScale(percent);
-+                    afterDialogDelayMs = 0;
-+                    di.dismiss();
-+                })
-+                .setNegativeButton(android.R.string.cancel, null)
-+                .create();
-+        show(d);
-+    }
-+
-+    /**
-+     * Pokazuje dialog bez zrywania trybu immersive (okno bez fokusu w chwili show() dostaje flagi UI
-+     * aktywności) i wykonuje wybraną akcję dopiero po zamknięciu, gdy fokus wraca do strumienia.
-+     */
-+    @SuppressWarnings("deprecation")
-+    private void show(AlertDialog d) {
-+        d.setOnDismissListener(di -> {
-+            if (dialog == di) {
-+                dialog = null;
++            if (item.closesMenu) {
++                hideMenu();
 +            }
-+            Runnable action = afterDialog;
-+            afterDialog = null;
-+            if (action != null && !destroyed) {
-+                mainHandler.postDelayed(() -> {
-+                    if (!destroyed) {
-+                        action.run();
-+                    }
-+                }, afterDialogDelayMs);
-+            }
-+        });
-+        afterDialog = null;
-+        dialog = d;
-+        Window w = d.getWindow();
-+        if (w != null) {
-+            w.setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
++            action.run();
++            refreshMenu();
 +        }
-+        d.show();
-+        if (w != null) {
-+            w.getDecorView().setSystemUiVisibility(activity.getWindow().getDecorView().getSystemUiVisibility());
-+            w.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
-+        }
-+    }
 +
-+    /** Zamknięcie bez wykonywania wybranej akcji (PiP, onDestroy, ponowne otwarcie menu). */
-+    private void dismissDialog() {
-+        AlertDialog d = dialog;
-+        dialog = null;
-+        afterDialog = null;
-+        if (d != null && d.isShowing()) {
-+            d.dismiss();
++        @Override
++        public void onDismissRequested() {
++            hideMenu();
 +        }
-+    }
++    };
++
++    private final ThumbcastMenuModel.Target menuTarget = new ThumbcastMenuModel.Target() {
++        @Override
++        public void disconnect() {
++            host.disconnect();
++        }
++
++        @Override
++        public boolean areControlsHidden() {
++            return overlay.getControlsHidden();
++        }
++
++        @Override
++        public void toggleControls() {
++            ThumbcastSession.this.toggleControls();
++        }
++
++        @Override
++        public void toggleKeyboard() {
++            // Okno aktywności nie traci fokusu (menu to widok, nie dialog), więc dawne opóźnienie 200 ms
++            // nie jest potrzebne. Zostaje post: klawiatura po zdjęciu menu, poza obsługą kliknięcia.
++            mainHandler.post(() -> {
++                if (!destroyed) {
++                    host.toggleKeyboard();
++                }
++            });
++        }
++
++        @Override
++        public int getScalePercent() {
++            return scalePercent;
++        }
++
++        @Override
++        public void setScalePercent(int percent) {
++            applyScale(percent);
++        }
++
++        @Override
++        public boolean isHideOnGamepad() {
++            return hideOnGamepad;
++        }
++
++        @Override
++        public void setHideOnGamepad(boolean hide) {
++            ThumbcastSession.this.setHideOnGamepad(hide);
++        }
++    };
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java
 new file mode 100644
-index 00000000..ffa9fcc4
+index 00000000..5011fa6c
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java
-@@ -0,0 +1,61 @@
+@@ -0,0 +1,80 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Ustawienia Thumbcast zmieniane także z menu w grze, więc mają własny
@@ -972,17 +2408,36 @@ index 00000000..ffa9fcc4
 +    public static final String KEY_CONTROL_SCALE = "list_thumbcast_control_scale";
 +    public static final String KEY_HIDE_ON_GAMEPAD = "checkbox_thumbcast_hide_on_gamepad";
 +
-+    /** Telefon: przyciski i gałka z presetów są za duże przy 100% (test właściciela 11.11.2026). */
-+    public static final int DEFAULT_SCALE_PERCENT = 85;
++    /**
++     * 100% = rozmiar z presetu. Od 11.11.2026 presety mają rozmiar, który właściciel uznał za normę
++     * na telefonie (wcześniejsze 85%), więc domyślnie nic nie jest skalowane.
++     */
++    public static final int DEFAULT_SCALE_PERCENT = 100;
 +    public static final boolean DEFAULT_HIDE_ON_GAMEPAD = true;
 +
 +    /** Wartości z menu w grze i z ekranu ustawień (thumbcast_control_scale_values). */
 +    static final int[] SCALE_PERCENTS = {60, 70, 85, 100, 115, 130};
 +
++    /** Jednorazowa migracja: zapisane 85% (stara norma) to po zmniejszeniu presetów 100%. */
++    private static final String KEY_SCALE_REBASED = "thumbcast_control_scale_rebased";
++    private static final String OLD_NORM_PERCENT = "85";
++
 +    private final SharedPreferences prefs;
 +
 +    public ThumbcastSettings(Context context) {
 +        prefs = PreferenceManager.getDefaultSharedPreferences(context);
++        migrateScale();
++    }
++
++    private void migrateScale() {
++        if (prefs.getBoolean(KEY_SCALE_REBASED, false)) {
++            return;
++        }
++        SharedPreferences.Editor e = prefs.edit().putBoolean(KEY_SCALE_REBASED, true);
++        if (OLD_NORM_PERCENT.equals(prefs.getString(KEY_CONTROL_SCALE, null))) {
++            e.putString(KEY_CONTROL_SCALE, String.valueOf(DEFAULT_SCALE_PERCENT));
++        }
++        e.apply();
 +    }
 +
 +    public int getControlScalePercent() {
@@ -1017,12 +2472,129 @@ index 00000000..ffa9fcc4
 +        prefs.edit().putBoolean(KEY_HIDE_ON_GAMEPAD, hide).apply();
 +    }
 +}
+diff --git a/app/src/main/res/layout/activity_thumbcast_profile_library.xml b/app/src/main/res/layout/activity_thumbcast_profile_library.xml
+new file mode 100644
+index 00000000..ad0385f2
+--- /dev/null
++++ b/app/src/main/res/layout/activity_thumbcast_profile_library.xml
+@@ -0,0 +1,49 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: biblioteka profili (ProfileLibraryActivity). -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@+id/thumbcast_library_root"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:orientation="vertical"
++    android:paddingLeft="16dp"
++    android:paddingRight="16dp"
++    android:paddingTop="8dp">
++
++    <TextView
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:paddingTop="8dp"
++        android:paddingBottom="8dp"
++        android:text="@string/thumbcast_library_title"
++        android:textAppearance="?android:attr/textAppearanceLarge" />
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:orientation="horizontal"
++        style="?android:attr/buttonBarStyle">
++
++        <Button
++            style="?android:attr/buttonBarButtonStyle"
++            android:id="@+id/thumbcast_library_import_file"
++            android:layout_width="0dp"
++            android:layout_height="wrap_content"
++            android:layout_weight="1"
++            android:text="@string/thumbcast_library_import_file" />
++
++        <Button
++            style="?android:attr/buttonBarButtonStyle"
++            android:id="@+id/thumbcast_library_import_clipboard"
++            android:layout_width="0dp"
++            android:layout_height="wrap_content"
++            android:layout_weight="1"
++            android:text="@string/thumbcast_library_import_clipboard" />
++    </LinearLayout>
++
++    <ListView
++        android:id="@+id/thumbcast_library_list"
++        android:layout_width="match_parent"
++        android:layout_height="0dp"
++        android:layout_weight="1"
++        android:clipToPadding="false" />
++</LinearLayout>
+diff --git a/app/src/main/res/layout/thumbcast_profile_header.xml b/app/src/main/res/layout/thumbcast_profile_header.xml
+new file mode 100644
+index 00000000..13d20910
+--- /dev/null
++++ b/app/src/main/res/layout/thumbcast_profile_header.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nagłówek sekcji biblioteki profili (Wbudowane / Moje profile). -->
++<TextView xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:paddingTop="16dp"
++    android:paddingBottom="4dp"
++    android:textAppearance="?android:attr/textAppearanceSmall"
++    android:textColor="?android:attr/colorAccent"
++    android:textStyle="bold" />
+diff --git a/app/src/main/res/layout/thumbcast_profile_item.xml b/app/src/main/res/layout/thumbcast_profile_item.xml
+new file mode 100644
+index 00000000..d0fa4d92
+--- /dev/null
++++ b/app/src/main/res/layout/thumbcast_profile_item.xml
+@@ -0,0 +1,40 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: wiersz biblioteki profili (radio = profil aktywny). -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:gravity="center_vertical"
++    android:minHeight="?android:attr/listPreferredItemHeight"
++    android:orientation="horizontal"
++    android:paddingTop="6dp"
++    android:paddingBottom="6dp">
++
++    <RadioButton
++        android:id="@+id/thumbcast_profile_active"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:clickable="false"
++        android:focusable="false"
++        android:importantForAccessibility="no" />
++
++    <LinearLayout
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
++        android:layout_weight="1"
++        android:orientation="vertical"
++        android:paddingStart="8dp"
++        android:paddingEnd="8dp">
++
++        <TextView
++            android:id="@+id/thumbcast_profile_name"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:textAppearance="?android:attr/textAppearanceMedium" />
++
++        <TextView
++            android:id="@+id/thumbcast_profile_details"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:textAppearance="?android:attr/textAppearanceSmall" />
++    </LinearLayout>
++</LinearLayout>
 diff --git a/app/src/main/res/values-pl/thumbcast_strings.xml b/app/src/main/res/values-pl/thumbcast_strings.xml
 new file mode 100644
-index 00000000..e77a6aaf
+index 00000000..8ffee1f7
 --- /dev/null
 +++ b/app/src/main/res/values-pl/thumbcast_strings.xml
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,85 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -1031,17 +2603,70 @@ index 00000000..e77a6aaf
 +    <string name="control_layer_thumbcast">Thumbcast (multitouch, profile)</string>
 +    <string name="control_layer_legacy">Klasyczny kontroler ekranowy</string>
 +    <string name="title_thumbcast_profile">Profil sterowania</string>
-+    <string name="thumbcast_profile_mmo_pad_plus">MMO – Pad+</string>
-+    <string name="thumbcast_profile_mmo_keyboard">MMO – Klawiatura</string>
-+    <string name="thumbcast_profile_desktop_touchpad">Pulpit – Touchpad</string>
-+    <string name="thumbcast_profile_big_picture">Big Picture</string>
 +    <string name="title_thumbcast_debug">Nakładka debug wejścia</string>
 +    <string name="summary_thumbcast_debug">Pokazuje aktywne wskaźniki, wysłane flagi pada i opóźnienie dotyk→wysyłka</string>
 +    <string name="thumbcast_profile_error">Nie udało się wczytać profilu, używam klasycznego kontrolera: %1$s</string>
++    <!-- Biblioteka profili (ProfileLibraryActivity, docs/profiles.md). -->
++    <string name="thumbcast_library_title">Profile sterowania</string>
++    <string name="thumbcast_library_import_file">Importuj plik</string>
++    <string name="thumbcast_library_import_clipboard">Wklej ze schowka</string>
++    <string name="thumbcast_library_section_builtin">Presety wbudowane</string>
++    <string name="thumbcast_library_section_user">Moje profile</string>
++    <string name="thumbcast_library_empty_user">Brak własnych profili. Zduplikuj preset albo zaimportuj profil.</string>
++    <string name="thumbcast_library_builtin">Wbudowany</string>
++    <string name="thumbcast_library_custom">Własny</string>
++    <string name="thumbcast_library_mode_pad_plus">Pad+</string>
++    <string name="thumbcast_library_mode_keyboard_mouse">Klawiatura + mysz</string>
++    <plurals name="thumbcast_library_controls">
++        <item quantity="one">%d kontrolka</item>
++        <item quantity="few">%d kontrolki</item>
++        <item quantity="many">%d kontrolek</item>
++        <item quantity="other">%d kontrolki</item>
++    </plurals>
++    <string name="thumbcast_library_invalid">Niepoprawny profil: %1$s</string>
++    <string name="thumbcast_library_active_description">%1$s, aktywny</string>
++    <string name="thumbcast_library_action_select">Użyj tego profilu</string>
++    <string name="thumbcast_library_action_edit">Edytuj układ</string>
++    <string name="thumbcast_library_action_duplicate">Duplikuj</string>
++    <string name="thumbcast_library_action_rename">Zmień nazwę</string>
++    <string name="thumbcast_library_action_export">Eksportuj do pliku</string>
++    <string name="thumbcast_library_action_share">Udostępnij</string>
++    <string name="thumbcast_library_action_delete">Usuń</string>
++    <string name="thumbcast_library_copy_suffix">" (kopia)"</string>
++    <string name="thumbcast_library_selected">Aktywny profil: %1$s</string>
++    <string name="thumbcast_library_duplicated">Utworzono kopię: %1$s</string>
++    <string name="thumbcast_library_rename_title">Zmień nazwę profilu</string>
++    <string name="thumbcast_library_delete_title">Usunąć profil?</string>
++    <string name="thumbcast_library_delete_message">Profil „%1$s” zostanie usunięty. Tego nie da się cofnąć.</string>
++    <string name="thumbcast_library_deleted">Profil usunięty</string>
++    <string name="thumbcast_library_deleted_active">Profil usunięty. Aktywny jest teraz domyślny preset.</string>
++    <string name="thumbcast_library_editor_unavailable">Edytor układu nie jest jeszcze dostępny w tej wersji.</string>
++    <string name="thumbcast_library_saved">Profil zapisany</string>
++    <string name="thumbcast_library_edit_failed">Nie zapisano edytowanego profilu</string>
++    <string name="thumbcast_library_exported">Profil wyeksportowany</string>
++    <string name="thumbcast_library_export_failed">Eksport nie powiódł się: %1$s</string>
++    <string name="thumbcast_library_no_file_picker">Na tym urządzeniu nie ma aplikacji do wybierania plików.</string>
++    <string name="thumbcast_library_share_title">Udostępnij profil</string>
++    <string name="thumbcast_library_clipboard_empty">Schowek nie zawiera tekstu.</string>
++    <string name="thumbcast_library_import_title">Zaimportować profil?</string>
++    <string name="thumbcast_library_import_details">Nazwa: %1$s\nKontrolki: %2$d\nTryb: %3$s</string>
++    <string name="thumbcast_library_import_new_id">Zostanie zapisany jako nowy profil, bo jego identyfikator jest już zajęty.</string>
++    <string name="thumbcast_library_import_confirm">Importuj</string>
++    <string name="thumbcast_library_import_confirm_use">Importuj i użyj</string>
++    <string name="thumbcast_library_imported">Zaimportowano profil: %1$s</string>
++    <string name="thumbcast_library_import_failed">Import nie powiódł się</string>
++    <string name="thumbcast_library_error">Operacja nie powiodła się</string>
++    <string name="thumbcast_library_err_too_large">Plik jest za duży (limit: %1$d KB).</string>
++    <string name="thumbcast_library_err_not_utf8">Plik nie jest tekstem UTF-8.</string>
++    <string name="thumbcast_library_err_invalid">To nie jest poprawny profil Thumbcast. Znalezione problemy:</string>
++    <string name="thumbcast_library_err_not_found">Nie znaleziono profilu.</string>
++    <string name="thumbcast_library_err_read_only">Presetów wbudowanych nie można zmieniać. Najpierw zduplikuj preset.</string>
++    <string name="thumbcast_library_err_name">Nazwa nie może być pusta. Maksymalna długość: %1$d.</string>
++    <string name="thumbcast_library_err_id">Niepoprawny identyfikator profilu.</string>
++    <string name="thumbcast_library_err_io">Nie udało się odczytać ani zapisać pliku.</string>
 +    <string name="title_thumbcast_control_scale">Rozmiar kontrolek</string>
 +    <string name="title_thumbcast_hide_on_gamepad">Ukryj przyciski przy podłączonym padzie</string>
 +    <string name="summary_thumbcast_hide_on_gamepad">Przyciski i gałki znikają, gdy podłączony jest fizyczny pad; gesty i przycisk menu zostają</string>
-+    <string name="thumbcast_percent">%1$d%%</string>
 +    <!-- Menu w grze (☰, gest od górnej krawędzi, systemowy Back). -->
 +    <string name="thumbcast_menu_title">Menu strumienia</string>
 +    <string name="thumbcast_menu_disconnect">Rozłącz</string>
@@ -1052,13 +2677,15 @@ index 00000000..e77a6aaf
 +    <string name="thumbcast_menu_hide_on_gamepad_on">Ukryj przyciski przy podłączonym padzie: wł.</string>
 +    <string name="thumbcast_menu_hide_on_gamepad_off">Ukryj przyciski przy podłączonym padzie: wył.</string>
 +    <string name="thumbcast_menu_resume">Wróć do gry</string>
++    <string name="thumbcast_menu_scale_decrease">Mniejsze kontrolki</string>
++    <string name="thumbcast_menu_scale_increase">Większe kontrolki</string>
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_arrays.xml b/app/src/main/res/values/thumbcast_arrays.xml
 new file mode 100644
-index 00000000..d641f5bb
+index 00000000..1e5e7040
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_arrays.xml
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,29 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: tablice preferencji warstwy sterowania (patches/preferences.patch.md, pkt 2). -->
 +<resources>
@@ -1070,19 +2697,7 @@ index 00000000..d641f5bb
 +        <item>thumbcast</item>
 +        <item>legacy</item>
 +    </string-array>
-+    <string-array name="thumbcast_profile_names">
-+        <item>@string/thumbcast_profile_mmo_pad_plus</item>
-+        <item>@string/thumbcast_profile_mmo_keyboard</item>
-+        <item>@string/thumbcast_profile_desktop_touchpad</item>
-+        <item>@string/thumbcast_profile_big_picture</item>
-+    </string-array>
-+    <string-array name="thumbcast_profile_values" translatable="false">
-+        <item>mmo-pad-plus.thumbcast.json</item>
-+        <item>mmo-keyboard.thumbcast.json</item>
-+        <item>desktop-touchpad.thumbcast.json</item>
-+        <item>big-picture.thumbcast.json</item>
-+    </string-array>
-+    <!-- Rozmiar kontrolek (ThumbcastSettings.SCALE_PERCENTS, domyślnie 85). -->
++    <!-- Rozmiar kontrolek (ThumbcastSettings.SCALE_PERCENTS, domyślnie 100). -->
 +    <string-array name="thumbcast_control_scale_names" translatable="false">
 +        <item>60%</item>
 +        <item>70%</item>
@@ -1102,10 +2717,10 @@ index 00000000..d641f5bb
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_strings.xml b/app/src/main/res/values/thumbcast_strings.xml
 new file mode 100644
-index 00000000..5a8e0678
+index 00000000..4f0804b0
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_strings.xml
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,85 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -1114,17 +2729,68 @@ index 00000000..5a8e0678
 +    <string name="control_layer_thumbcast">Thumbcast (multitouch, profiles)</string>
 +    <string name="control_layer_legacy">Classic on-screen controller</string>
 +    <string name="title_thumbcast_profile">Control profile</string>
-+    <string name="thumbcast_profile_mmo_pad_plus">MMO – Pad+</string>
-+    <string name="thumbcast_profile_mmo_keyboard">MMO – Keyboard</string>
-+    <string name="thumbcast_profile_desktop_touchpad">Desktop – Touchpad</string>
-+    <string name="thumbcast_profile_big_picture">Big Picture</string>
 +    <string name="title_thumbcast_debug">Input debug overlay</string>
 +    <string name="summary_thumbcast_debug">Shows active pointers, sent pad flags and touch-to-send latency</string>
 +    <string name="thumbcast_profile_error">Control profile could not be loaded, using classic controller: %1$s</string>
++    <!-- Biblioteka profili (ProfileLibraryActivity, docs/profiles.md). -->
++    <string name="thumbcast_library_title">Control profiles</string>
++    <string name="thumbcast_library_import_file">Import file</string>
++    <string name="thumbcast_library_import_clipboard">Paste from clipboard</string>
++    <string name="thumbcast_library_section_builtin">Built-in presets</string>
++    <string name="thumbcast_library_section_user">My profiles</string>
++    <string name="thumbcast_library_empty_user">No profiles yet. Duplicate a preset or import a profile.</string>
++    <string name="thumbcast_library_builtin">Built-in</string>
++    <string name="thumbcast_library_custom">Custom</string>
++    <string name="thumbcast_library_mode_pad_plus">Pad+</string>
++    <string name="thumbcast_library_mode_keyboard_mouse">Keyboard + mouse</string>
++    <plurals name="thumbcast_library_controls">
++        <item quantity="one">%d control</item>
++        <item quantity="other">%d controls</item>
++    </plurals>
++    <string name="thumbcast_library_invalid">Invalid profile: %1$s</string>
++    <string name="thumbcast_library_active_description">%1$s, active</string>
++    <string name="thumbcast_library_action_select">Use this profile</string>
++    <string name="thumbcast_library_action_edit">Edit layout</string>
++    <string name="thumbcast_library_action_duplicate">Duplicate</string>
++    <string name="thumbcast_library_action_rename">Rename</string>
++    <string name="thumbcast_library_action_export">Export to file</string>
++    <string name="thumbcast_library_action_share">Share</string>
++    <string name="thumbcast_library_action_delete">Delete</string>
++    <string name="thumbcast_library_copy_suffix">" (copy)"</string>
++    <string name="thumbcast_library_selected">Active profile: %1$s</string>
++    <string name="thumbcast_library_duplicated">Copy created: %1$s</string>
++    <string name="thumbcast_library_rename_title">Rename profile</string>
++    <string name="thumbcast_library_delete_title">Delete profile?</string>
++    <string name="thumbcast_library_delete_message">“%1$s” will be deleted. This cannot be undone.</string>
++    <string name="thumbcast_library_deleted">Profile deleted</string>
++    <string name="thumbcast_library_deleted_active">Profile deleted. The default preset is now active.</string>
++    <string name="thumbcast_library_editor_unavailable">The layout editor is not available in this version yet.</string>
++    <string name="thumbcast_library_saved">Profile saved</string>
++    <string name="thumbcast_library_edit_failed">Edited profile was not saved</string>
++    <string name="thumbcast_library_exported">Profile exported</string>
++    <string name="thumbcast_library_export_failed">Export failed: %1$s</string>
++    <string name="thumbcast_library_no_file_picker">No app for picking files was found on this device.</string>
++    <string name="thumbcast_library_share_title">Share profile</string>
++    <string name="thumbcast_library_clipboard_empty">The clipboard contains no text.</string>
++    <string name="thumbcast_library_import_title">Import profile?</string>
++    <string name="thumbcast_library_import_details">Name: %1$s\nControls: %2$d\nMode: %3$s</string>
++    <string name="thumbcast_library_import_new_id">It will be saved as a new profile, because its ID is already in use.</string>
++    <string name="thumbcast_library_import_confirm">Import</string>
++    <string name="thumbcast_library_import_confirm_use">Import and use</string>
++    <string name="thumbcast_library_imported">Profile imported: %1$s</string>
++    <string name="thumbcast_library_import_failed">Import failed</string>
++    <string name="thumbcast_library_error">Operation failed</string>
++    <string name="thumbcast_library_err_too_large">The file is too large (limit: %1$d KB).</string>
++    <string name="thumbcast_library_err_not_utf8">The file is not UTF-8 text.</string>
++    <string name="thumbcast_library_err_invalid">This is not a valid Thumbcast profile. Problems found:</string>
++    <string name="thumbcast_library_err_not_found">Profile not found.</string>
++    <string name="thumbcast_library_err_read_only">Built-in presets cannot be changed. Duplicate the preset first.</string>
++    <string name="thumbcast_library_err_name">The name cannot be empty. Maximum length: %1$d.</string>
++    <string name="thumbcast_library_err_id">Invalid profile ID.</string>
++    <string name="thumbcast_library_err_io">The file could not be read or written.</string>
 +    <string name="title_thumbcast_control_scale">Control size</string>
 +    <string name="title_thumbcast_hide_on_gamepad">Hide controls when a gamepad is connected</string>
 +    <string name="summary_thumbcast_hide_on_gamepad">Buttons and sticks disappear while a physical gamepad is connected; gestures and the menu button stay</string>
-+    <string name="thumbcast_percent">%1$d%%</string>
 +    <!-- Menu w grze (☰, gest od górnej krawędzi, systemowy Back). -->
 +    <string name="thumbcast_menu_title">Stream menu</string>
 +    <string name="thumbcast_menu_disconnect">Disconnect</string>
@@ -1135,12 +2801,16 @@ index 00000000..5a8e0678
 +    <string name="thumbcast_menu_hide_on_gamepad_on">Hide controls when a gamepad is connected: on</string>
 +    <string name="thumbcast_menu_hide_on_gamepad_off">Hide controls when a gamepad is connected: off</string>
 +    <string name="thumbcast_menu_resume">Back to game</string>
++    <string name="thumbcast_menu_scale_decrease">Smaller controls</string>
++    <string name="thumbcast_menu_scale_increase">Larger controls</string>
++    <string name="thumbcast_menu_scale_minus" translatable="false">−</string>
++    <string name="thumbcast_menu_scale_plus" translatable="false">+</string>
 +</resources>
 diff --git a/app/src/main/res/xml/preferences.xml b/app/src/main/res/xml/preferences.xml
-index 5b09082b..d1929e7f 100644
+index 5b09082b..702825ee 100644
 --- a/app/src/main/res/xml/preferences.xml
 +++ b/app/src/main/res/xml/preferences.xml
-@@ -145,6 +145,48 @@
+@@ -145,6 +145,47 @@
              android:summary="@string/summary_checkbox_absolute_mouse_mode"
              android:defaultValue="false" />
      </PreferenceCategory>
@@ -1157,13 +2827,12 @@ index 5b09082b..d1929e7f 100644
 +            android:entryValues="@array/control_layer_values"
 +            android:defaultValue="thumbcast" />
 +
-+        <ListPreference
++        <!-- Otwiera bibliotekę profili (ProfileLibraryActivity); wartość (nazwa pliku) zapisuje biblioteka.
++             Podsumowanie = nazwa aktywnego profilu (StreamSettings, onResume). -->
++        <Preference
 +            android:key="list_thumbcast_profile"
 +            android:title="@string/title_thumbcast_profile"
-+            android:summary="%s"
-+            android:entries="@array/thumbcast_profile_names"
-+            android:entryValues="@array/thumbcast_profile_values"
-+            android:defaultValue="mmo-pad-plus.thumbcast.json" />
++            android:persistent="false" />
 +
 +        <ListPreference
 +            android:key="list_thumbcast_control_scale"
@@ -1171,7 +2840,7 @@ index 5b09082b..d1929e7f 100644
 +            android:summary="%s"
 +            android:entries="@array/thumbcast_control_scale_names"
 +            android:entryValues="@array/thumbcast_control_scale_values"
-+            android:defaultValue="85" />
++            android:defaultValue="100" />
 +
 +        <CheckBoxPreference
 +            android:key="checkbox_thumbcast_hide_on_gamepad"
