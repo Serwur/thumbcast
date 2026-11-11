@@ -363,7 +363,13 @@ public class StreamSettings extends Activity {
                     if (oscPref != null) oscPref.setEnabled(!tc);
                     // Wibracja telefonu przy rumble (vibrateOsc) działa też w trybie Thumbcast, więc nie może zależeć
                     // od checkbox_show_onscreen_controls (w tym trybie wyszarzonego i zwykle równego false).
-                    if (vibrateOscPref != null) vibrateOscPref.setDependency(tc ? null : "checkbox_show_onscreen_controls");
+                    if (vibrateOscPref != null) {
+                        vibrateOscPref.setDependency(tc ? null : "checkbox_show_onscreen_controls");
+                        // setDependency(null) tylko wyrejestrowuje zależność i nie zeruje flagi "zależność niespełniona"
+                        // ustawionej chwilę wcześniej przez oscPref.setEnabled(false), więc odblokowujemy ręcznie
+                        // (błąd znaleziony w smoke teście na emulatorze 11.11.2026).
+                        if (tc && oscPref != null) vibrateOscPref.onDependencyChanged(oscPref, false);
+                    }
                     return true;
                 };
                 layerListener.onPreferenceChange(controlLayer, controlLayer.getValue());
