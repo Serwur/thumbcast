@@ -116,7 +116,7 @@ data class EngineConfig(
     /** Kolejność = z-order: późniejsza kontrolka leży wyżej. */
     val controls: List<ControlSpec>,
     val tuning: EngineTuning = EngineTuning(),
-    /** Właściciel wolnej strefy: kamera (Pad+) albo touchpad. Jeden na profil. */
+    /** Właściciel wolnej strefy: kamera (Pad+), touchpad albo nic (tylko edge swipe). Jeden na profil. */
     val freeZone: FreeZoneMode = FreeZoneMode.CAMERA,
     val touchpad: TouchpadSpec = TouchpadSpec()
 )

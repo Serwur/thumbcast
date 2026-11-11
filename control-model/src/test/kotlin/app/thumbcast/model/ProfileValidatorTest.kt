@@ -168,6 +168,17 @@ class ProfileValidatorTest {
         assertInvalid(p.copy(gestures = p.gestures.copy(touchpad = Touchpad(scrollPxPerNotch = Float.NaN))), "scrollPxPerNotch")
         assertValid(p.copy(gestures = p.gestures.copy(touchpad = Touchpad(sensitivity = 2.5f, scrollPxPerNotch = 30f))))
     }
+    // --- wolna strefa: none (12.11.2026) ---
+    private fun noFreeZone(p: Profile): Profile = p.copy(gestures = p.gestures.copy(freeZone = FreeZoneMode.NONE))
+    @Test fun noneFreeZoneFreesRightStickForControl() {
+        // Bez kamery prawa gałka jest wolna dla kontrolki (jak przy touchpadzie), także przy cameraDrag = pad_right_stick.
+        val p = noFreeZone(padWith(lookStick))
+        assertTrue(p.gestures.cameraDrag.output == CameraOutput.PAD_RIGHT_STICK)
+        assertValid(p)
+    }
+    @Test fun noneFreeZoneStillRejectsTwoRightSticks() =
+        assertInvalid(noFreeZone(padWith(lookStick, lookStick.copy(id = "look2", rect = Rect(0.4f, 0.1f, 0.2f, 0.2f)))), axisFragment)
+    @Test fun noneFreeZoneInKbmGood() = assertValid(noFreeZone(f.kbmProfile()))
     @Test fun touchpadLongPressMustNotOverlapTap() =
         assertInvalid(touchpad(f.padProfile()).copy(gestures = GesturesConfig(freeZone = FreeZoneMode.TOUCHPAD, longPress = LongPress(minMs = 200))), "longPress")
 

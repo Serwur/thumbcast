@@ -18,8 +18,7 @@
     "longPress":  { "enabled": false, "output": "mouse_right_at_point", "minMs": 450 },
     "pinchZoom":  { "enabled": false, "output": "mouse_wheel", "pxPerNotch": 40 },
     "edgeSwipeTop": { "enabled": true, "output": "app_menu" },
-    "freeZone": "touchpad",
-    "touchpad": { "sensitivity": 1.0, "scrollPxPerNotch": 24 }
+    "freeZone": "none"
   },
   "controls": [
     { "id": "left_stick", "type": "stick", "label": "", "output": { "pad": "left_stick" },

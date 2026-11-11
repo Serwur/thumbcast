@@ -1,6 +1,8 @@
 package app.thumbcast.engine
 
 import app.thumbcast.model.Control
+import app.thumbcast.model.Output
+import app.thumbcast.model.PadStick
 import app.thumbcast.model.Profile
 import app.thumbcast.model.ProfileMode
 import app.thumbcast.model.StickControl
@@ -83,6 +85,20 @@ class ActionPolicyPropertyTest {
         }
     }
 
+    /**
+     * Wolna strefa wyłączona (freeZone = none, 12.11.2026): ten sam chaos wielu palców co przy touchpadzie. Poza
+     * zwykłymi właściwościami: żadnego wyjścia myszy, a prawa gałka rusza się tylko z widocznej kontrolki.
+     */
+    @Test
+    fun noFreeZoneMultiFingerChaoticStreams(): Unit = runBlocking<Unit> {
+        checkAll(iterations, Arb.long()) { seed ->
+            val r = Random(seed xor NONE_SALT)
+            val mode = if (r.nextInt(4) == 0) ProfileMode.KEYBOARD_MOUSE else ProfileMode.PAD_PLUS
+            val profile = withSprintLock(noFreeZoneProfile(mode = mode, rightStick = r.nextBoolean()), seed)
+            Scenario(seed, profile, chaotic = true, slide = false, touchpad = true, noFreeZone = true).run()
+        }
+    }
+
     @Test
     fun clockWithoutTouchNeverEmits(): Unit = runBlocking<Unit> {
         checkAll(iterations, Arb.long()) { seed ->
@@ -134,6 +150,7 @@ class ActionPolicyPropertyTest {
     private companion object {
         const val SPRINT_SALT: Long = 0x5EED_5B1A7L
         const val TOUCHPAD_SALT: Long = 0x70C4_9AD5L
+        const val NONE_SALT: Long = 0x0F2E_E20EL
     }
 
     /** Jeden strumień zdarzeń i jego sprawdzenia. */
@@ -142,8 +159,11 @@ class ActionPolicyPropertyTest {
         profile: Profile,
         private val chaotic: Boolean,
         private val slide: Boolean,
-        private val touchpad: Boolean = false
+        private val touchpad: Boolean = false,
+        private val noFreeZone: Boolean = false
     ) {
+        private val hasRightStickControl: Boolean =
+            profile.controls.any { it is StickControl && (it.output as? Output.Stick)?.stick == PadStick.RIGHT }
         private val rnd: Random = Random(seed)
         private val sink: FakeInputSink = FakeInputSink()
         private val clock: FakeClock = FakeClock(1000L)
@@ -178,6 +198,7 @@ class ActionPolicyPropertyTest {
         fun run() {
             val steps = 20 + rnd.nextInt(80)
             for (i in 0 until steps) step()
+            if (noFreeZone) checkNoFreeZoneOutput()
             // Na koniec: releaseAll i zegar bez dotyku.
             engine.releaseAll()
             live.clear()
@@ -191,6 +212,22 @@ class ActionPolicyPropertyTest {
             check(sink.records.isEmpty(), "wyjście bez dotyku po releaseAll")
             check(engine.violationCount == 0L, "naruszenia: " + engine.violations)
             check(countedEdges <= downs, "krawędzie $countedEdges > DOWN $downs")
+        }
+
+        /** freeZone = none: bez myszy (ruch, przyciski, pozycja, kółka), prawa gałka tylko z kontrolki. */
+        private fun checkNoFreeZoneOutput() {
+            for (rec in sink.records) {
+                val mouse = rec.call == SinkCall.MOVE || rec.call == SinkCall.BUTTON || rec.call == SinkCall.POSITION ||
+                    rec.call == SinkCall.WHEEL || rec.call == SinkCall.HWHEEL
+                check(!mouse, "wolna strefa none dała wyjście myszy: $rec")
+                if (rec.call == SinkCall.PAD && !hasRightStickControl) {
+                    check(rec.rx.toInt() == 0 && rec.ry.toInt() == 0, "prawa gałka bez kontrolki (kamera?): $rec")
+                }
+                val binding = rec.cause?.bindingId ?: ""
+                if (rec.call == SinkCall.APP && binding.startsWith("gesture:")) {
+                    check(rec.app == "menu" && binding == "gesture:edge", "gest inny niż edge swipe: $rec")
+                }
+            }
         }
 
         private fun step() {

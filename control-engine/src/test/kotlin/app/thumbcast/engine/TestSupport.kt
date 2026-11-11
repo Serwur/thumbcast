@@ -7,6 +7,7 @@ import app.thumbcast.model.CameraOutput
 import app.thumbcast.model.Control
 import app.thumbcast.model.Curve
 import app.thumbcast.model.CurveType
+import app.thumbcast.model.EdgeSwipe
 import app.thumbcast.model.FreeZoneMode
 import app.thumbcast.model.GesturesConfig
 import app.thumbcast.model.GlobalSettings
@@ -152,6 +153,25 @@ fun touchpadProfile(
             touchpad = Touchpad(sensitivity = sensitivity, scrollPxPerNotch = scrollPxPerNotch)
         ),
         controls = controls
+    )
+}
+
+/**
+ * Profil z wyłączoną wolną strefą (`gestures.freeZone = none`, 12.11.2026). Gesty tap, long-press i pinch zostają
+ * włączone w polach profilu (jak w [testProfile]), żeby testy pokazały, że tryb `none` i tak je ignoruje.
+ * `rightStick` jak w [touchpadProfile] (widoczna prawa gałka, jak w presetach „Pad – Xbox/PlayStation”).
+ */
+fun noFreeZoneProfile(
+    mode: ProfileMode = ProfileMode.PAD_PLUS,
+    rightStick: Boolean = false,
+    edgeSwipe: Boolean = true
+): Profile {
+    val base = touchpadProfile(mode = mode, rightStick = rightStick)
+    return base.copy(
+        gestures = base.gestures.copy(
+            freeZone = FreeZoneMode.NONE,
+            edgeSwipeTop = EdgeSwipe(enabled = edgeSwipe)
+        )
     )
 }
 

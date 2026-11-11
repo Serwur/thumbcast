@@ -30,8 +30,10 @@ class ProfileCodecTest {
         for (p in listOf(xbox, ps)) {
             assertEquals(ProfileMode.PAD_PLUS, p.mode)
             assertTrue(p.global.autoHideOnGamepad, "${p.name}: autoHideOnGamepad")
-            // Wolna strefa bez kamery (prawa gałka jest kontrolką) i bez klików myszy.
-            assertEquals(FreeZoneMode.TOUCHPAD, p.gestures.freeZone)
+            // Wolna strefa wyłączona (12.11.2026): bez kamery (prawa gałka jest kontrolką), bez myszy i klików;
+            // menu nadal otwiera gest od górnej krawędzi.
+            assertEquals(FreeZoneMode.NONE, p.gestures.freeZone)
+            assertTrue(p.gestures.edgeSwipeTop.enabled, "${p.name}: edge swipe (menu) włączony")
             assertTrue(!p.gestures.tapTarget.enabled && !p.gestures.longPress.enabled, "${p.name}: tap i long-press wyłączone")
             val sticks = p.controls.filterIsInstance<StickControl>()
             assertEquals(listOf(PadStick.LEFT, PadStick.RIGHT), sticks.map { (it.output as Output.Stick).stick }.sorted())
@@ -187,6 +189,19 @@ class ProfileCodecTest {
         assertEquals(Touchpad(1.4f, 30f), p.gestures.touchpad)
         val text = ProfileCodec.encode(p)
         assertTrue(text.contains("\"freeZone\": \"touchpad\""), text)
+        assertEquals(p, ProfileCodec.decode(text).getOrThrow())
+    }
+
+    @Test
+    fun noneFreeZoneDecodesAndRoundTrips() {
+        val json = TestFixtures.MINIMAL_JSON.replace(
+            "\"mode\": \"pad_plus\",",
+            "\"mode\": \"pad_plus\", \"gestures\": { \"freeZone\": \"none\" },",
+        )
+        val p = ProfileCodec.decode(json).getOrThrow()
+        assertEquals(FreeZoneMode.NONE, p.gestures.freeZone)
+        val text = ProfileCodec.encode(p)
+        assertTrue(text.contains("\"freeZone\": \"none\""), text)
         assertEquals(p, ProfileCodec.decode(text).getOrThrow())
     }
 

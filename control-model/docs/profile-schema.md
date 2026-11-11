@@ -48,10 +48,10 @@ Wszystkie współrzędne są znormalizowane do zakresu 0..1 względem bezpieczne
 | `longPress` | `enabled` (true), `output` (`"mouse_right_at_point"`), `minMs` (450) | Gdy włączone są oba gesty, `minMs` musi być większe od `tapTarget.maxMs`. Long-press daje jedno wejście **zamiast** tapu. |
 | `pinchZoom` | `enabled` (true), `output` (`"mouse_wheel"`), `pxPerNotch` (40) | `pxPerNotch` > 0 |
 | `edgeSwipeTop` | `enabled` (true), `output` (`"app_menu"`) | Akcja lokalna, nic nie trafia do hosta. |
-| `freeZone` | `"camera"` (domyślnie) \| `"touchpad"` | Właściciel wolnej strefy (od 11.11.2026). Jeden na profil, więc jedno przeciągnięcie nigdy nie daje naraz kamery i ruchu myszy. Profile bez tego pola mają `"camera"`, czyli działają jak dotąd. |
+| `freeZone` | `"camera"` (domyślnie) \| `"touchpad"` \| `"none"` | Właściciel wolnej strefy (od 11.11.2026, `"none"` od 12.11.2026). Jeden na profil, więc jedno przeciągnięcie nigdy nie daje naraz kamery i ruchu myszy. Profile bez tego pola mają `"camera"`, czyli działają jak dotąd. |
 | `touchpad` | `sensitivity` (1.0), `scrollPxPerNotch` (24) | Używane tylko przy `freeZone = "touchpad"`. `sensitivity` w (0..10]: piksele myszy na piksel palca. `scrollPxPerNotch` 4..400: droga środka dwóch palców na 1 ząbek kółka (120 jednostek). |
 
-### Wolna strefa: `camera` i `touchpad`
+### Wolna strefa: `camera`, `touchpad` i `none`
 
 `"camera"` to tabela gestów Pad+ z tabeli wyżej: `cameraDrag` w strefie `zone` (połowa ekranu), tap i long-press w punkcie dotyku, pinch, edge swipe.
 
@@ -68,6 +68,8 @@ Wszystkie współrzędne są znormalizowane do zakresu 0..1 względem bezpieczne
 | `edgeSwipeTop` | `app_menu`, bez zmian |
 
 Trzeci palec w wolnej strefie nic nie robi i unieważnia tap dwoma palcami. Palec, który dotknie wolnej strefy, gdy inny trzyma LMB (przeciąganie), nic nie robi.
+
+`"none"` (12.11.2026): dotyk poza kontrolkami nic nie wysyła do hosta (bez kamery, myszy, klików, kółka). Pola `cameraDrag`, `tapTarget`, `longPress`, `pinchZoom` i `touchpad` są ignorowane. Działa tylko `edgeSwipeTop` (`app_menu`), jeśli jest włączony, rozpoznawany tak samo jak w pozostałych trybach. Kamery nie ma, więc prawa gałka jest wolna dla kontrolki. Używają go presety „Pad – Xbox” i „Pad – PlayStation” (pełny pad na ekranie, przeciągnięcie w pustym miejscu nie rusza kursorem na hoście).
 
 `curve`: `{ "type": "linear" }` (wtedy `exponent` musi wynosić 1, co jest wartością domyślną) albo `{ "type": "power", "exponent": 1.0..3.0 }`.
 
@@ -105,7 +107,7 @@ Pola wspólne dla wszystkich typów:
 
 | Pole | Domyślnie | Reguły |
 |---|---|---|
-| `output` | `{ "pad": "left_stick" }` | Musi to być gałka (`Output.Stick`). W `pad_plus` jedna gałka pada ma jedno źródło: dwie kontrolki `stick` z tą samą gałką albo `right_stick` przy `gestures.freeZone = "camera"` i `gestures.cameraDrag.output = "pad_right_stick"` to błąd. Przy `freeZone = "touchpad"` kamery nie ma, więc prawa gałka jest wolna dla kontrolki (np. preset Big Picture). |
+| `output` | `{ "pad": "left_stick" }` | Musi to być gałka (`Output.Stick`). W `pad_plus` jedna gałka pada ma jedno źródło: dwie kontrolki `stick` z tą samą gałką albo `right_stick` przy `gestures.freeZone = "camera"` i `gestures.cameraDrag.output = "pad_right_stick"` to błąd. Przy `freeZone = "touchpad"` i `"none"` kamery nie ma, więc prawa gałka jest wolna dla kontrolki (np. presety Big Picture i Pad – Xbox). |
 | `floating` | true | Środek joysticka wypada w miejscu, w którym kciuk dotknął strefy. |
 | `deadzone` | 0.12 | 0..0.5 |
 | `outerDeadzone` | 0.04 | 0..0.5; suma z `deadzone` ≤ 0.9 |
@@ -144,7 +146,7 @@ To samo co `button`, z dwiema różnicami: `behavior` może mieć wartość `"la
 
 `ProfileMigrations.migrate(tree, from, to)` działa na drzewie JSON przed dekodowaniem typowanym. Każdy krok n → n+1 musi ustawić `"schema": n+1`. Schemat starszy niż 1 albo nowszy niż `CURRENT_SCHEMA` jest odrzucany.
 
-Pola `gestures.freeZone` i `gestures.touchpad` (11.11.2026) dodano bez podnoszenia schematu: mają wartości domyślne, więc każdy istniejący plik v1 wczytuje się bez zmian i bez migracji. Starsza wersja aplikacji odrzuci jednak profil, który je zawiera (nieznane pole).
+Pola `gestures.freeZone` i `gestures.touchpad` (11.11.2026) oraz wartość `freeZone = "none"` (12.11.2026) dodano bez podnoszenia schematu: mają wartości domyślne, więc każdy istniejący plik v1 wczytuje się bez zmian i bez migracji. Starsza wersja aplikacji odrzuci jednak profil, który je zawiera (nieznane pole).
 
 ## Przykład (fragment `presets/mmo-pad-plus.thumbcast.json`)
 

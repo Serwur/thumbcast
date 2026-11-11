@@ -18,7 +18,8 @@ TouchEvent (overlay Androida)        tick czasu (onTick, tylko gdy dotyka palec)
         ├─ kontrolka ─► StickRecognizer | ButtonRecognizer   (slide-to-press: zwolnij → przenieś → wciśnij)
         └─ gest ──────► FreeZoneGestures (jeden na profil, `gestures.freeZone`)
                           ├─ camera:   GestureArbiter ─► Tap | LongPress | CameraDrag | Pinch | EdgeSwipe
-                          └─ touchpad: TouchpadGestures ─► kursor | tap LMB | tap 2 palcami RMB | przytrzymanie+LMB | kółko V/H | EdgeSwipe
+                          ├─ touchpad: TouchpadGestures ─► kursor | tap LMB | tap 2 palcami RMB | przytrzymanie+LMB | kółko V/H | EdgeSwipe
+                          └─ none:     EdgeSwipeOnlyGestures ─► tylko EdgeSwipe (reszta dotyku nic nie wysyła)
                                    │
                                    ▼
                         Intent(pointerId, bindingId, kind, effect)
@@ -52,6 +53,7 @@ TouchEvent (overlay Androida)        tick czasu (onTick, tylko gdy dotyka palec)
 | `FreeZoneGestures` | `FreeZoneGestures.kt` | Interfejs właściciela wolnej strefy (`onDown`, `onMove`, `onUp`, `reset`) i fabryka `create` według `EngineConfig.freeZone`. Jedna implementacja na profil, więc jedno przeciągnięcie nigdy nie daje naraz kamery i myszy. |
 | `GestureArbiter` | `GestureArbiter.kt` | `freeZone = camera` (tabela Pad+). Palec wolnej strefy ma stan `PENDING → CAMERA / LONG_PRESS / PINCH / CONSUMED`. Jeden palec dostaje najwyżej jeden gest. |
 | `TouchpadGestures` | `TouchpadGestures.kt` | `freeZone = touchpad`, cała wolna strefa (bez podziału na połowy). Stan palca `PENDING → POINTER / DRAG / TWO → SCROLL / CONSUMED`. Szczegóły niżej. |
+| `EdgeSwipeOnlyGestures` | `EdgeSwipeOnlyGestures.kt` | `freeZone = none` (12.11.2026): wolna strefa nic nie wysyła; jedynym gestem jest edge swipe z góry (gdy włączony). Szczegóły niżej. |
 | `TapRecognizer` | `TapRecognizer.kt`, `VideoMapper.kt` | UP w czasie ≤ `maxMs` i ruch ≤ `maxMovePx` daje `mousePosition` (przeliczone przez `videoRect` → `videoRefWidth × videoRefHeight`; dotyk w czarnym pasie letterboxu nic nie daje), potem LMB down i up. |
 | `LongPressRecognizer` | `LongPressRecognizer.kt` | Palec bez ruchu ≥ `minMs`: `mousePosition` i RMB down, RMB up przy UP palca. Rozpoznanie zachodzi tylko w cyklu zdarzenia: MOVE, tick aktywnego palca albo UP po progu (wtedy down i up w jednym cyklu). Long-press zastępuje tap, nigdy nie występują oba. |
 | `CameraDragRecognizer` (interfejs) = `StickCameraDrag` / `MouseLookCameraDrag`, `CameraMath`, `RelativeAccumulator` | `CameraDragRecognizer.kt`, `RelativeAccumulator.kt` | Start po przekroczeniu `maxMovePx` w strefie kamery (wolna połowa ekranu; leworęczność zamienia strony). `StickCameraDrag` (PAD_PLUS, `pad_right_stick`): prędkość px/ms, EMA (α = 2/(N+1), N = 2), martwa strefa `deadzonePx` na ramkę 16,67 ms, krzywa, `sensitivity` i `maxDeflection` dają prawą gałkę. Po zatrzymaniu wychylenie wygasa liniowo do 0 w `decayMs` (ticki). `MouseLookCameraDrag` (KBM / `mouse_look`): RMB down na starcie, `mouseMoveRelative(delta × sensitivity)` z akumulacją reszt ułamkowych (`RelativeAccumulator`), RMB up na końcu. |
@@ -74,7 +76,7 @@ Zgodność z 1 dotyk = 1 wejście: stan należy do aktywnego palca gałki i gini
 
 `InputEngine.visualState(): EngineVisualState` (plik `VisualState.kt`) to migawka do rysowania, tylko do odczytu: palce (`PointerVisual`: pozycja, punkt DOWN, kontrolka-właściciel albo `null` dla gestu), przyciski HOLD trzymane palcem (`heldIds`), zatrzaśnięte LATCH (`latchedIds`) i wszystkie gałki (`StickVisual`: środek, promień i surowe wychylenie palca obcięte do koła jednostkowego, w osiach ekranu). Dla aktywnej gałki to te same wartości, z których rozpoznawacz liczy wyjście; dla nieaktywnej środek `rect` i promień, który przyjmie `onDown`. Overlay nie ma własnego hit testu, więc wygląd i haptyka idą za strefą aktywacji, slide-to-press i promieniem silnika. Odczyt nie otwiera cyklu polityki i niczego nie emituje.
 
-## Wolna strefa: kamera albo touchpad (11.11.2026)
+## Wolna strefa: kamera, touchpad albo nic (11.11.2026, `none` od 12.11.2026)
 
 `gestures.freeZone` wybiera jedną implementację `FreeZoneGestures` na cały profil (wzorzec strategii, bez reguł konfigurowalnych w `ActionPolicy`). `camera` (domyślnie) to `GestureArbiter` jak dotąd. `touchpad` to `TouchpadGestures`, czyli gładzik laptopa na całej wolnej części ekranu:
 
@@ -89,6 +91,8 @@ Zgodność z 1 dotyk = 1 wejście: stan należy do aktywnego palca gałki i gini
 | pinch | | wyłączony |
 
 Wybór wariantu przeciągania: przytrzymanie, a potem ruch. Wariant „tap, a potem przytrzymanie” wymagałby wstrzymania kliknięcia z tapu do czasu, aż wiadomo, czy przyjdzie drugi dotyk, czyli timera wysyłającego klik po fakcie (zakazane). Przytrzymanie rozpoznawane jest tak samo jak long-press w Pad+: tylko w cyklu MOVE, ticku trzymanego palca (R7, `ONE_SHOT_TIMED`) albo przy UP.
+
+`none` to `EdgeSwipeOnlyGestures`: palec wolnej strefy nie daje kamery, myszy, klików, pinchu ani kółka, niezależnie od pól `cameraDrag`, `tapTarget`, `longPress`, `pinchZoom` i `touchpad`. Palec, który dotknął paska przy górnej krawędzi (gdy `edgeSwipeTop.enabled`), po wyjściu poza `tap.maxMovePx` w dół otwiera menu (`gesture:edge`, ONE_SHOT, raz na palec, tylko w cyklu MOVE); ruch w bok albo w górę kończy kandydata. Tick niczego nie robi. Presety „Pad – Xbox” i „Pad – PlayStation” używają tego trybu (dawniej touchpad z wyłączonym tapem, w którym przeciągnięcie nadal ruszało kursorem hosta).
 
 Zgodność z 1 dotyk = 1 wejście: każdy palec daje najwyżej jedną krawędź (LMB z tapu albo przytrzymania, RMB z tapu dwoma palcami tylko dla drugiego palca, menu z edge swipe). Ruch kursora i kółko nie mają trwałego stanu (jak RMB-look i pinch) i powstają wyłącznie w cyklu MOVE. Trzeci palec w wolnej strefie i palec dołożony w trakcie przeciągania nic nie robią (`CONSUMED`). Dołożenie drugiego palca do palca przesuwającego kursor zatrzymuje kursor i zaczyna przewijanie (bez tapu). Po CANCEL i `releaseAll` stan jest zapominany (`reset`), a polityka wysyła zerowy stan.
 
@@ -126,10 +130,11 @@ Każde wywołanie sinka może dostać przyczynę (`EmitCause`: id cyklu, rodzaj,
 - `ButtonAndHitTestTest`: HOLD, flagi, LATCH (także po zmianie viewportu), wspólny stan, slide-to-press (X → 0 → A), App, klawisz w Pad+, strefa aktywacji, z-order, `safeArea`, lustro (w silniku i z `HandednessTransform` bez podwójnego odbicia).
 - `GestureRecognizersTest`: tap (układ wideo, letterbox), tap kontra long-press kontra drag, long-press na ticku i przy UP, brak wyjścia bez palca, kamera Pad+ (kierunek, wygaszanie, monotoniczność krzywej), RMB-look z resztami ułamkowymi, pinch (ząbki, kotwica, przerwanie kamery), edge swipe, kilka palców naraz z CANCEL.
 - `TouchpadGesturesTest`: ruch kursora z resztami ułamkowymi (i kontrola, że ta sama ścieżka w Pad+ to gałka, a nie mysz), tap LMB w miejscu kursora, za wolny tap, przytrzymanie bez ticków, przytrzymanie na ticku i przeciąganie z LMB, palec już przesuwający kursor nie staje się przeciąganiem, tap dwoma palcami (RMB na ostatnim UP, za wolny, trzeci palec), rozsuwanie bez zoomu, przewijanie pionowe i poziome z blokadą osi, dwa palce w jednym MOVE, drugi palec dołożony do kursora, ticki przy dwóch palcach, edge swipe, CANCEL i `releaseAll` przy trzymanym LMB, prawa gałka-kontrolka razem z touchpadem, KBM.
+- `NoFreeZoneTest` (`freeZone = none`): przeciągnięcie, tap, long-press (ticki i UP), dwa palce i pinch nic nie dają; edge swipe otwiera menu raz (MOVE), wyłączony albo w bok nic nie daje; kontrolki (prawa gałka, A) działają obok; KBM bez RMB-look; CANCEL i `releaseAll` czyszczą kandydata.
 - `HWheelTest`: `HWheel` → `mouseHScroll`, zero pomijane, R1/R3/R7 dla kółka poziomego.
 - `ActionPolicyTest`: każda reguła R1–R9 wywołana bezpośrednio.
 - `KnownRisksTest`: ryzyka z `docs/HANDOFF.md`. Gałkę RIGHT razem z kamerą `pad_right_stick` i każdy `chord` walidator od 11.11.2026 odrzuca. Testy sprawdzają to odrzucenie i opisują zachowanie silnika na takim profilu niewalidowanym. Poza tym rozstrzygnięty `sprintLock` (histereza) i long-press przy tickach co klatkę.
-- `ActionPolicyPropertyTest` (Kotest `checkAll`, liczba iteracji z `thumbcast.policy.iterations`). Strumienie są poprawne albo chaotyczne: CANCEL, podwójny DOWN, UP bez DOWN, nieznane palce w MOVE, cofający się czas, `releaseAll` i zmiana viewportu w trakcie. Sprawdzane są tryby Pad+, Pad+ ze slide-to-press, KBM oraz touchpad (poprawne i chaotyczne strumienie; Pad+ albo KBM, z widoczną prawą gałką albo bez, losowa czułość i długość ząbka, dodatkowo pary palców w wolnej strefie i wspólny ruch kilku palców w jednym MOVE); mniej więcej połowa strumieni (wybór z ziarna) ma gałkę z `sprintLock = true`. Właściwości:
+- `ActionPolicyPropertyTest` (Kotest `checkAll`, liczba iteracji z `thumbcast.policy.iterations`). Strumienie są poprawne albo chaotyczne: CANCEL, podwójny DOWN, UP bez DOWN, nieznane palce w MOVE, cofający się czas, `releaseAll` i zmiana viewportu w trakcie. Sprawdzane są tryby Pad+, Pad+ ze slide-to-press, KBM, wolna strefa `none` (chaos wielu palców; dodatkowo brak wyjścia myszy, prawa gałka tylko z kontrolki, z gestów tylko menu) oraz touchpad (poprawne i chaotyczne strumienie; Pad+ albo KBM, z widoczną prawą gałką albo bez, losowa czułość i długość ząbka, dodatkowo pary palców w wolnej strefie i wspólny ruch kilku palców w jednym MOVE); mniej więcej połowa strumieni (wybór z ziarna) ma gałkę z `sprintLock = true`. Właściwości:
   - każda krawędź ma przyczynę z tego samego zdarzenia i żywego palca;
   - jeden dotyk daje najwyżej jedną krawędź, więc liczba krawędzi ≤ liczba DOWN;
   - tick nie zmienia stanu poza wygaszaniem;
