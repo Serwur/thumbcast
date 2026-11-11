@@ -21,7 +21,7 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 - Konfiguracja hosta i testy: `docs/host-setup.md`, `docs/test-plan.md` (hosty H1 Virtual HID, H2 ViGEmBus, H3 bez pada, H4 macOS; scenariusz T-10 dla trybu bez pada).
 
 ## Uwagi
-- Kod powstał offline. Od 11.11.2026 `:app:assembleNonRootDebug`/`Release` przechodzi (kod główny `control-*` kompiluje się); testy i patche jeszcze nie. Build: `JAVA_HOME` = JBR Android Studio (systemowa Java 1.8 się nie nadaje). Start: `URUCHOMIENIE.md`, `docs/NEXT-STEPS.md`.
+- Kod powstał offline. Od 11.11.2026 `:app:assembleNonRootDebug`/`Release` przechodzi z nałożonymi patchami, testy JVM (`control-model`, `control-engine` z 10^5 iteracji polityki, `control-android` unit) i lint są zielone; testy na urządzeniu jeszcze nie. Build: `JAVA_HOME` = JBR Android Studio (systemowa Java 1.8 się nie nadaje). Start: `URUCHOMIENIE.md`, `docs/NEXT-STEPS.md`.
 - `onTick(nowMs)` w `InputEngine` jest poza kontraktem, ale używany przez nakładkę.
 - `LICENSE` zawiera pełny tekst GPLv3 (kopia z Debiana, `/usr/share/common-licenses/GPL-3`, 35149 B, SHA-256 `3972dc97...6986`; z gnu.org nie pobrano, bo proxy blokuje; porównać z oficjalnym `gpl-3.0.txt` przy okazji); nagłówek projektu i SPDX są w `NOTICE`.
 - Lint presetów: `.github/scripts/check_presets.py` sprawdza pola `type`/`behavior` i klucze JSON, nie dowolne napisy (etykieta „Delay” jest dozwolona). Uruchamiany w jobie `lint`.
