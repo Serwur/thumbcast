@@ -18,7 +18,6 @@
     <string name="title_thumbcast_control_scale">Rozmiar kontrolek</string>
     <string name="title_thumbcast_hide_on_gamepad">Ukryj przyciski przy podłączonym padzie</string>
     <string name="summary_thumbcast_hide_on_gamepad">Przyciski i gałki znikają, gdy podłączony jest fizyczny pad; gesty i przycisk menu zostają</string>
-    <string name="thumbcast_percent">%1$d%%</string>
     <!-- Menu w grze (☰, gest od górnej krawędzi, systemowy Back). -->
     <string name="thumbcast_menu_title">Menu strumienia</string>
     <string name="thumbcast_menu_disconnect">Rozłącz</string>
@@ -29,4 +28,6 @@
     <string name="thumbcast_menu_hide_on_gamepad_on">Ukryj przyciski przy podłączonym padzie: wł.</string>
     <string name="thumbcast_menu_hide_on_gamepad_off">Ukryj przyciski przy podłączonym padzie: wył.</string>
     <string name="thumbcast_menu_resume">Wróć do gry</string>
+    <string name="thumbcast_menu_scale_decrease">Mniejsze kontrolki</string>
+    <string name="thumbcast_menu_scale_increase">Większe kontrolki</string>
 </resources>

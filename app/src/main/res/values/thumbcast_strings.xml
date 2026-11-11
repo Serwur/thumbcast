@@ -18,7 +18,6 @@
     <string name="title_thumbcast_control_scale">Control size</string>
     <string name="title_thumbcast_hide_on_gamepad">Hide controls when a gamepad is connected</string>
     <string name="summary_thumbcast_hide_on_gamepad">Buttons and sticks disappear while a physical gamepad is connected; gestures and the menu button stay</string>
-    <string name="thumbcast_percent">%1$d%%</string>
     <!-- Menu w grze (☰, gest od górnej krawędzi, systemowy Back). -->
     <string name="thumbcast_menu_title">Stream menu</string>
     <string name="thumbcast_menu_disconnect">Disconnect</string>
@@ -29,4 +28,8 @@
     <string name="thumbcast_menu_hide_on_gamepad_on">Hide controls when a gamepad is connected: on</string>
     <string name="thumbcast_menu_hide_on_gamepad_off">Hide controls when a gamepad is connected: off</string>
     <string name="thumbcast_menu_resume">Back to game</string>
+    <string name="thumbcast_menu_scale_decrease">Smaller controls</string>
+    <string name="thumbcast_menu_scale_increase">Larger controls</string>
+    <string name="thumbcast_menu_scale_minus" translatable="false">−</string>
+    <string name="thumbcast_menu_scale_plus" translatable="false">+</string>
 </resources>
