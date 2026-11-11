@@ -1,4 +1,4 @@
-# Handoff (11.11.2026, aktualizacja po kroku 1)
+# Handoff (11.11.2026, aktualizacja po krokach 1–2)
 
 Dla nowej sesji (Claude Code na PC z Android Studio i internetem). Najpierw przeczytaj `CLAUDE.md`, potem ten plik, `docs/DECISIONS.md` i `docs/NEXT-STEPS.md`.
 
@@ -9,14 +9,15 @@ Android + PC: granie w WoW Forever (i inne gry z obsługą pada) przez streaming
 Host: Sunshine (lub Apollo/Vibepollo). Pad w Windows: ViGEmBus 1.17+ albo płatny Virtual HID Driver. Klient: fork `moonlight-stream/moonlight-android` (v12.2, GPLv3) z naszą warstwą dotyku (`control-model`, `control-engine`, `control-android`, `patches/`). Zasada: 1 dotyk = 1 wejście, bez makr (`FAIR_PLAY.md`).
 
 ## Stan
-- **Krok 1 zrobiony (11.11.2026, gałąź `thumbcast/merge-upstream-v12.2`, nie scalona do `main`, nie wypchnięta).** Historia upstreamu v12.2 scalona z repo (DECISIONS.md pkt j), remote `upstream` dodany, submoduł `moonlight-common-c` zainicjowany. Usunięte grafiki i metadane marki upstreamu. `:app` ma `applicationId` `io.github.serwur.thumbcast`, `minSdk 26`, bez flavoru `root` i sufiksu `.unofficial`, podpis release z właściwości `thumbcastKeystore*`, zależność od `:control-android`.
-- Sprawdzone buildem: czysty upstream v12.2 (`assembleNonRootDebug`), a po scaleniu `:app:assembleNonRootDebug` i `:app:assembleNonRootRelease` (R8, APK niepodpisany w `app/build/outputs/apk/nonRoot/release/`). Kod główny `:control-model`, `:control-engine`, `:control-android` kompiluje się bez poprawek (1 ostrzeżenie: `HAPTIC_FEEDBACK_ENABLED` deprecated w `OverlayHaptics.kt:36`). **Testy nie były uruchamiane ani kompilowane, patche nie stosowane.**
+- **Krok 1 zrobiony (11.11.2026, scalony do lokalnego `main`, nie wypchnięty).** Historia upstreamu v12.2 scalona z repo (DECISIONS.md pkt j), remote `upstream` dodany, submoduł `moonlight-common-c` zainicjowany. Usunięte grafiki i metadane marki upstreamu. `:app` ma `applicationId` `io.github.serwur.thumbcast`, `minSdk 26`, bez flavoru `root` i sufiksu `.unofficial`, podpis release z właściwości `thumbcastKeystore*`, zależność od `:control-android`.
+- Sprawdzone buildem: czysty upstream v12.2 (`assembleNonRootDebug`), a po scaleniu `:app:assembleNonRootDebug` i `:app:assembleNonRootRelease` (R8, APK niepodpisany w `app/build/outputs/apk/nonRoot/release/`). Kod główny `:control-model`, `:control-engine`, `:control-android` kompiluje się bez poprawek (1 ostrzeżenie: `HAPTIC_FEEDBACK_ENABLED` deprecated w `OverlayHaptics.kt:36`). **Testy nie były uruchamiane ani kompilowane.**
+- **Krok 2 zrobiony (11.11.2026, gałąź `thumbcast/hooks`, nie wypchnięta).** Fasady Java, preferencje (z wymuszeniem `onscreenController=true`), presety w `assets/presets/` i hooki w `Game.java` nałożone wg `patches/APPLY.md`; różnice względem opisów są na początku tego pliku. Diff: `patches/0001-thumbcast.diff`. `:app:assembleNonRootDebug` i `Release` przechodzą. Na urządzeniu nie uruchamiane.
 - Założenia o upstreamie zweryfikowane z moonlight-android v12.2 (patrz `CLAUDE.md`), ale tylko ze streszczeń kodu. Patche to opisy kroków z kotwicami, nie pliki `.patch`.
 - Zatwierdzone decyzje: `docs/DECISIONS.md` (pkt i): wymuszamy `onscreenController=true`, usuwamy flavor `root` i sufiks `.unofficial`.
 
 ## Następne kroki (w kolejności)
-1. ~~Fork `moonlight-stream/moonlight-android`, scalenie z tym repo wg `docs/NEXT-STEPS.md` (sekcje 1–2). Upewnij się, że czysty upstream się buduje (`./gradlew assembleNonRootDebug`).~~ Zrobione 11.11.2026 (patrz Stan). Do zrobienia przez właściciela: przegląd gałęzi, scalenie do `main`, push.
-2. Zastosuj `patches/APPLY.md`, po nałożeniu zrób własny `git diff v12.2`.
+1. ~~Fork `moonlight-stream/moonlight-android`, scalenie z tym repo wg `docs/NEXT-STEPS.md` (sekcje 1–2). Upewnij się, że czysty upstream się buduje (`./gradlew assembleNonRootDebug`).~~ Zrobione 11.11.2026 (patrz Stan).
+2. ~~Zastosuj `patches/APPLY.md`, po nałożeniu zrób własny `git diff v12.2`.~~ Zrobione 11.11.2026 (patrz Stan).
 3. `./gradlew :control-model:test :control-engine:test`, popraw błędy kompilacji. Potem testy `*Policy*` z `-Pthumbcast.policy.iterations=100000`.
 4. Zbuduj APK, sparuj z Sunshine w LAN, sprawdź stream pulpitu.
 5. Test T-03 w grze (`docs/test-plan.md`, sekcja 4): czy ruch myszy przełącza HUD gry z trybu pada. Od niego zależy tryb hybrydowy.

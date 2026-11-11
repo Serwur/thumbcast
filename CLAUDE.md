@@ -6,7 +6,7 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 - `control-model` (JVM): profil JSON, walidacja, migracje. Zakazane typy: sequence, macro, repeat, turbo, delay, toggle_auto.
 - `control-engine` (JVM): `InputEngine`, rozpoznawanie gestów, `ActionPolicy`. Wszystkie wyjścia idą przez politykę. Szczegóły: `control-engine/docs/engine.md`.
 - `control-android`: `ThumbcastOverlay` i adaptery. Retransmisja stanu pada (25/50/75 ms) jest tylko w `HostPadReporterImpl`, silnik jej nie robi.
-- `patches/`: zmiany do forka Moonlight, nie kompilują się w tym repo.
+- `patches/`: opisy zmian w `:app` (`*.patch.md`) i pewny diff `0001-thumbcast.diff` (`git diff v12.2 -- app/`). Od 11.11.2026 nałożone w `app/` (bloki `THUMBCAST`).
 
 ## Zasady
 - 1 dotyk = 1 wejście. Bez makr, sekwencji, turbo, timerów generujących naciśnięcia (`FAIR_PLAY.md`).
@@ -32,5 +32,5 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 - W trybie Thumbcast `PreferenceConfiguration` musi wymuszać `onscreenController=true` (bit 0 maski pada, landscape, rumble). Patrz `patches/preferences.patch.md`.
 - `KeyboardTranslator.translate(int, int)` ma 2 parametry. `applicationId` ustawia się we flavorze `nonRoot`; flavor `root` do usunięcia (maxSdk 25 vs minSdk 26).
 - Patche to opisy kroków z kotwicami z v12.2, nie gotowe pliki `.patch`. Po nałożeniu zrób własny `git diff v12.2`.
-- Nic z `patches/` nie było stosowane ani kompilowane.
+- Patche nałożone i skompilowane 11.11.2026 (debug i release); nie testowane na urządzeniu ani z hostem.
 - Zatwierdzone 10.11.2026 (DECISIONS.md pkt i): wymuszamy `onscreenController=true`, usuwamy flavor `root` i sufiks `.unofficial` po zmianie `applicationId`.

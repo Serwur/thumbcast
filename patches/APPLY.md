@@ -1,5 +1,16 @@
 # Jak nałożyć patche Thumbcast na świeży fork moonlight-android v12.2
 
+> **Stan 11.11.2026: nałożone** w tym repo (gałąź `thumbcast/hooks`, commity `thumbcast: ...`). Źródłem prawdy jest teraz kod w `app/`
+> (bloki `THUMBCAST`, `git grep -n THUMBCAST -- app/`) i pewny diff `patches/0001-thumbcast.diff` (`git diff v12.2 -- app/`).
+> Kopie plików Java z `patches/app/` usunięte (są w `app/src/main/java/com/limelight/thumbcast/`). Opisy `*.patch.md` zostają jako
+> instrukcja ponownego nałożenia przy konflikcie z upstreamem. Różnice względem opisów:
+> - `assets.srcDir` w `app/build.gradle` dostaje `File` (`layout.buildDirectory.dir(...).get().asFile`), bo AGP 9.4 odrzuca `Provider`
+>   („You cannot add Provider instances to the Android SourceSet API”).
+> - Nazwy profili w `thumbcast_profile_names` to zasoby `@string/thumbcast_profile_*` (EN „MMO – Keyboard”, PL „MMO – Klawiatura”).
+> - `onThumbcastAppAction` używa stałych `AppActions.*` z `:control-model` zamiast literałów.
+> - Zmiany w `Game.java`: ok. 95 dodanych linii (z czego ~55 to dwie nowe metody), 1 zmieniona linia upstreamu (warunek bloku VirtualController).
+> - Testy ręczne z kroku 6 (stream, overlay, A w „Kontrolery gier”) **nie zrobione**: brak urządzenia i hosta w tej sesji.
+
 Ten katalog zawiera **opis** zmian w upstreamie (`*.patch.md`) i **nowe pliki** do skopiowania
 (`app/src/main/java/com/limelight/thumbcast/*.java`). Nie ma tu kodu upstreamu.
 
