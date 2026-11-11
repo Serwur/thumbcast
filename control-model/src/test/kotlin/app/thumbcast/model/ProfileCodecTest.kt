@@ -19,6 +19,52 @@ class ProfileCodecTest {
         assertTrue("mmo-keyboard.thumbcast.json" in names, "brak presetu Klawiatura: $names")
         assertTrue("desktop-touchpad.thumbcast.json" in names, "brak presetu Pulpit – Touchpad: $names")
         assertTrue("big-picture.thumbcast.json" in names, "brak presetu Big Picture: $names")
+        assertTrue("gamepad-xbox.thumbcast.json" in names, "brak presetu Pad – Xbox: $names")
+        assertTrue("gamepad-playstation.thumbcast.json" in names, "brak presetu Pad – PlayStation: $names")
+    }
+
+    @Test
+    fun gamepadPresetsAreFullStandardPad() {
+        val xbox = ProfileCodec.decode(TestFixtures.readPreset("gamepad-xbox.thumbcast.json")).getOrThrow()
+        val ps = ProfileCodec.decode(TestFixtures.readPreset("gamepad-playstation.thumbcast.json")).getOrThrow()
+        for (p in listOf(xbox, ps)) {
+            assertEquals(ProfileMode.PAD_PLUS, p.mode)
+            assertTrue(p.global.autoHideOnGamepad, "${p.name}: autoHideOnGamepad")
+            // Wolna strefa bez kamery (prawa gałka jest kontrolką) i bez klików myszy.
+            assertEquals(FreeZoneMode.TOUCHPAD, p.gestures.freeZone)
+            assertTrue(!p.gestures.tapTarget.enabled && !p.gestures.longPress.enabled, "${p.name}: tap i long-press wyłączone")
+            val sticks = p.controls.filterIsInstance<StickControl>()
+            assertEquals(listOf(PadStick.LEFT, PadStick.RIGHT), sticks.map { (it.output as Output.Stick).stick }.sorted())
+            // Każde wyjście pada dokładnie raz: 15 przycisków, 2 triggery, 2 gałki.
+            val outputs = p.controls.mapNotNull {
+                when (it) {
+                    is ButtonControl -> it.output
+                    is ModifierControl -> it.output
+                    is StickControl -> it.output
+                    is SystemControl -> null
+                }
+            }
+            val expected = PadButton.values().map { Output.Pad(it) } +
+                PadTrigger.values().map { Output.Trigger(it) } + PadStick.values().map { Output.Stick(it) }
+            assertEquals(expected.toSet(), outputs.toSet(), "${p.name}: pełny pad")
+            assertEquals(outputs.size, outputs.toSet().size, "${p.name}: wyjście powtórzone")
+            assertEquals(
+                setOf(AppActions.MENU, AppActions.SOFT_KEYBOARD),
+                p.controls.filterIsInstance<SystemControl>().map { it.output.action }.toSet(),
+            )
+        }
+        // Oba presety różnią się tylko etykietami: te same id, prostokąty i wyjścia.
+        fun shape(p: Profile) = p.controls.map {
+            when (it) {
+                is StickControl -> it.copy(label = null)
+                is ButtonControl -> it.copy(label = null)
+                is ModifierControl -> it.copy(label = null)
+                is SystemControl -> it.copy(label = null)
+            }
+        }
+        assertEquals(shape(xbox), shape(ps))
+        assertEquals(listOf("Y", "X", "B", "A"), listOf("y", "x", "b", "a").map { id -> xbox.controls.single { it.id == id }.label })
+        assertEquals(listOf("△", "□", "○", "✕"), listOf("y", "x", "b", "a").map { id -> ps.controls.single { it.id == id }.label })
     }
 
     @Test

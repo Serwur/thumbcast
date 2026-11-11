@@ -10,12 +10,16 @@
         <item>legacy</item>
     </string-array>
     <string-array name="thumbcast_profile_names">
+        <item>@string/thumbcast_profile_gamepad_xbox</item>
+        <item>@string/thumbcast_profile_gamepad_playstation</item>
         <item>@string/thumbcast_profile_mmo_pad_plus</item>
         <item>@string/thumbcast_profile_mmo_keyboard</item>
         <item>@string/thumbcast_profile_desktop_touchpad</item>
         <item>@string/thumbcast_profile_big_picture</item>
     </string-array>
     <string-array name="thumbcast_profile_values" translatable="false">
+        <item>gamepad-xbox.thumbcast.json</item>
+        <item>gamepad-playstation.thumbcast.json</item>
         <item>mmo-pad-plus.thumbcast.json</item>
         <item>mmo-keyboard.thumbcast.json</item>
         <item>desktop-touchpad.thumbcast.json</item>

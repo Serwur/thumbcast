@@ -137,7 +137,7 @@ public class PreferenceConfiguration {
     private static final String THUMBCAST_PROFILE_PREF_STRING = "list_thumbcast_profile";
     private static final String THUMBCAST_DEBUG_PREF_STRING = "checkbox_thumbcast_debug";
     private static final String DEFAULT_CONTROL_LAYER = "thumbcast";
-    private static final String DEFAULT_THUMBCAST_PROFILE = "mmo-pad-plus.thumbcast.json";
+    private static final String DEFAULT_THUMBCAST_PROFILE = "gamepad-xbox.thumbcast.json";
 
     public ControlLayer controlLayer;
     public String thumbcastProfileFile;

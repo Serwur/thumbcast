@@ -6,6 +6,8 @@
     <string name="control_layer_thumbcast">Thumbcast (multitouch, profile)</string>
     <string name="control_layer_legacy">Klasyczny kontroler ekranowy</string>
     <string name="title_thumbcast_profile">Profil sterowania</string>
+    <string name="thumbcast_profile_gamepad_xbox">Pad – Xbox</string>
+    <string name="thumbcast_profile_gamepad_playstation">Pad – PlayStation</string>
     <string name="thumbcast_profile_mmo_pad_plus">MMO – Pad+</string>
     <string name="thumbcast_profile_mmo_keyboard">MMO – Klawiatura</string>
     <string name="thumbcast_profile_desktop_touchpad">Pulpit – Touchpad</string>
