@@ -16,7 +16,7 @@ object ThumbcastProfiles {
 
     const val PROFILES_DIR: String = "profiles"
     const val ASSET_PRESETS_DIR: String = "presets"
-    const val DEFAULT_PRESET: String = "mmo-pad-plus.thumbcast.json"
+    const val DEFAULT_PRESET: String = "gamepad-xbox.thumbcast.json"
 
     /** Wynik jako `Result`, żeby Game mogło pokazać błąd walidacji i wrócić do trybu legacy. */
     @JvmStatic

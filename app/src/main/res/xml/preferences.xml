@@ -164,7 +164,7 @@
             android:summary="%s"
             android:entries="@array/thumbcast_profile_names"
             android:entryValues="@array/thumbcast_profile_values"
-            android:defaultValue="mmo-pad-plus.thumbcast.json" />
+            android:defaultValue="gamepad-xbox.thumbcast.json" />
 
         <ListPreference
             android:key="list_thumbcast_control_scale"

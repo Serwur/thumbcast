@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "id": "5cbc3cde-c168-4060-bd5f-d320d7ffe737",
+  "name": "Pad – Xbox",
+  "tags": { "game": "generic", "preset": "gamepad-xbox", "layout": "xbox" },
+  "mode": "pad_plus",
+  "reference": { "aspect": "20:9", "unit": "dp-normalized" },
+  "handedness": "right",
+  "global": {
+    "opacity": 0.55,
+    "haptics": { "enabled": true, "strength": 0.6, "onPress": "tick", "onRelease": "none" },
+    "slideToPress": false,
+    "autoHideOnGamepad": true,
+    "allowChords": false
+  },
+  "gestures": {
+    "tapTarget":  { "enabled": false, "output": "mouse_left_at_point", "maxMovePx": 12, "maxMs": 220 },
+    "longPress":  { "enabled": false, "output": "mouse_right_at_point", "minMs": 450 },
+    "pinchZoom":  { "enabled": false, "output": "mouse_wheel", "pxPerNotch": 40 },
+    "edgeSwipeTop": { "enabled": true, "output": "app_menu" },
+    "freeZone": "touchpad",
+    "touchpad": { "sensitivity": 1.0, "scrollPxPerNotch": 24 }
+  },
+  "controls": [
+    { "id": "left_stick", "type": "stick", "label": "", "output": { "pad": "left_stick" },
+      "rect": { "x": 0.0, "y": 0.30, "w": 0.24, "h": 0.70 }, "floating": true,
+      "deadzone": 0.12, "outerDeadzone": 0.04, "curve": { "type": "linear" }, "sprintLock": true },
+    { "id": "l3", "type": "button", "label": "LS", "output": { "pad": "L3" },
+      "rect": { "x": 0.252, "y": 0.33, "w": 0.045, "h": 0.1 }, "shape": "circle" },
+
+    { "id": "dpad_up", "type": "button", "label": "▲", "output": { "pad": "UP" },
+      "rect": { "x": 0.307, "y": 0.601, "w": 0.046, "h": 0.1 }, "shape": "rounded_rect" },
+    { "id": "dpad_left", "type": "button", "label": "◀", "output": { "pad": "LEFT" },
+      "rect": { "x": 0.256, "y": 0.72, "w": 0.046, "h": 0.1 }, "shape": "rounded_rect" },
+    { "id": "dpad_right", "type": "button", "label": "▶", "output": { "pad": "RIGHT" },
+      "rect": { "x": 0.358, "y": 0.72, "w": 0.046, "h": 0.1 }, "shape": "rounded_rect" },
+    { "id": "dpad_down", "type": "button", "label": "▼", "output": { "pad": "DOWN" },
+      "rect": { "x": 0.307, "y": 0.839, "w": 0.046, "h": 0.1 }, "shape": "rounded_rect" },
+
+    { "id": "right_stick", "type": "stick", "label": "", "output": { "pad": "right_stick" },
+      "rect": { "x": 0.62, "y": 0.6867, "w": 0.12, "h": 0.2667 }, "floating": false,
+      "deadzone": 0.12, "outerDeadzone": 0.04, "curve": { "type": "linear" } },
+    { "id": "r3", "type": "button", "label": "RS", "output": { "pad": "R3" },
+      "rect": { "x": 0.595, "y": 0.575, "w": 0.045, "h": 0.1 }, "shape": "circle" },
+
+    { "id": "y", "type": "button", "label": "Y", "output": { "pad": "Y" },
+      "rect": { "x": 0.852, "y": 0.5855, "w": 0.06, "h": 0.133 }, "shape": "circle" },
+    { "id": "x", "type": "button", "label": "X", "output": { "pad": "X" },
+      "rect": { "x": 0.784, "y": 0.7035, "w": 0.06, "h": 0.133 }, "shape": "circle" },
+    { "id": "b", "type": "button", "label": "B", "output": { "pad": "B" },
+      "rect": { "x": 0.92, "y": 0.7035, "w": 0.06, "h": 0.133 }, "shape": "circle" },
+    { "id": "a", "type": "button", "label": "A", "output": { "pad": "A" },
+      "rect": { "x": 0.852, "y": 0.8215, "w": 0.06, "h": 0.133 }, "shape": "circle" },
+
+    { "id": "lt", "type": "modifier", "label": "LT", "output": { "pad": "LT" }, "behavior": "hold",
+      "rect": { "x": 0.02, "y": 0.15, "w": 0.077, "h": 0.092 } },
+    { "id": "lb", "type": "modifier", "label": "LB", "output": { "pad": "LB" }, "behavior": "hold",
+      "rect": { "x": 0.11, "y": 0.15, "w": 0.077, "h": 0.092 } },
+    { "id": "rb", "type": "modifier", "label": "RB", "output": { "pad": "RB" }, "behavior": "hold",
+      "rect": { "x": 0.813, "y": 0.15, "w": 0.077, "h": 0.092 } },
+    { "id": "rt", "type": "modifier", "label": "RT", "output": { "pad": "RT" }, "behavior": "hold",
+      "rect": { "x": 0.903, "y": 0.15, "w": 0.077, "h": 0.092 } },
+
+    { "id": "back", "type": "button", "label": "View", "output": { "pad": "BACK" },
+      "rect": { "x": 0.405, "y": 0.135, "w": 0.054, "h": 0.072 }, "shape": "rounded_rect" },
+    { "id": "guide", "type": "button", "label": "Guide", "output": { "pad": "GUIDE" },
+      "rect": { "x": 0.4775, "y": 0.02, "w": 0.045, "h": 0.1 }, "shape": "circle" },
+    { "id": "start", "type": "button", "label": "Menu", "output": { "pad": "START" },
+      "rect": { "x": 0.541, "y": 0.135, "w": 0.054, "h": 0.072 }, "shape": "rounded_rect" },
+
+    { "id": "app_menu", "type": "system", "label": "☰", "output": { "app": "menu" },
+      "rect": { "x": 0.015, "y": 0.02, "w": 0.045, "h": 0.09 } },
+    { "id": "chat", "type": "system", "label": "⌨", "output": { "app": "soft_keyboard" },
+      "rect": { "x": 0.065, "y": 0.02, "w": 0.045, "h": 0.09 } }
+  ]
+}
