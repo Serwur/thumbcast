@@ -26,8 +26,8 @@
   },
   "controls": [
     { "id": "app_menu", "type": "system", "label": "☰", "output": { "app": "menu" },
-      "rect": { "x": 0.02, "y": 0.02, "w": 0.05, "h": 0.09 } },
+      "rect": { "x": 0.017, "y": 0.017, "w": 0.0425, "h": 0.0765 } },
     { "id": "chat", "type": "system", "label": "⌨", "output": { "app": "soft_keyboard" },
-      "rect": { "x": 0.08, "y": 0.02, "w": 0.05, "h": 0.09 } }
+      "rect": { "x": 0.068, "y": 0.017, "w": 0.0425, "h": 0.0765 } }
   ]
 }

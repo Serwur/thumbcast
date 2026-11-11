@@ -172,7 +172,7 @@
             android:summary="%s"
             android:entries="@array/thumbcast_control_scale_names"
             android:entryValues="@array/thumbcast_control_scale_values"
-            android:defaultValue="85" />
+            android:defaultValue="100" />
 
         <CheckBoxPreference
             android:key="checkbox_thumbcast_hide_on_gamepad"

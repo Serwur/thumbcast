@@ -21,7 +21,7 @@
         <item>desktop-touchpad.thumbcast.json</item>
         <item>big-picture.thumbcast.json</item>
     </string-array>
-    <!-- Rozmiar kontrolek (ThumbcastSettings.SCALE_PERCENTS, domyślnie 85). -->
+    <!-- Rozmiar kontrolek (ThumbcastSettings.SCALE_PERCENTS, domyślnie 100). -->
     <string-array name="thumbcast_control_scale_names" translatable="false">
         <item>60%</item>
         <item>70%</item>

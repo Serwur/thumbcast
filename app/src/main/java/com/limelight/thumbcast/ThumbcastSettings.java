@@ -14,17 +14,36 @@ public final class ThumbcastSettings {
     public static final String KEY_CONTROL_SCALE = "list_thumbcast_control_scale";
     public static final String KEY_HIDE_ON_GAMEPAD = "checkbox_thumbcast_hide_on_gamepad";
 
-    /** Telefon: przyciski i gałka z presetów są za duże przy 100% (test właściciela 11.11.2026). */
-    public static final int DEFAULT_SCALE_PERCENT = 85;
+    /**
+     * 100% = rozmiar z presetu. Od 11.11.2026 presety mają rozmiar, który właściciel uznał za normę
+     * na telefonie (wcześniejsze 85%), więc domyślnie nic nie jest skalowane.
+     */
+    public static final int DEFAULT_SCALE_PERCENT = 100;
     public static final boolean DEFAULT_HIDE_ON_GAMEPAD = true;
 
     /** Wartości z menu w grze i z ekranu ustawień (thumbcast_control_scale_values). */
     static final int[] SCALE_PERCENTS = {60, 70, 85, 100, 115, 130};
 
+    /** Jednorazowa migracja: zapisane 85% (stara norma) to po zmniejszeniu presetów 100%. */
+    private static final String KEY_SCALE_REBASED = "thumbcast_control_scale_rebased";
+    private static final String OLD_NORM_PERCENT = "85";
+
     private final SharedPreferences prefs;
 
     public ThumbcastSettings(Context context) {
         prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        migrateScale();
+    }
+
+    private void migrateScale() {
+        if (prefs.getBoolean(KEY_SCALE_REBASED, false)) {
+            return;
+        }
+        SharedPreferences.Editor e = prefs.edit().putBoolean(KEY_SCALE_REBASED, true);
+        if (OLD_NORM_PERCENT.equals(prefs.getString(KEY_CONTROL_SCALE, null))) {
+            e.putString(KEY_CONTROL_SCALE, String.valueOf(DEFAULT_SCALE_PERCENT));
+        }
+        e.apply();
     }
 
     public int getControlScalePercent() {
