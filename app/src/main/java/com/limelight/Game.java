@@ -36,6 +36,16 @@ import com.limelight.utils.ServerHelper;
 import com.limelight.utils.ShortcutHelper;
 import com.limelight.utils.SpinnerDialog;
 import com.limelight.utils.UiHelper;
+// THUMBCAST:
+import com.limelight.thumbcast.HostConnectionImpl;
+import com.limelight.thumbcast.HostPadReporterImpl;
+import com.limelight.thumbcast.ThumbcastKeyTranslator;
+import app.thumbcast.android.ThumbcastOverlayFactory;
+import app.thumbcast.android.ThumbcastProfiles;
+import app.thumbcast.android.overlay.ThumbcastOverlay;
+import app.thumbcast.model.AppActions;
+import app.thumbcast.model.Profile;
+// THUMBCAST END
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -112,6 +122,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private ControllerHandler controllerHandler;
     private KeyboardTranslator keyboardTranslator;
     private VirtualController virtualController;
+    // THUMBCAST:
+    private ThumbcastOverlay thumbcastOverlay;          // null = tryb legacy
+    private HostPadReporterImpl thumbcastPadReporter;
+    // THUMBCAST END
 
     private PreferenceConfiguration prefConfig;
     private SharedPreferences tombstonePrefs;
@@ -504,7 +518,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             }
         }
 
-        if (prefConfig.onscreenController) {
+        // THUMBCAST:
+        boolean thumbcastActive = createThumbcastOverlay();
+        // THUMBCAST END
+        if (prefConfig.onscreenController && !thumbcastActive) {
             // create virtual onscreen controller
             virtualController = new VirtualController(controllerHandler,
                     (FrameLayout)streamView.getParent(),
@@ -594,6 +611,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 if (virtualController != null) {
                     virtualController.hide();
                 }
+                // THUMBCAST:
+                if (thumbcastOverlay != null) {
+                    thumbcastOverlay.releaseAll();
+                    thumbcastOverlay.setVisibility(View.GONE);
+                }
+                // THUMBCAST END
 
                 performanceOverlayView.setVisibility(View.GONE);
                 notificationOverlayView.setVisibility(View.GONE);
@@ -612,6 +635,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 if (virtualController != null) {
                     virtualController.show();
                 }
+                // THUMBCAST:
+                if (thumbcastOverlay != null) {
+                    thumbcastOverlay.setVisibility(View.VISIBLE);
+                }
+                // THUMBCAST END
 
                 if (prefConfig.enablePerfOverlay) {
                     performanceOverlayView.setVisibility(View.VISIBLE);
@@ -1035,6 +1063,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        // THUMBCAST:
+        if (thumbcastPadReporter != null) {
+            thumbcastPadReporter.cancelPending();
+        }
+        // THUMBCAST END
 
         if (controllerHandler != null) {
             controllerHandler.destroy();
@@ -1503,6 +1537,57 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         InputMethodManager inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         inputManager.toggleSoftInput(0, 0);
     }
+
+    // THUMBCAST:
+    private boolean createThumbcastOverlay() {
+        if (prefConfig.controlLayer != PreferenceConfiguration.ControlLayer.THUMBCAST) {
+            return false;
+        }
+        Profile profile = ThumbcastProfiles.loadOrNull(this, prefConfig.thumbcastProfileFile);
+        if (profile == null) {
+            // Błąd odczytu/walidacji: komunikat i powrót do VirtualController (onscreenController jest wymuszone).
+            Toast.makeText(this, getString(R.string.thumbcast_profile_error,
+                    String.valueOf(ThumbcastProfiles.getLastError())), Toast.LENGTH_LONG).show();
+            return false;
+        }
+        thumbcastPadReporter = new HostPadReporterImpl(controllerHandler);
+        thumbcastOverlay = ThumbcastOverlayFactory.create(
+                this,
+                profile,
+                new HostConnectionImpl(conn),
+                thumbcastPadReporter,
+                this::onThumbcastAppAction,
+                new ThumbcastKeyTranslator(keyboardTranslator));
+        FrameLayout parent = (FrameLayout) streamView.getParent();
+        // Ostatnie dziecko FrameLayout jest rysowane na wierzchu i pierwsze dostaje dotyk.
+        parent.addView(thumbcastOverlay, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        thumbcastOverlay.setDebugEnabled(prefConfig.thumbcastDebugOverlay);
+        thumbcastOverlay.setStreamResolution(prefConfig.width, prefConfig.height);
+        // Prostokąt wideo = rozmiar StreamView po layoucie (onMeasure dopasowuje proporcje, layout_gravity=center
+        // wyśrodkowuje). l/t/r/b są w układzie rodzica, tym samym co overlay (MATCH_PARENT, bez paddingu).
+        streamView.addOnLayoutChangeListener((v, l, t, r, b, oldL, oldT, oldR, oldB) ->
+                thumbcastOverlay.setVideoRect(l, t, r, b, prefConfig.width, prefConfig.height));
+        return true;
+    }
+
+    private void onThumbcastAppAction(String action) {
+        switch (action) {
+            case AppActions.SOFT_KEYBOARD:
+                toggleKeyboard();
+                break;
+            case AppActions.MENU:
+                // v12.2 nie ma w Game menu do otwarcia; E2: bottom sheet.
+                LimeLog.info("Thumbcast: menu requested");
+                break;
+            case AppActions.TOGGLE_OVERLAY:
+                // Overlay już przełączył widoczność kontrolek (fabryka).
+                break;
+            default:
+                break;
+        }
+    }
+    // THUMBCAST END
 
     private byte getLiTouchTypeFromEvent(MotionEvent event) {
         switch (event.getActionMasked()) {
@@ -1993,6 +2078,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             // This case is for fingers
             else
             {
+                // THUMBCAST: overlay obsługuje palce w całości (do 10 wskaźników); touchContextMap pomijamy.
+                if (thumbcastOverlay != null) {
+                    return true;
+                }
+                // THUMBCAST END
                 if (virtualController != null &&
                         (virtualController.getControllerMode() == VirtualController.ControllerMode.MoveButtons ||
                          virtualController.getControllerMode() == VirtualController.ControllerMode.ResizeButtons)) {
@@ -2227,6 +2317,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     private void stopConnection() {
         if (connecting || connected) {
+            // THUMBCAST: zerowy stan na hosta przed zamknięciem połączenia.
+            if (thumbcastOverlay != null) {
+                thumbcastOverlay.releaseAll();
+            }
+            // THUMBCAST END
             connecting = connected = false;
             updatePipAutoEnter();
 
