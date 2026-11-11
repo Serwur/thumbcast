@@ -15,6 +15,18 @@ object GestureExclusion {
 
     const val MAX_EXCLUSION_DP: Float = 200f
 
+    /** Szerokość pasa przy krawędzi, w którym działa systemowy gest „wstecz”. */
+    const val EDGE_BAND_DP: Float = 32f
+
+    /** Strefy gałek z układu, przycięte do limitu (pas krawędzi [EDGE_BAND_DP]). */
+    fun forSticks(layout: ControlLayout, viewWidth: Float, density: Float): List<PxRect> {
+        val zones: ArrayList<PxRect> = ArrayList()
+        for (c in layout.controls) {
+            if (c.kind == LaidOutControl.Kind.STICK) zones.add(c.bounds)
+        }
+        return compute(zones, viewWidth, density, EDGE_BAND_DP * density)
+    }
+
     fun compute(
         zones: List<PxRect>,
         viewWidth: Float,

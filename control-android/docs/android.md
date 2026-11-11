@@ -31,9 +31,17 @@ MotionEvent ──► ThumbcastOverlay.onTouchEvent
   podstawa pojawia się tam, gdzie wylądował kciuk; stały: w środku strefy), przyciski okrągłe,
   zaokrąglone i prostokątne (`shape`), modyfikatory (z wizualnym stanem LATCH), przyciski systemowe.
   Etykieta to `label` z profilu albo skrót wyjścia (`A`, `LT`, `M`, `☰`). Przezroczystość: `global.opacity`.
-- **Stan wizualny ≠ stan wyjścia.** Overlay sam robi prosty hit test tylko do rysowania „wciśnięcia”
-  i haptyki. O tym, co trafia do hosta, decyduje silnik. Jeśli silnik odrzuci dotyk (np. polityka),
-  przycisk może się podświetlić bez wysyłki: to błąd kosmetyczny, nigdy naruszenie polityki.
+- **Stan wizualny = stan silnika** (od 11.11.2026). Overlay nie robi własnego hit testu. „Wciśnięcie”,
+  LATCH, palec → kontrolka (także w strefie aktywacji i po slide-to-press), środek, promień i wychylenie
+  gałki bierze z `InputEngine.visualState()`. Haptyka wynika z przejść tego stanu przed i po zdarzeniu
+  (`TouchFeedback`): wibruje tam, gdzie silnik naprawdę wcisnął. Podstawa gałki ma promień silnika
+  (pełne wychylenie na obwodzie): stała = połowa krótszego boku `rect`, pływająca = 15% krótszego boku ekranu.
+- **Podział klas.** `ThumbcastOverlay` to klej `View` (dotyk, impuls czasu przez `FrameTicker`, cykl życia,
+  wykluczenia gestów). Rysowanie: `OverlaySnapshotBuilder` (czysta migawka z układu i stanu silnika) →
+  `OverlayRenderer` (Canvas, bez znajomości silnika; do ponownego użycia w edytorze układu).
+  `VideoGeometry` (czysta): prostokąt wideo i odniesienie → `Viewport`. `EffectiveProfile` (czysta):
+  profil bazowy → przekształcenia (`ProfileStep`, np. skalowanie, `setProfileTransforms`) → ukrycie kontrolek.
+  `GamepadPresenceMonitor`: wykrywanie pada fizycznego, publiczne i używalne poza overlayem.
 - **Multitouch.** Do 10 wskaźników (`MotionTranslator.MAX_POINTERS`); 11. palec jest ignorowany w całości.
   `ACTION_POINTER_DOWN/UP` dają osobne `DOWN/UP` dla właściwego `pointerId`. `MOVE` niesie wszystkie
   śledzone palce, bez próbek historycznych (koalescencja do jednego zdarzenia na ramkę wejścia).
@@ -52,7 +60,7 @@ MotionEvent ──► ThumbcastOverlay.onTouchEvent
 - **Gest „wstecz”.** Na API 29+ strefy joysticków dotykające krawędzi (pas 32 dp) trafiają do
   `setSystemGestureExclusionRects`, przycięte symetrycznie do łącznie 200 dp wysokości na krawędź
   (limit Androida; nadmiar system i tak by zignorował).
-- **Pad BT.** `InputManager.InputDeviceListener` wykrywa zewnętrzny pad (`SOURCE_GAMEPAD`/`SOURCE_JOYSTICK`,
+- **Pad BT.** `GamepadPresenceMonitor` (`InputManager.InputDeviceListener`, callback `onPresenceChanged`) wykrywa zewnętrzny pad (`SOURCE_GAMEPAD`/`SOURCE_JOYSTICK`,
   niewirtualny, na API 29+ `isExternal`). Przy `global.autoHideOnGamepad` kontrolki znikają, a zostają
   kontrolki systemowe i gesty (silnik dostaje profil bez stick/button/modifier). Akcja `toggle_overlay`
   robi to samo ręcznie.
@@ -87,7 +95,8 @@ overlay.setStreamResolution(width, height);  // albo setVideoRect(...) z prostok
 Pełny opis zmian w upstreamie: `patches/Game.java.patch.md`, kolejność kroków: `patches/APPLY.md`.
 
 Publiczne API overlaya: `setProfile(Profile)`, `setVideoRect(...)`, `setStreamResolution(w, h)`,
-`setControlsHidden(Boolean)` / `toggleControlsHidden()`, `releaseAll()`, `debugEnabled`.
+`setControlsHidden(Boolean)` / `toggleControlsHidden()` / `controlsHidden` (`isControlsHidden()`),
+`setProfileTransforms(List<ProfileStep>)`, `releaseAll()`, `debugEnabled`.
 Wszystko na wątku UI.
 
 ## Fasady (dlaczego nie wołamy upstreamu wprost)
@@ -115,7 +124,9 @@ powtarza ten sam stan po 25/50/75 ms, tak jak upstreamowy `VirtualController.sen
 - **JVM (`src/test`, JUnit 4):** `MotionTranslatorTest` (DOWN/UP per wskaźnik, limit 10, CANCEL,
   zgubiony UP, narzędzia inne niż palec, losowa właściwość „każdy DOWN ma jeden UP”), `SinksTest`
   (adaptery na fałszywych fasadach, pokrycie `KeyCodes.ALL`), `GeometryTest` (letterbox, limit 200 dp,
-  układ i hit test, percentyle). Testy nie dotykają klas Androida w czasie wykonania (stałe
+  układ i hit test, percentyle), `VideoGeometryTest`, `EffectiveProfileTest`, `GamepadPresenceMonitorTest`
+  (reguła „fizyczny pad”, callback tylko przy zmianie), `OverlaySnapshotTest` (migawka z prawdziwym silnikiem:
+  wciśnięcie w strefie aktywacji, slide-to-press, LATCH, promień i gałka z silnika, haptyka z przejść). Testy nie dotykają klas Androida w czasie wykonania (stałe
   `KeyEvent.KEYCODE_*` są wklejane przez kompilator), więc Robolectric nie jest potrzebny. Jeśli kompilator
   jednak nie wklei stałych (np. zmiana w android.jar), `unitTests.isReturnDefaultValues` nie wystarczy:
   wtedy dodać Robolectric (`libs.robolectric`) do `SinksTest`.
@@ -129,9 +140,9 @@ powtarza ten sam stan po 25/50/75 ms, tak jak upstreamowy `VirtualController.sen
 - **Stałe protokołu** (`HostProtocol`: kierunek klawisza, bity modyfikatorów, numery przycisków myszy,
   prefiks `0x80` kodu VK) zweryfikowane z upstreamowymi `KeyboardPacket`, `MouseButtonPacket`,
   `KeyboardTranslator` (v12.2, b48494cb96bf). Kompilacja nadal niesprawdzona.
-- **Hit test wizualny** zakłada, że `rect` jest względem całego overlaya i że późniejsza kontrolka jest
-  na wierzchu. Jeśli silnik używa `safeArea` z `Viewport` albo innego z-order, podświetlenie może się
-  rozjechać z faktycznym wyjściem (tylko wizualnie).
+- **Geometria rysunku** (`ControlLayout`) zakłada, że `rect` jest względem całego overlaya. Stan wciśnięć
+  idzie z silnika, ale prostokąty grafiki nie: gdy overlay zacznie podawać `safeArea`, `ControlLayout` musi
+  liczyć `rect` względem tego samego prostokąta (inaczej grafika rozjedzie się ze strefą trafienia).
 - **Leworęczność** nie jest stosowana w overlayu: profil ma już być w odpowiedniej orientacji
   (`HandednessTransform` w modelu).
 - **`WindowInsets`/wycięcie aparatu:** overlay nie podaje `safeArea` (pole opcjonalne silnika). Do zrobienia
