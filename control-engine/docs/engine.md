@@ -90,6 +90,7 @@ Każde wywołanie sinka może dostać przyczynę (`EmitCause`: id cyklu, rodzaj,
 - `ButtonAndHitTestTest`: HOLD, flagi, LATCH (także po zmianie viewportu), wspólny stan, slide-to-press (X → 0 → A), App, klawisz w Pad+, strefa aktywacji, z-order, `safeArea`, lustro (w silniku i z `HandednessTransform` bez podwójnego odbicia).
 - `GestureRecognizersTest`: tap (układ wideo, letterbox), tap kontra long-press kontra drag, long-press na ticku i przy UP, brak wyjścia bez palca, kamera Pad+ (kierunek, wygaszanie, monotoniczność krzywej), RMB-look z resztami ułamkowymi, pinch (ząbki, kotwica, przerwanie kamery), edge swipe, kilka palców naraz z CANCEL.
 - `ActionPolicyTest`: każda reguła R1–R9 wywołana bezpośrednio.
+- `KnownRisksTest`: obecne zachowanie przy ryzykach z `docs/HANDOFF.md` (gałka RIGHT razem z kamerą, ignorowane `chord` i `sprintLock`, long-press przy tickach co klatkę).
 - `ActionPolicyPropertyTest` (Kotest `checkAll`, liczba iteracji z `thumbcast.policy.iterations`). Strumienie są poprawne albo chaotyczne: CANCEL, podwójny DOWN, UP bez DOWN, nieznane palce w MOVE, cofający się czas, `releaseAll` i zmiana viewportu w trakcie. Sprawdzane są tryby Pad+, Pad+ ze slide-to-press i KBM. Właściwości:
   - każda krawędź ma przyczynę z tego samego zdarzenia i żywego palca;
   - jeden dotyk daje najwyżej jedną krawędź, więc liczba krawędzi ≤ liczba DOWN;

@@ -29,7 +29,11 @@ Landscape lock (DECISIONS.md pkt h). Fork vs submoduł i `applicationId` rozstrz
 
 ## Znane ryzyka
 - Płatny Virtual HID Driver: 14,99 USD/rok lub 49,99 USD jednorazowo (5 maszyn, internet przy tworzeniu pada). ViGEmBus jest zarchiwizowany od XI 2023 i daje tylko Xbox 360/DS4.
-- Nierozstrzygnięte: stick RIGHT razem z kamerą na prawej gałce (walidator), `chord`/`sprintLock` ignorowane przez silnik, long-press bez ticków działa dopiero przy puszczeniu palca.
+- Sprawdzone 11.11.2026, testy charakteryzujące w `control-engine/.../KnownRisksTest.kt` i 2 testy w `ProfileValidatorTest` (asercje „do decyzji” odwrócić razem z poprawką):
+  - **Gałka RIGHT + kamera `pad_right_stick` (do decyzji):** walidator to przepuszcza, tak samo jak dwie gałki na jednej osi. Silnik nadpisuje oś ostatnim zapisem. Po UP palca kamery zostaje jej wychylenie, dopóki palec gałki się nie ruszy. Wygaszanie kamery po nadpisaniu osi daje naruszenie R7. Dokumenty tego nie rozstrzygają. Opcje: (A) walidator odrzuca dwa źródła jednej osi (rekomendacja; gałka RIGHT działa z kamerą `mouse_look`); (B) wyłączna własność osi, pierwszy palec wygrywa; (C) przy zwolnieniu przywracać wartość pozostałego właściciela.
+  - **`chord` (do decyzji):** przy `allowChords = true` walidator przepuszcza akord, a silnik po cichu wysyła tylko `output`. Wdrożenie oznacza 2 wyjścia z jednego dotyku, czyli wyjątek od zasady („szara strefa” w FAIR_PLAY). Wymaga osobnej reguły w ActionPolicy i zmiany właściwości „krawędzi ≤ DOWN”. Opcje: (A) wdrożyć według FAIR_PLAY; (B) do czasu wdrożenia walidator odrzuca `chord` także przy `allowChords = true`; (C) usunąć `chord`/`allowChords` ze schematu (migracja).
+  - **`sprintLock` (no-op, bez ryzyka):** definicję z PLAN 5.4 (poza obrysem 100%, tylko dopóki palec dotyka) silnik spełnia bez flagi. Zatrzask po puszczeniu palca (auto-bieg) łamałby zasadę, więc odpada. Do wyboru: zostawić jako no-op, nadać znaczenie histerezy (100% aż do powrotu w martwą strefę, nadal tylko z palcem) albo usunąć pole (migracja).
+  - **Long-press bez ticków (nie dotyczy wysyłanej ścieżki):** `ThumbcastOverlayFactory` (używana w `Game.java`) podaje `TickHandler`, a overlay woła `onTick` co klatkę, dopóki dotyka palec. Long-press odpala w cyklu TICK najpóźniej klatkę po `minMs`, z palcem na ekranie. Ograniczenie dotyczy tylko wywołań bez ticków (`tickHandler = null`, przyszły tryb testu edytora).
 - Zachowanie Sunshine/Apollo wobec pakietów pada nr 0 przy `multiController=false` nieprzetestowane.
 
 ## Środowisko

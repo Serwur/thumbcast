@@ -123,6 +123,17 @@ class ProfileValidatorTest {
     @Test fun buttonWithMouseWheelBad() = assertInvalid(padWith(f.buttonA.copy(id = "w", output = Output.MouseWheel)), "pinchZoom")
     @Test fun buttonWithMouseLeftGood() = assertValid(padWith(f.buttonA.copy(id = "lmb", output = Output.Mouse(MouseBtn.LEFT))))
 
+    // --- współdzielona oś gałki (ryzyko z HANDOFF.md, do decyzji właściciela) ---
+    // Dziś walidator nie sprawdza, czy dwa źródła piszą do tej samej osi. Silnik nadpisuje wtedy oś
+    // ostatnim zapisem (patrz KnownRisksTest w :control-engine). Po decyzji te asercje trzeba odwrócić.
+    @Test fun stickRightWithPadRightStickCameraAcceptedToday() {
+        val look = f.stick.copy(id = "look", rect = Rect(0.6f, 0.4f, 0.2f, 0.3f), output = Output.Stick(PadStick.RIGHT), floating = false)
+        val p = padWith(look)
+        assertTrue(p.gestures.cameraDrag.output == CameraOutput.PAD_RIGHT_STICK)
+        assertValid(p)
+    }
+    @Test fun twoSticksOnSameAxisAcceptedToday() = assertValid(padWith(f.stick.copy(id = "move2", rect = Rect(0.6f, 0.4f, 0.2f, 0.3f))))
+
     // --- kody klawiszy ---
     @Test fun keyCodeGood() {
         for (code in listOf("A", "Z", "0", "9", "F1", "F12", "SPACE", "ESC", "TAB", "ENTER", "-", "=", "UP")) {
