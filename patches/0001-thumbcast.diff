@@ -1559,14 +1559,15 @@ index 00000000..056ba4cc
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuModel.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuModel.java
 new file mode 100644
-index 00000000..c8101011
+index 00000000..d6d8dbd2
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuModel.java
-@@ -0,0 +1,130 @@
+@@ -0,0 +1,173 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Pozycje menu w grze (etykiety i akcje) bez widoku: ThumbcastMenuView je tylko rysuje,
 +// ThumbcastSession dostarcza stan i wykonuje akcje. Kolejność pozycji jak w dawnym AlertDialog.
++// Od 12.11.2026 dwie strony: główna (build) i lista profili do zmiany w trakcie gry (buildProfiles).
 +
 +import com.limelight.R;
 +
@@ -1600,6 +1601,31 @@ index 00000000..c8101011
 +        boolean isHideOnGamepad();
 +
 +        void setHideOnGamepad(boolean hide);
++
++        /** Nazwa wyświetlana aktywnego profilu. */
++        String getActiveProfileName();
++
++        /** Strona z listą profili (menu zostaje otwarte). */
++        void openProfiles();
++
++        /** Powrót ze strony profili na stronę główną. */
++        void showMainPage();
++
++        /** Zmiana aktywnego profilu na żywo (wołane po zamknięciu menu); aktywny profil = nic. */
++        void switchProfile(String fileName);
++    }
++
++    /** Profil na stronie wyboru: plik (wartość preferencji list_thumbcast_profile) i nazwa. */
++    static final class ProfileChoice {
++        final String fileName;
++        final String name;
++        final boolean active;
++
++        ProfileChoice(String fileName, String name, boolean active) {
++            this.fileName = fileName;
++            this.name = name;
++            this.active = active;
++        }
 +    }
 +
 +    enum Kind {
@@ -1654,6 +1680,8 @@ index 00000000..c8101011
 +                ? R.string.thumbcast_menu_show_controls : R.string.thumbcast_menu_hide_controls),
 +                true, t::toggleControls));
 +        items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_keyboard), true, t::toggleKeyboard));
++        items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_profile, t.getActiveProfileName()),
++                false, t::openProfiles));
 +
 +        final int percent = t.getScalePercent();
 +        final int smaller = stepScale(percent, -1);
@@ -1667,6 +1695,21 @@ index 00000000..c8101011
 +                ? R.string.thumbcast_menu_hide_on_gamepad_on : R.string.thumbcast_menu_hide_on_gamepad_off),
 +                false, () -> t.setHideOnGamepad(!hide)));
 +        items.add(Item.button(Style.PRIMARY, s.get(R.string.thumbcast_menu_resume), true, () -> { }));
++        return Collections.unmodifiableList(items);
++    }
++
++    /**
++     * Strona wyboru profilu: „Wstecz”, potem profile z biblioteki (presety, potem profile użytkownika). Aktywny jest
++     * wyróżniony (PRIMARY, znacznik) i od niego startuje zaznaczenie z pada. Wybór zamyka menu i przełącza profil.
++     */
++    static List<Item> buildProfiles(Strings s, List<ProfileChoice> profiles, final Target t) {
++        List<Item> items = new ArrayList<>();
++        items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_back), false, t::showMainPage));
++        for (final ProfileChoice p : profiles) {
++            items.add(Item.button(p.active ? Style.PRIMARY : Style.NORMAL,
++                    p.active ? s.get(R.string.thumbcast_menu_profile_active, p.name) : p.name,
++                    true, () -> t.switchProfile(p.fileName)));
++        }
 +        return Collections.unmodifiableList(items);
 +    }
 +
@@ -1695,7 +1738,7 @@ index 00000000..c8101011
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuView.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuView.java
 new file mode 100644
-index 00000000..96b0b137
+index 00000000..56f3dc0b
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuView.java
 @@ -0,0 +1,463 @@
@@ -1853,9 +1896,9 @@ index 00000000..96b0b137
 +                rows.add(row);
 +                list.addView(row, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 +            }
-+            // Nowa lista: zaznaczenie (jeśli było) wraca na wiersz domyślny.
++            // Nowa lista: zaznaczenie (jeśli było) wraca na wiersz domyślny i jest przewijane do widoku.
 +            if (selected >= 0) {
-+                selected = defaultIndex();
++                select(defaultIndex());
 +            }
 +        }
 +        if (selected >= newItems.size()) {
@@ -2164,10 +2207,10 @@ index 00000000..96b0b137
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
 new file mode 100644
-index 00000000..b4f7e690
+index 00000000..9af1f31a
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
-@@ -0,0 +1,528 @@
+@@ -0,0 +1,636 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Cała logika Thumbcast w aktywności Game: Game trzyma jedno pole
@@ -2183,6 +2226,11 @@ index 00000000..b4f7e690
 +// i zdarzenie ruchu (consumeMotionEvent), zanim cokolwiek wyśle do hosta. Klawisze i przyciski pada nawigują
 +// po menu (MenuInputRouter z :control-android), osie pada też, a do hosta nic nie trafia. Przy otwarciu menu
 +// stan nakładki i padów fizycznych jest zerowany (przyciski puszczone, gałki na środku).
++//
++// Zmiana profilu w trakcie gry (12.11.2026): strona menu z profilami z biblioteki (ProfileRepository, presety
++// i profile użytkownika). Wybór zeruje stan na hoście, przebudowuje silnik i overlay (setProfile, jak przy
++// starcie: ten sam plik wczytany przez ThumbcastProfiles, ukrywanie przy padzie i skala z sesji) i zapisuje
++// nazwę pliku w preferencji list_thumbcast_profile (jak biblioteka profili).
 +
 +import android.app.Activity;
 +import android.content.Context;
@@ -2190,6 +2238,7 @@ index 00000000..b4f7e690
 +import android.os.Build;
 +import android.os.Handler;
 +import android.os.Looper;
++import android.preference.PreferenceManager;
 +import android.view.InputDevice;
 +import android.view.KeyEvent;
 +import android.view.MotionEvent;
@@ -2205,6 +2254,7 @@ index 00000000..b4f7e690
 +import com.limelight.preferences.PreferenceConfiguration;
 +import com.limelight.ui.GameGestures;
 +
++import java.util.ArrayList;
 +import java.util.Collections;
 +import java.util.HashMap;
 +import java.util.List;
@@ -2212,6 +2262,8 @@ index 00000000..b4f7e690
 +
 +import app.thumbcast.android.ThumbcastOverlayFactory;
 +import app.thumbcast.android.ThumbcastProfiles;
++import app.thumbcast.android.library.ProfileEntry;
++import app.thumbcast.android.library.ProfileRepository;
 +import app.thumbcast.android.menu.MenuCommand;
 +import app.thumbcast.android.menu.MenuInputRouter;
 +import app.thumbcast.android.menu.MenuKeyResult;
@@ -2240,12 +2292,15 @@ index 00000000..b4f7e690
 +    private final Activity activity;
 +    private final Host host;
 +    private final ThumbcastSettings settings;
++    private final PreferenceConfiguration prefConfig;
 +    private final ThumbcastOverlay overlay;
 +    private final HostPadReporterImpl padReporter;
 +    private final ControllerHandler controllerHandler;
 +    private final MenuInputRouter menuInput = new MenuInputRouter();
 +    /** Profil z pliku z wyłączonym autoHideOnGamepad (ukrywaniem przy padzie steruje sesja), bez skalowania. */
-+    private final Profile baseProfile;
++    private Profile baseProfile;
++    /** Nazwa pliku aktywnego profilu (wartość preferencji list_thumbcast_profile). */
++    private String activeProfileFile;
 +    private final Map<String, Runnable> commands;
 +    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 +    private final InputManager inputManager;
@@ -2259,6 +2314,10 @@ index 00000000..b4f7e690
 +    private final FrameLayout overlayParent;
 +    /** Tworzony przy pierwszym otwarciu; pokazany = dodany do {@link #overlayParent}. */
 +    private ThumbcastMenuView menuView;
++    /** Strona menu: false = główna, true = lista profili. */
++    private boolean profilesPage;
++    /** Lista profili wczytana przy otwarciu strony profili. */
++    private List<ThumbcastMenuModel.ProfileChoice> profileChoices = Collections.emptyList();
 +    private boolean destroyed;
 +
 +    private final InputManager.InputDeviceListener deviceListener = new InputManager.InputDeviceListener() {
@@ -2320,6 +2379,8 @@ index 00000000..b4f7e690
 +        this.activity = activity;
 +        this.host = host;
 +        this.settings = new ThumbcastSettings(activity);
++        this.prefConfig = prefConfig;
++        this.activeProfileFile = prefConfig.thumbcastProfileFile;
 +        this.scalePercent = settings.getControlScalePercent();
 +        this.hideOnGamepad = settings.isHideOnGamepad();
 +        this.baseProfile = ThumbcastOverlayFactory.withAutoHideOnGamepad(profile, false);
@@ -2598,13 +2659,76 @@ index 00000000..b4f7e690
 +        if (isMenuShown()) {
 +            overlayParent.removeView(menuView);
 +        }
++        profilesPage = false;
 +        menuInput.resetAxes();
 +        setPhysicalInputBlocked(false);
 +    }
 +
-+    /** B, Back, Escape przy otwartym menu. */
++    /** B, Back, Escape przy otwartym menu: ze strony profili na stronę główną, ze strony głównej do gry. */
 +    private void onMenuBack() {
-+        hideMenu();
++        if (profilesPage) {
++            showPage(false);
++        } else {
++            hideMenu();
++        }
++    }
++
++    private void showPage(boolean profiles) {
++        if (profiles) {
++            profileChoices = loadProfileChoices();
++        }
++        profilesPage = profiles;
++        refreshMenu();
++        if (isMenuShown()) {
++            menuView.scrollToTop();
++        }
++    }
++
++    /** Profile z biblioteki (presety, potem profile użytkownika), bez plików uszkodzonych. */
++    private List<ThumbcastMenuModel.ProfileChoice> loadProfileChoices() {
++        List<ThumbcastMenuModel.ProfileChoice> out = new ArrayList<>();
++        try {
++            for (ProfileEntry e : ProfileRepository.create(activity).listAll()) {
++                if (e.isValid()) {
++                    out.add(new ThumbcastMenuModel.ProfileChoice(e.getFileName(), e.getName(),
++                            e.getFileName().equals(activeProfileFile)));
++                }
++            }
++        } catch (RuntimeException e) {
++            LimeLog.warning("Thumbcast: profile list failed: " + e);
++        }
++        return out;
++    }
++
++    /** Nazwa wyświetlana aktywnego profilu (pole name z pliku). */
++    private String activeProfileName() {
++        return baseProfile.getName();
++    }
++
++    /**
++     * Zmiana profilu na żywo. Najpierw zerowy stan na hoście (nakładka i pady), potem nowy profil w overlayu
++     * (setProfile: releaseAll, silnik z nowym profilem, układ i haptyka) z bieżącą skalą i regułą ukrywania.
++     */
++    private void switchProfile(String fileName) {
++        if (destroyed || fileName == null || fileName.equals(activeProfileFile)) {
++            return;
++        }
++        Profile loaded = ThumbcastProfiles.loadOrNull(activity, fileName);
++        if (loaded == null) {
++            Toast.makeText(activity, activity.getString(R.string.thumbcast_menu_profile_switch_error,
++                    String.valueOf(ThumbcastProfiles.getLastError())), Toast.LENGTH_LONG).show();
++            return;
++        }
++        releaseHostInput();
++        baseProfile = ThumbcastOverlayFactory.withAutoHideOnGamepad(loaded, false);
++        activeProfileFile = fileName;
++        prefConfig.thumbcastProfileFile = fileName;
++        PreferenceManager.getDefaultSharedPreferences(activity).edit()
++                .putString(ProfileLibraryActivity.PREF_PROFILE, fileName).apply();
++        overlay.setProfile(effectiveProfile());
++        applyControlsHidden();
++        Toast.makeText(activity, activity.getString(R.string.thumbcast_library_selected, loaded.getName()),
++                Toast.LENGTH_SHORT).show();
 +    }
 +
 +    /** Polecenie z klawiatury lub pada przy otwartym menu. */
@@ -2620,7 +2744,14 @@ index 00000000..b4f7e690
 +    }
 +
 +    private void refreshMenu() {
-+        if (isMenuShown()) {
++        if (!isMenuShown()) {
++            return;
++        }
++        if (profilesPage) {
++            menuView.setTitle(menuString(R.string.thumbcast_menu_profiles_title));
++            menuView.bind(ThumbcastMenuModel.buildProfiles(this::menuString, profileChoices, menuTarget));
++        } else {
++            menuView.setTitle(menuString(R.string.thumbcast_menu_title));
 +            menuView.bind(ThumbcastMenuModel.build(this::menuString, menuTarget));
 +        }
 +    }
@@ -2693,6 +2824,26 @@ index 00000000..b4f7e690
 +        @Override
 +        public void setHideOnGamepad(boolean hide) {
 +            ThumbcastSession.this.setHideOnGamepad(hide);
++        }
++
++        @Override
++        public String getActiveProfileName() {
++            return activeProfileName();
++        }
++
++        @Override
++        public void openProfiles() {
++            showPage(true);
++        }
++
++        @Override
++        public void showMainPage() {
++            showPage(false);
++        }
++
++        @Override
++        public void switchProfile(String fileName) {
++            ThumbcastSession.this.switchProfile(fileName);
 +        }
 +    };
 +}
@@ -2901,10 +3052,10 @@ index 00000000..d0fa4d92
 +</LinearLayout>
 diff --git a/app/src/main/res/values-pl/thumbcast_strings.xml b/app/src/main/res/values-pl/thumbcast_strings.xml
 new file mode 100644
-index 00000000..8ffee1f7
+index 00000000..89c02a4b
 --- /dev/null
 +++ b/app/src/main/res/values-pl/thumbcast_strings.xml
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,89 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -2989,6 +3140,10 @@ index 00000000..8ffee1f7
 +    <string name="thumbcast_menu_resume">Wróć do gry</string>
 +    <string name="thumbcast_menu_scale_decrease">Mniejsze kontrolki</string>
 +    <string name="thumbcast_menu_scale_increase">Większe kontrolki</string>
++    <string name="thumbcast_menu_profile">Profil: %1$s</string>
++    <string name="thumbcast_menu_profiles_title">Profil sterowania</string>
++    <string name="thumbcast_menu_back">‹ Wstecz</string>
++    <string name="thumbcast_menu_profile_switch_error">Nie udało się wczytać profilu: %1$s</string>
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_arrays.xml b/app/src/main/res/values/thumbcast_arrays.xml
 new file mode 100644
@@ -3027,10 +3182,10 @@ index 00000000..1e5e7040
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_strings.xml b/app/src/main/res/values/thumbcast_strings.xml
 new file mode 100644
-index 00000000..4f0804b0
+index 00000000..dade9fe5
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_strings.xml
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,90 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -3114,6 +3269,11 @@ index 00000000..4f0804b0
 +    <string name="thumbcast_menu_scale_decrease">Smaller controls</string>
 +    <string name="thumbcast_menu_scale_increase">Larger controls</string>
 +    <string name="thumbcast_menu_scale_minus" translatable="false">−</string>
++    <string name="thumbcast_menu_profile">Profile: %1$s</string>
++    <string name="thumbcast_menu_profiles_title">Control profile</string>
++    <string name="thumbcast_menu_back">‹ Back</string>
++    <string name="thumbcast_menu_profile_active" translatable="false">✓ %1$s</string>
++    <string name="thumbcast_menu_profile_switch_error">Could not load the profile: %1$s</string>
 +    <string name="thumbcast_menu_scale_plus" translatable="false">+</string>
 +</resources>
 diff --git a/app/src/main/res/xml/preferences.xml b/app/src/main/res/xml/preferences.xml

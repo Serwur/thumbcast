@@ -2,6 +2,7 @@ package com.limelight.thumbcast;
 
 // NOWY PLIK (moduł :app). Pozycje menu w grze (etykiety i akcje) bez widoku: ThumbcastMenuView je tylko rysuje,
 // ThumbcastSession dostarcza stan i wykonuje akcje. Kolejność pozycji jak w dawnym AlertDialog.
+// Od 12.11.2026 dwie strony: główna (build) i lista profili do zmiany w trakcie gry (buildProfiles).
 
 import com.limelight.R;
 
@@ -35,6 +36,31 @@ final class ThumbcastMenuModel {
         boolean isHideOnGamepad();
 
         void setHideOnGamepad(boolean hide);
+
+        /** Nazwa wyświetlana aktywnego profilu. */
+        String getActiveProfileName();
+
+        /** Strona z listą profili (menu zostaje otwarte). */
+        void openProfiles();
+
+        /** Powrót ze strony profili na stronę główną. */
+        void showMainPage();
+
+        /** Zmiana aktywnego profilu na żywo (wołane po zamknięciu menu); aktywny profil = nic. */
+        void switchProfile(String fileName);
+    }
+
+    /** Profil na stronie wyboru: plik (wartość preferencji list_thumbcast_profile) i nazwa. */
+    static final class ProfileChoice {
+        final String fileName;
+        final String name;
+        final boolean active;
+
+        ProfileChoice(String fileName, String name, boolean active) {
+            this.fileName = fileName;
+            this.name = name;
+            this.active = active;
+        }
     }
 
     enum Kind {
@@ -89,6 +115,8 @@ final class ThumbcastMenuModel {
                 ? R.string.thumbcast_menu_show_controls : R.string.thumbcast_menu_hide_controls),
                 true, t::toggleControls));
         items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_keyboard), true, t::toggleKeyboard));
+        items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_profile, t.getActiveProfileName()),
+                false, t::openProfiles));
 
         final int percent = t.getScalePercent();
         final int smaller = stepScale(percent, -1);
@@ -102,6 +130,21 @@ final class ThumbcastMenuModel {
                 ? R.string.thumbcast_menu_hide_on_gamepad_on : R.string.thumbcast_menu_hide_on_gamepad_off),
                 false, () -> t.setHideOnGamepad(!hide)));
         items.add(Item.button(Style.PRIMARY, s.get(R.string.thumbcast_menu_resume), true, () -> { }));
+        return Collections.unmodifiableList(items);
+    }
+
+    /**
+     * Strona wyboru profilu: „Wstecz”, potem profile z biblioteki (presety, potem profile użytkownika). Aktywny jest
+     * wyróżniony (PRIMARY, znacznik) i od niego startuje zaznaczenie z pada. Wybór zamyka menu i przełącza profil.
+     */
+    static List<Item> buildProfiles(Strings s, List<ProfileChoice> profiles, final Target t) {
+        List<Item> items = new ArrayList<>();
+        items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_back), false, t::showMainPage));
+        for (final ProfileChoice p : profiles) {
+            items.add(Item.button(p.active ? Style.PRIMARY : Style.NORMAL,
+                    p.active ? s.get(R.string.thumbcast_menu_profile_active, p.name) : p.name,
+                    true, () -> t.switchProfile(p.fileName)));
+        }
         return Collections.unmodifiableList(items);
     }
 

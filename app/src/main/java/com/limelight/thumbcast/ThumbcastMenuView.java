@@ -152,9 +152,9 @@ public final class ThumbcastMenuView extends FrameLayout {
                 rows.add(row);
                 list.addView(row, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
             }
-            // Nowa lista: zaznaczenie (jeśli było) wraca na wiersz domyślny.
+            // Nowa lista: zaznaczenie (jeśli było) wraca na wiersz domyślny i jest przewijane do widoku.
             if (selected >= 0) {
-                selected = defaultIndex();
+                select(defaultIndex());
             }
         }
         if (selected >= newItems.size()) {

@@ -82,4 +82,8 @@
     <string name="thumbcast_menu_resume">Wróć do gry</string>
     <string name="thumbcast_menu_scale_decrease">Mniejsze kontrolki</string>
     <string name="thumbcast_menu_scale_increase">Większe kontrolki</string>
+    <string name="thumbcast_menu_profile">Profil: %1$s</string>
+    <string name="thumbcast_menu_profiles_title">Profil sterowania</string>
+    <string name="thumbcast_menu_back">‹ Wstecz</string>
+    <string name="thumbcast_menu_profile_switch_error">Nie udało się wczytać profilu: %1$s</string>
 </resources>

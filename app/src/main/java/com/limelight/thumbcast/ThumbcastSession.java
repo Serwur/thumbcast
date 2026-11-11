@@ -13,6 +13,11 @@ package com.limelight.thumbcast;
 // i zdarzenie ruchu (consumeMotionEvent), zanim cokolwiek wyśle do hosta. Klawisze i przyciski pada nawigują
 // po menu (MenuInputRouter z :control-android), osie pada też, a do hosta nic nie trafia. Przy otwarciu menu
 // stan nakładki i padów fizycznych jest zerowany (przyciski puszczone, gałki na środku).
+//
+// Zmiana profilu w trakcie gry (12.11.2026): strona menu z profilami z biblioteki (ProfileRepository, presety
+// i profile użytkownika). Wybór zeruje stan na hoście, przebudowuje silnik i overlay (setProfile, jak przy
+// starcie: ten sam plik wczytany przez ThumbcastProfiles, ukrywanie przy padzie i skala z sesji) i zapisuje
+// nazwę pliku w preferencji list_thumbcast_profile (jak biblioteka profili).
 
 import android.app.Activity;
 import android.content.Context;
@@ -20,6 +25,7 @@ import android.hardware.input.InputManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -35,6 +41,7 @@ import com.limelight.nvstream.NvConnection;
 import com.limelight.preferences.PreferenceConfiguration;
 import com.limelight.ui.GameGestures;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +49,8 @@ import java.util.Map;
 
 import app.thumbcast.android.ThumbcastOverlayFactory;
 import app.thumbcast.android.ThumbcastProfiles;
+import app.thumbcast.android.library.ProfileEntry;
+import app.thumbcast.android.library.ProfileRepository;
 import app.thumbcast.android.menu.MenuCommand;
 import app.thumbcast.android.menu.MenuInputRouter;
 import app.thumbcast.android.menu.MenuKeyResult;
@@ -70,12 +79,15 @@ public final class ThumbcastSession {
     private final Activity activity;
     private final Host host;
     private final ThumbcastSettings settings;
+    private final PreferenceConfiguration prefConfig;
     private final ThumbcastOverlay overlay;
     private final HostPadReporterImpl padReporter;
     private final ControllerHandler controllerHandler;
     private final MenuInputRouter menuInput = new MenuInputRouter();
     /** Profil z pliku z wyłączonym autoHideOnGamepad (ukrywaniem przy padzie steruje sesja), bez skalowania. */
-    private final Profile baseProfile;
+    private Profile baseProfile;
+    /** Nazwa pliku aktywnego profilu (wartość preferencji list_thumbcast_profile). */
+    private String activeProfileFile;
     private final Map<String, Runnable> commands;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final InputManager inputManager;
@@ -89,6 +101,10 @@ public final class ThumbcastSession {
     private final FrameLayout overlayParent;
     /** Tworzony przy pierwszym otwarciu; pokazany = dodany do {@link #overlayParent}. */
     private ThumbcastMenuView menuView;
+    /** Strona menu: false = główna, true = lista profili. */
+    private boolean profilesPage;
+    /** Lista profili wczytana przy otwarciu strony profili. */
+    private List<ThumbcastMenuModel.ProfileChoice> profileChoices = Collections.emptyList();
     private boolean destroyed;
 
     private final InputManager.InputDeviceListener deviceListener = new InputManager.InputDeviceListener() {
@@ -150,6 +166,8 @@ public final class ThumbcastSession {
         this.activity = activity;
         this.host = host;
         this.settings = new ThumbcastSettings(activity);
+        this.prefConfig = prefConfig;
+        this.activeProfileFile = prefConfig.thumbcastProfileFile;
         this.scalePercent = settings.getControlScalePercent();
         this.hideOnGamepad = settings.isHideOnGamepad();
         this.baseProfile = ThumbcastOverlayFactory.withAutoHideOnGamepad(profile, false);
@@ -428,13 +446,76 @@ public final class ThumbcastSession {
         if (isMenuShown()) {
             overlayParent.removeView(menuView);
         }
+        profilesPage = false;
         menuInput.resetAxes();
         setPhysicalInputBlocked(false);
     }
 
-    /** B, Back, Escape przy otwartym menu. */
+    /** B, Back, Escape przy otwartym menu: ze strony profili na stronę główną, ze strony głównej do gry. */
     private void onMenuBack() {
-        hideMenu();
+        if (profilesPage) {
+            showPage(false);
+        } else {
+            hideMenu();
+        }
+    }
+
+    private void showPage(boolean profiles) {
+        if (profiles) {
+            profileChoices = loadProfileChoices();
+        }
+        profilesPage = profiles;
+        refreshMenu();
+        if (isMenuShown()) {
+            menuView.scrollToTop();
+        }
+    }
+
+    /** Profile z biblioteki (presety, potem profile użytkownika), bez plików uszkodzonych. */
+    private List<ThumbcastMenuModel.ProfileChoice> loadProfileChoices() {
+        List<ThumbcastMenuModel.ProfileChoice> out = new ArrayList<>();
+        try {
+            for (ProfileEntry e : ProfileRepository.create(activity).listAll()) {
+                if (e.isValid()) {
+                    out.add(new ThumbcastMenuModel.ProfileChoice(e.getFileName(), e.getName(),
+                            e.getFileName().equals(activeProfileFile)));
+                }
+            }
+        } catch (RuntimeException e) {
+            LimeLog.warning("Thumbcast: profile list failed: " + e);
+        }
+        return out;
+    }
+
+    /** Nazwa wyświetlana aktywnego profilu (pole name z pliku). */
+    private String activeProfileName() {
+        return baseProfile.getName();
+    }
+
+    /**
+     * Zmiana profilu na żywo. Najpierw zerowy stan na hoście (nakładka i pady), potem nowy profil w overlayu
+     * (setProfile: releaseAll, silnik z nowym profilem, układ i haptyka) z bieżącą skalą i regułą ukrywania.
+     */
+    private void switchProfile(String fileName) {
+        if (destroyed || fileName == null || fileName.equals(activeProfileFile)) {
+            return;
+        }
+        Profile loaded = ThumbcastProfiles.loadOrNull(activity, fileName);
+        if (loaded == null) {
+            Toast.makeText(activity, activity.getString(R.string.thumbcast_menu_profile_switch_error,
+                    String.valueOf(ThumbcastProfiles.getLastError())), Toast.LENGTH_LONG).show();
+            return;
+        }
+        releaseHostInput();
+        baseProfile = ThumbcastOverlayFactory.withAutoHideOnGamepad(loaded, false);
+        activeProfileFile = fileName;
+        prefConfig.thumbcastProfileFile = fileName;
+        PreferenceManager.getDefaultSharedPreferences(activity).edit()
+                .putString(ProfileLibraryActivity.PREF_PROFILE, fileName).apply();
+        overlay.setProfile(effectiveProfile());
+        applyControlsHidden();
+        Toast.makeText(activity, activity.getString(R.string.thumbcast_library_selected, loaded.getName()),
+                Toast.LENGTH_SHORT).show();
     }
 
     /** Polecenie z klawiatury lub pada przy otwartym menu. */
@@ -450,7 +531,14 @@ public final class ThumbcastSession {
     }
 
     private void refreshMenu() {
-        if (isMenuShown()) {
+        if (!isMenuShown()) {
+            return;
+        }
+        if (profilesPage) {
+            menuView.setTitle(menuString(R.string.thumbcast_menu_profiles_title));
+            menuView.bind(ThumbcastMenuModel.buildProfiles(this::menuString, profileChoices, menuTarget));
+        } else {
+            menuView.setTitle(menuString(R.string.thumbcast_menu_title));
             menuView.bind(ThumbcastMenuModel.build(this::menuString, menuTarget));
         }
     }
@@ -523,6 +611,26 @@ public final class ThumbcastSession {
         @Override
         public void setHideOnGamepad(boolean hide) {
             ThumbcastSession.this.setHideOnGamepad(hide);
+        }
+
+        @Override
+        public String getActiveProfileName() {
+            return activeProfileName();
+        }
+
+        @Override
+        public void openProfiles() {
+            showPage(true);
+        }
+
+        @Override
+        public void showMainPage() {
+            showPage(false);
+        }
+
+        @Override
+        public void switchProfile(String fileName) {
+            ThumbcastSession.this.switchProfile(fileName);
         }
     };
 }

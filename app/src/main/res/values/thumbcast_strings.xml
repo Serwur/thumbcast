@@ -81,5 +81,10 @@
     <string name="thumbcast_menu_scale_decrease">Smaller controls</string>
     <string name="thumbcast_menu_scale_increase">Larger controls</string>
     <string name="thumbcast_menu_scale_minus" translatable="false">−</string>
+    <string name="thumbcast_menu_profile">Profile: %1$s</string>
+    <string name="thumbcast_menu_profiles_title">Control profile</string>
+    <string name="thumbcast_menu_back">‹ Back</string>
+    <string name="thumbcast_menu_profile_active" translatable="false">✓ %1$s</string>
+    <string name="thumbcast_menu_profile_switch_error">Could not load the profile: %1$s</string>
     <string name="thumbcast_menu_scale_plus" translatable="false">+</string>
 </resources>
