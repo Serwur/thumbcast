@@ -14,15 +14,14 @@ import app.thumbcast.android.sink.MouseSink
 import app.thumbcast.android.sink.PadSink
 import app.thumbcast.engine.InputEngine
 import app.thumbcast.engine.Viewport
-import app.thumbcast.model.AppActions
 import app.thumbcast.model.Profile
 
 /**
- * Jedyny punkt wejścia dla `Game` (upstream). Składa adaptery, silnik i overlay.
+ * Jedyny punkt wejścia dla `:app` (`com.limelight.thumbcast.ThumbcastSession`). Składa adaptery, silnik i overlay.
  *
- * Akcja "toggle_overlay" jest obsługiwana lokalnie (ukrycie kontrolek, gesty zostają), a potem
- * i tak przekazywana do [AppActionHandler], żeby Game mogło np. zaktualizować menu.
- * Pozostałe akcje ("menu", "soft_keyboard") obsługuje wyłącznie Game.
+ * Wszystkie akcje aplikacji ("menu", "soft_keyboard", "toggle_overlay") trafiają bez zmian do [AppActionHandler].
+ * Ukrycie kontrolek robi wołający przez publiczne [ThumbcastOverlay.setControlsHidden], bo to on łączy
+ * wybór użytkownika z ustawieniem „ukryj przy podłączonym padzie”.
  */
 object ThumbcastOverlayFactory {
 
@@ -44,21 +43,11 @@ object ThumbcastOverlayFactory {
         appActionHandler: AppActionHandler,
         keyTranslator: KeyTranslator,
     ): ThumbcastOverlay {
-        val holder: OverlayHolder = OverlayHolder()
-        val routedActions: AppActionHandler = AppActionHandler { action ->
-            if (action == AppActions.TOGGLE_OVERLAY) {
-                val o: ThumbcastOverlay? = holder.overlay
-                if (o != null) {
-                    o.toggleControlsHidden()
-                }
-            }
-            appActionHandler.onAppAction(action)
-        }
         val sink: CompositeInputSink = CompositeInputSink(
             PadSink(padReporter),
             KeyboardSink(hostConnection, keyTranslator),
             MouseSink(hostConnection),
-            routedActions,
+            appActionHandler,
         )
         val engineFactory: ThumbcastOverlay.EngineFactory = ThumbcastOverlay.EngineFactory { p, s, viewport ->
             defaultEngine(p, s, viewport)
@@ -69,15 +58,19 @@ object ThumbcastOverlayFactory {
         val tickHandler: ThumbcastOverlay.TickHandler = ThumbcastOverlay.TickHandler { engine, nowMs ->
             engine.onTick(nowMs)
         }
-        val overlay: ThumbcastOverlay = ThumbcastOverlay(context, profile, sink, engineFactory, tickHandler)
-        holder.overlay = overlay
-        return overlay
+        return ThumbcastOverlay(context, profile, sink, engineFactory, tickHandler)
     }
+
+    /**
+     * Kopia profilu z nadpisanym `global.autoHideOnGamepad`. Sesja w `:app` ustawia `false`, bo sama decyduje
+     * o ukryciu przy padzie (ustawienie użytkownika ma pierwszeństwo przed polem profilu). Pomocnik dla Javy,
+     * która nie ma `copy()` z argumentami nazwanymi.
+     */
+    @JvmStatic
+    fun withAutoHideOnGamepad(profile: Profile, enabled: Boolean): Profile =
+        if (profile.global.autoHideOnGamepad == enabled) profile
+        else profile.copy(global = profile.global.copy(autoHideOnGamepad = enabled))
 
     private fun defaultEngine(profile: Profile, sink: CompositeInputSink, viewport: Viewport): InputEngine =
         InputEngine(profile, sink, EngineBridge.uptimeClock, viewport)
-
-    private class OverlayHolder {
-        var overlay: ThumbcastOverlay? = null
-    }
 }
