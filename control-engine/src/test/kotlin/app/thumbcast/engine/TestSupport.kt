@@ -7,6 +7,7 @@ import app.thumbcast.model.CameraOutput
 import app.thumbcast.model.Control
 import app.thumbcast.model.Curve
 import app.thumbcast.model.CurveType
+import app.thumbcast.model.FreeZoneMode
 import app.thumbcast.model.GesturesConfig
 import app.thumbcast.model.GlobalSettings
 import app.thumbcast.model.Handedness
@@ -24,6 +25,7 @@ import app.thumbcast.model.StickControl
 import app.thumbcast.model.StickKeys
 import app.thumbcast.model.SystemControl
 import app.thumbcast.model.TapTarget
+import app.thumbcast.model.Touchpad
 
 // Profil testowy budowany inline (nie czytamy presetów z dysku).
 // Ekran testowy 2000 x 1000 px, wideo 1920 x 1080 na całym ekranie.
@@ -121,6 +123,38 @@ fun testProfile(
     )
 }
 
+/**
+ * Profil z wolną strefą w trybie touchpada (`gestures.freeZone = touchpad`). Z `rightStick = true` dochodzi widoczna
+ * prawa gałka (jak w presecie Big Picture): x 1100..1300, y 600..900 px, czyli środek (1200, 750).
+ */
+fun touchpadProfile(
+    mode: ProfileMode = ProfileMode.PAD_PLUS,
+    sensitivity: Float = 1.0f,
+    scrollPxPerNotch: Float = 24f,
+    rightStick: Boolean = false
+): Profile {
+    val base = testProfile(mode = mode)
+    val controls = ArrayList<Control>(base.controls)
+    if (rightStick) {
+        controls.add(
+            StickControl(
+                id = "look", rect = Rect(0.55f, 0.60f, 0.10f, 0.30f), label = null,
+                output = Output.Stick(PadStick.RIGHT), floating = false, deadzone = 0.12f, outerDeadzone = 0.04f,
+                curve = Curve(CurveType.LINEAR),
+                kbmKeys = if (mode == ProfileMode.KEYBOARD_MOUSE) StickKeys("UP", "DOWN", "LEFT", "RIGHT") else null,
+                kbmThreshold = 0.35f
+            )
+        )
+    }
+    return base.copy(
+        gestures = base.gestures.copy(
+            freeZone = FreeZoneMode.TOUCHPAD,
+            touchpad = Touchpad(sensitivity = sensitivity, scrollPxPerNotch = scrollPxPerNotch)
+        ),
+        controls = controls
+    )
+}
+
 /** Uchwyt testowy: silnik + fałszywy sink + zegar + wygodne zdarzenia. Pozycje palców są pamiętane. */
 class Rig(profile: Profile = testProfile(), config: EngineConfig? = null) {
     val sink: FakeInputSink = FakeInputSink()
@@ -139,6 +173,12 @@ class Rig(profile: Profile = testProfile(), config: EngineConfig? = null) {
 
     fun move(id: Int, x: Float, y: Float) {
         pos[id] = TouchPointer(id, x, y)
+        engine.onTouch(TouchEvent(TouchAction.MOVE, -1, ArrayList(pos.values), clock.now))
+    }
+
+    /** Jedno zdarzenie MOVE z kilkoma palcami przesuniętymi naraz (jak MotionEvent z kilkoma wskaźnikami). */
+    fun moveAll(vararg moved: TouchPointer) {
+        for (tp in moved) pos[tp.id] = tp
         engine.onTouch(TouchEvent(TouchAction.MOVE, -1, ArrayList(pos.values), clock.now))
     }
 

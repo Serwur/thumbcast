@@ -127,6 +127,11 @@ Autor: agent ENGINE, 2026-11-07. Pliki: `control-engine/**`. Typy z kontraktu (`
 - Opcjonalny interfejs `EmitCauseListener` (`onEmitCause(cause: EmitCause?)`). Jeśli `InputSink` go implementuje, przed każdym wywołaniem metody sinka dostaje przyczynę (cykl, akcja dotyku, `timeMs`, `pointerId`, wiązanie). Używa go `FakeInputSink`, przyda się też overlayowi debug. Nie jest wymagany.
 - `InputEngine.violationCount`, `InputEngine.padSnapshot()`, `InputEngine.activeProfile`, konstruktor `InputEngine(config: EngineConfig, profile, sink, clock, viewport)` (testy, przyszły „tryb testu” edytora).
 
+### Wolna strefa: kamera albo touchpad (11.11.2026)
+- `EngineConfig.freeZone` (z `gestures.freeZone`) wybiera `FreeZoneGestures`: `GestureArbiter` (kamera, jak dotąd) albo `TouchpadGestures` (ruch kursora, tap = LMB, tap dwoma palcami = RMB, przytrzymanie = LMB trzymany do UP, dwa palce = kółko pionowe albo poziome z blokadą osi). Tabela i uzasadnienie: `control-engine/docs/engine.md`. Polityka bez zmian i bez nowych wyjątków.
+- `InputEngine` w MOVE najpierw aktualizuje pozycje wszystkich palców zdarzenia, potem woła rozpoznawacze (dotąd robił to palec po palcu). Sumy pinch się nie zmieniają; zmienia się tylko to, który palec zdarzenia dostaje wyjście.
+- Overlay ANDROID nie musi nic zmieniać: profil z `freeZone = touchpad` działa przez to samo `onTouch`/`onTick`.
+
 ### Zmiana kontraktu 11.11.2026: kółko poziome
 - `InputSink.mouseHScroll(highResDelta: Int)`: nowa metoda abstrakcyjna (bez domyślnej implementacji, żeby żaden sink nie gubił po cichu przewijania). 120 = 1 ząbek, dodatnie = w prawo. `mouseWheel` bez zmian (dodatnie = w górę).
 - W silniku efekt `HWheel(delta)` (obok `Wheel`). `OutputMapper` wysyła go tylko przy `delta != 0`. Dla `ActionPolicy` jest to wciśnięcie bez trwałego stanu, tak jak `Wheel`: wymaga przyczyny, palca w zdarzeniu i żywego palca, a w cyklu TICK jest odrzucane (R7).

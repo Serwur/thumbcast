@@ -3,8 +3,8 @@ package app.thumbcast.engine
 import app.thumbcast.model.GestureZone
 import kotlin.math.hypot
 
-// Rozpoznawacze gestów w wolnej strefie produkują wyłącznie Intent przez IntentEmitter (ActionPolicy).
-// O tym, który gest dostaje palec, decyduje GestureArbiter (jeden palec = jeden gest).
+// Wolna strefa w trybie freeZone = camera (tabela Pad+). Rozpoznawacze produkują wyłącznie Intent przez
+// IntentEmitter (ActionPolicy). O tym, który gest dostaje palec, decyduje GestureArbiter (jeden palec = jeden gest).
 
 /**
  * Przydział palców wolnej strefy do gestów. Stan palca:
@@ -15,7 +15,7 @@ class GestureArbiter(
     viewport: Viewport,
     screen: PxRect,
     private val emitter: IntentEmitter
-) {
+) : FreeZoneGestures {
     enum class State { PENDING, CAMERA, LONG_PRESS, PINCH, CONSUMED }
 
     private class G(val fromEdge: Boolean) {
@@ -36,7 +36,7 @@ class GestureArbiter(
 
     fun stateOf(pointerId: Int): State? = states[pointerId]?.state
 
-    fun onDown(p: TrackedPointer, tracker: PointerTracker) {
+    override fun onDown(p: TrackedPointer, tracker: PointerTracker) {
         val g = G(edge.isCandidate(p.downY))
         states[p.id] = g
         // Drugi palec wolnej strefy -> szczypanie (jeśli pierwszy jeszcze nie dał wejścia jednorazowego).
@@ -69,7 +69,7 @@ class GestureArbiter(
     }
 
     /** Prawdziwe zdarzenie dotyku (MOVE) albo tick (isTick): pozycje już zaktualizowane w trackerze. */
-    fun onMove(p: TrackedPointer, tracker: PointerTracker, t: Long, isTick: Boolean) {
+    override fun onMove(p: TrackedPointer, tracker: PointerTracker, t: Long, isTick: Boolean) {
         val g = states[p.id] ?: return
         val dx = p.x - p.downX
         val dy = p.y - p.downY
@@ -116,7 +116,7 @@ class GestureArbiter(
      * Koniec palca. fire = false przy przerwaniu (podwójny DOWN tego samego id): zwalniamy, ale nie
      * rozpoznajemy tapu ani long-pressu.
      */
-    fun onUp(p: TrackedPointer, t: Long, fire: Boolean) {
+    override fun onUp(p: TrackedPointer, t: Long, fire: Boolean) {
         val g = states.remove(p.id) ?: return
         when (g.state) {
             State.PENDING -> {
@@ -142,7 +142,7 @@ class GestureArbiter(
         }
     }
 
-    fun reset() {
+    override fun reset() {
         states.clear()
         camera.reset()
         pinch.end()

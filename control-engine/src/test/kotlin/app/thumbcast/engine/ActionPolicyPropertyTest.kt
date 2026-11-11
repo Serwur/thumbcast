@@ -20,7 +20,8 @@ import kotlin.test.fail
  * Kotest generuje ziarno, z którego budujemy deterministyczny strumień zdarzeń (poprawny albo chaotyczny:
  * CANCEL, podwójny DOWN tego samego id, UP bez DOWN, MOVE nieznanych palców, cofający się czas, releaseAll
  * w trakcie, zmiana viewportu, ticki). Ziarno jest w komunikacie błędu, więc porażkę da się odtworzyć.
- * Część profili (wybór z ziarna) ma gałkę z `sprintLock = true`.
+ * Część profili (wybór z ziarna) ma gałkę z `sprintLock = true`. Strumienie touchpada (`freeZone = touchpad`) mają
+ * dodatkowo pary palców w wolnej strefie i wspólny ruch kilku palców w jednym MOVE (tap dwoma palcami, przewijanie).
  *
  * Sprawdzane po każdym kroku:
  *  P1. każda krawędź wciśnięcia ma przyczynę: cykl TOUCH (DOWN/MOVE/UP, nie CANCEL) albo TICK tylko dla long-pressu,
@@ -66,13 +67,30 @@ class ActionPolicyPropertyTest {
         }
     }
 
+    /** Touchpad (freeZone = touchpad), poprawne strumienie; część profili z widoczną prawą gałką (Big Picture). */
+    @Test
+    fun touchpadValidStreams(): Unit = runBlocking<Unit> {
+        checkAll(iterations, Arb.long()) { seed ->
+            Scenario(seed, touchpadFor(seed), chaotic = false, slide = false, touchpad = true).run()
+        }
+    }
+
+    /** Touchpad: chaos wielu palców (pary palców, ruch kilku palców w jednym zdarzeniu, CANCEL, podwójny DOWN...). */
+    @Test
+    fun touchpadMultiFingerChaoticStreams(): Unit = runBlocking<Unit> {
+        checkAll(iterations, Arb.long()) { seed ->
+            Scenario(seed, touchpadFor(seed), chaotic = true, slide = false, touchpad = true).run()
+        }
+    }
+
     @Test
     fun clockWithoutTouchNeverEmits(): Unit = runBlocking<Unit> {
         checkAll(iterations, Arb.long()) { seed ->
             val rnd = Random(seed)
             val sink = FakeInputSink()
             val clock = FakeClock(rnd.nextInt(100000).toLong())
-            val engine = InputEngine(testProfile(), sink, clock, testViewport())
+            val profile = if (rnd.nextBoolean()) testProfile() else touchpadProfile()
+            val engine = InputEngine(profile, sink, clock, testViewport())
             for (i in 0 until 50) {
                 clock.advance(rnd.nextInt(1000).toLong())
                 if (rnd.nextBoolean()) engine.onTick() else engine.onTick(clock.now + rnd.nextInt(5000) - 2500)
@@ -97,8 +115,25 @@ class ActionPolicyPropertyTest {
         return p.copy(controls = controls)
     }
 
+    /**
+     * Profil touchpada z ziarna (osobna sól): Pad+ albo KBM, z widoczną prawą gałką albo bez, różna czułość i
+     * długość ząbka, czasem z gałką `sprintLock`.
+     */
+    private fun touchpadFor(seed: Long): Profile {
+        val r = Random(seed xor TOUCHPAD_SALT)
+        val mode = if (r.nextInt(4) == 0) ProfileMode.KEYBOARD_MOUSE else ProfileMode.PAD_PLUS
+        val p = touchpadProfile(
+            mode = mode,
+            sensitivity = 0.5f + r.nextInt(30) / 10f,
+            scrollPxPerNotch = (4 + r.nextInt(60)).toFloat(),
+            rightStick = r.nextBoolean()
+        )
+        return withSprintLock(p, seed)
+    }
+
     private companion object {
         const val SPRINT_SALT: Long = 0x5EED_5B1A7L
+        const val TOUCHPAD_SALT: Long = 0x70C4_9AD5L
     }
 
     /** Jeden strumień zdarzeń i jego sprawdzenia. */
@@ -106,7 +141,8 @@ class ActionPolicyPropertyTest {
         private val seed: Long,
         profile: Profile,
         private val chaotic: Boolean,
-        private val slide: Boolean
+        private val slide: Boolean,
+        private val touchpad: Boolean = false
     ) {
         private val rnd: Random = Random(seed)
         private val sink: FakeInputSink = FakeInputSink()
@@ -133,6 +169,12 @@ class ActionPolicyPropertyTest {
             floatArrayOf(1715f, 780f)
         )
 
+        /** Wolna strefa i widoczna prawa gałka (touchpadProfile(rightStick = true)) dla strumieni touchpada. */
+        private val touchpadSpots: Array<FloatArray> = arrayOf(
+            floatArrayOf(1300f, 400f), floatArrayOf(1500f, 400f), floatArrayOf(1200f, 500f), floatArrayOf(800f, 250f),
+            floatArrayOf(1200f, 750f), floatArrayOf(1300f, 20f)
+        )
+
         fun run() {
             val steps = 20 + rnd.nextInt(80)
             for (i in 0 until steps) step()
@@ -154,6 +196,11 @@ class ActionPolicyPropertyTest {
         private fun step() {
             val r = rnd.nextInt(100)
             if (r < 12) advanceTime()
+            if (touchpad && rnd.nextInt(100) < 25) {
+                // Gesty wielu palców: para palców w wolnej strefie albo wspólny ruch wszystkich palców w jednym MOVE.
+                if (rnd.nextBoolean()) doPairDown() else doMoveTogether()
+                return
+            }
             when {
                 r < 30 -> doDown()
                 r < 60 -> doMove()
@@ -175,6 +222,10 @@ class ActionPolicyPropertyTest {
         }
 
         private fun point(): FloatArray {
+            if (touchpad && rnd.nextInt(100) < 40) {
+                val h = touchpadSpots[rnd.nextInt(touchpadSpots.size)]
+                return floatArrayOf(h[0] + rnd.nextInt(41) - 20, h[1] + rnd.nextInt(41) - 20)
+            }
             if (rnd.nextInt(100) < 60) {
                 val h = hotspots[rnd.nextInt(hotspots.size)]
                 return floatArrayOf(h[0] + rnd.nextInt(21) - 10, h[1] + rnd.nextInt(21) - 10)
@@ -198,6 +249,38 @@ class ActionPolicyPropertyTest {
             live[id] = TouchPointer(id, p[0], p[1])
             beginLifetime(id)
             send(TouchEvent(TouchAction.DOWN, id, ArrayList(live.values), time), TouchAction.DOWN)
+        }
+
+        /** Dwa palce blisko siebie w wolnej strefie, w osobnych zdarzeniach DOWN (tap dwoma palcami, przewijanie). */
+        private fun doPairDown() {
+            val base = touchpadSpots[rnd.nextInt(3)]
+            for (k in 0 until 2) {
+                val id = freeId()
+                if (id < 0) return
+                val x = base[0] + k * (60 + rnd.nextInt(120)) + rnd.nextInt(11) - 5
+                val y = base[1] + rnd.nextInt(41) - 20
+                live[id] = TouchPointer(id, x, y)
+                beginLifetime(id)
+                send(TouchEvent(TouchAction.DOWN, id, ArrayList(live.values), time), TouchAction.DOWN)
+                if (rnd.nextBoolean()) time += rnd.nextInt(60).toLong()
+                clock.now = time
+            }
+        }
+
+        /** Wszystkie palce przesunięte o (prawie) ten sam wektor w jednym zdarzeniu MOVE. */
+        private fun doMoveTogether() {
+            if (live.isEmpty()) return
+            val big = rnd.nextInt(100) < 50
+            val range = if (big) 80 else 14
+            val dx = (rnd.nextInt(2 * range + 1) - range).toFloat()
+            val dy = (rnd.nextInt(2 * range + 1) - range).toFloat()
+            for (id in ArrayList(live.keys)) {
+                val old = live[id] ?: continue
+                live[id] = TouchPointer(id, old.x + dx + rnd.nextInt(5) - 2, old.y + dy + rnd.nextInt(5) - 2)
+            }
+            time += rnd.nextInt(20).toLong()
+            clock.now = time
+            send(TouchEvent(TouchAction.MOVE, -1, ArrayList(live.values), time), TouchAction.MOVE)
         }
 
         private fun doDoubleDown() {
@@ -346,7 +429,8 @@ class ActionPolicyPropertyTest {
                     if (action != null) check(c.action == action, "krawędź z innego zdarzenia: $edge")
                 }
                 check(liveBefore.contains(c.pointerId), "krawędź palca, który nie dotyka: $edge")
-                val stickKey = kbm && c.bindingId == "control:move"
+                // Jedyny opisany wyjątek (engine.md): gałka w KBM trzyma do dwóch klawiszy kierunku (skos WASD).
+                val stickKey = kbm && (c.bindingId == "control:move" || c.bindingId == "control:look")
                 if (stickKey) continue
                 if (slide && c.bindingId.startsWith("control:") && c.action == TouchAction.MOVE) {
                     // Slide-to-press: kolejny przycisk tego samego palca po zwolnieniu poprzedniego.
@@ -376,7 +460,7 @@ class ActionPolicyPropertyTest {
         }
 
         private fun check(cond: Boolean, msg: String) {
-            if (!cond) fail("seed=$seed chaotic=$chaotic slide=$slide sprintLock=$sprint: $msg")
+            if (!cond) fail("seed=$seed chaotic=$chaotic slide=$slide sprintLock=$sprint touchpad=$touchpad: $msg")
         }
     }
 }

@@ -55,7 +55,9 @@ object ProfileAdapter {
             pinch = PinchConfig(g.pinchZoom.enabled, g.pinchZoom.pxPerNotch),
             edgeSwipe = EdgeSwipeConfig(g.edgeSwipeTop.enabled),
             controls = controls,
-            tuning = tuning
+            tuning = tuning,
+            freeZone = g.freeZone,
+            touchpad = TouchpadSpec(g.touchpad.sensitivity, g.touchpad.scrollPxPerNotch)
         )
     }
 
