@@ -22,6 +22,9 @@ app/*/release/
 keystore.properties
 signing.properties
 
+# Worktree agentów Claude Code
+.claude/worktrees/
+
 # IDE
 .idea/
 *.iml

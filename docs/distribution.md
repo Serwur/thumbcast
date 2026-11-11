@@ -62,7 +62,7 @@ Polityka zabrania m.in. „game cheating apps that affect the gameplay of other 
 
 - [ ] Plan testów: scenariusze z [test-plan.md](test-plan.md) zaliczone na min. 2 telefonach.
 - [ ] `policy-tests` zielony na tagu.
-- [x] LICENSE zawiera pełny tekst GPLv3 (10.11.2026; porównać z gnu.org).
+- [x] LICENSE zawiera pełny tekst GPLv3, zgodny z gnu.org (sprawdzone 11.11.2026).
 - [ ] NOTICE: aktualne biblioteki i licencje.
 - [ ] Metadane fastlane PL i EN bez znaków towarowych Blizzarda.
 - [ ] `SHA256SUMS.txt` i podpis zweryfikowane (`apksigner verify`).

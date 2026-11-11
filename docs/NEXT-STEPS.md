@@ -47,7 +47,7 @@ Konflikty z plikami upstreamu:
 | `build.gradle` (główny, Groovy, `buildscript { classpath AGP 9.4.0 }`, `allprojects { repositories ... jitpack }`) | Usuń. Zostaje nasz `build.gradle.kts` (pluginy przez version catalog). W `settings.gradle.kts` odkomentuj `maven { url = uri("https://jitpack.io") }`. |
 | `gradle.properties` | Scal ręcznie: zachowaj ustawienia upstreamu i dodaj nasze (`thumbcast.policy.iterations`, `kotlin.code.style`). |
 | `gradle/wrapper/gradle-wrapper.properties` | Zachowaj wersję upstreamu (9.7.1), dodaj `distributionSha256Sum` z https://gradle.org/release-checksums/. |
-| `LICENSE.txt` upstreamu | Zachowaj. Nasz `LICENSE` zawiera już pełny tekst GPLv3 (10.11.2026); zostaw jeden z dwóch plików, np. `LICENSE.txt` upstreamu. |
+| `LICENSE.txt` upstreamu | Usunięty 11.11.2026. Zostaje nasz `LICENSE` (aktualny tekst z gnu.org; `LICENSE.txt` upstreamu to starsza wersja z linkami http). |
 | `fastlane/metadata/android/` upstreamu | Zastąp naszymi metadanymi (inna nazwa, opis bez znaków towarowych). Usuń zrzuty i grafiki upstreamu, jeśli pokazują markę Moonlight. |
 | `README.md` upstreamu | Zastąp naszym; dopisz link do upstreamu (już jest). |
 
@@ -170,4 +170,4 @@ Host i gra:
 Dystrybucja i prawo:
 - Kontrola znaków towarowych nazwy „Thumbcast” ([naming.md](naming.md)).
 - Jak Android Developer Verification obejmie buildy F-Droid.
-- Pełny tekst GPLv3 w `LICENSE` jest (kopia z Debiana, SHA-256 zgodny z oficjalnym `gpl-3.0.txt` z pamięci; porównać z gnu.org).
+- Pełny tekst GPLv3 w `LICENSE` jest identyczny z gnu.org (sprawdzone 11.11.2026).

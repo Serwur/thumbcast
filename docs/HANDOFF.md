@@ -25,7 +25,7 @@ Host: Sunshine (lub Apollo/Vibepollo). Pad w Windows: ViGEmBus 1.17+ albo płatn
 6. Strojenie stałych na prawdziwym telefonie: promień pływającego joysticka (15% krótszego boku), czułość kamery (1,5 px/ms), tolerancja trafienia (max(8 px, 20%)).
 
 ## Otwarte decyzje
-Landscape lock (DECISIONS.md pkt h). Fork vs submoduł i `applicationId` rozstrzygnięte 11.11.2026 (pkt j). Porównaj `LICENSE` z oficjalnym tekstem GPLv3 (kopia z Debiana).
+Landscape lock (DECISIONS.md pkt h). Fork vs submoduł i `applicationId` rozstrzygnięte 11.11.2026 (pkt j). `LICENSE` zgodny z gnu.org (11.11.2026).
 
 ## Znane ryzyka
 - Płatny Virtual HID Driver: 14,99 USD/rok lub 49,99 USD jednorazowo (5 maszyn, internet przy tworzeniu pada). ViGEmBus jest zarchiwizowany od XI 2023 i daje tylko Xbox 360/DS4.
