@@ -27,8 +27,20 @@ object ProfileValidator {
     const val OPACITY_MIN = 0.1f
     private const val EPS = 1e-4f
 
-    /** Modyfikatory pada dozwolone w ModifierControl i jako `chord`. */
+    /** Modyfikatory pada dozwolone w ModifierControl. */
     val PAD_MODIFIER_BUTTONS: Set<PadButton> = setOf(PadButton.LB, PadButton.RB)
+
+    /**
+     * Stały fragment komunikatu (kod błędu): dwa źródła piszą do tej samej gałki pada.
+     * Decyzja właściciela z 11.11.2026 (HANDOFF.md, „Znane ryzyka”, opcja A).
+     */
+    const val ERR_STICK_AXIS_CONFLICT = "dwa źródła jednej gałki pada"
+
+    /**
+     * Stały fragment komunikatu (kod błędu): akordy nie są obsługiwane, także przy `global.allowChords = true`.
+     * Decyzja właściciela z 11.11.2026 (FAIR_PLAY.md, „Szara strefa: akordy”, opcja B).
+     */
+    const val ERR_CHORD_UNSUPPORTED = "akordy nie są obsługiwane"
 
     fun validate(p: Profile): List<String> {
         val errors = ArrayList<String>()
@@ -36,6 +48,7 @@ object ProfileValidator {
         checkGlobal(p.global, errors)
         checkGestures(p, errors)
         checkUniqueIds(p.controls, errors)
+        checkStickSources(p, errors)
         p.controls.forEachIndexed { index, c ->
             val path = "controls[$index] (id=${c.id})"
             checkRect(path, c.rect, errors)
@@ -106,6 +119,36 @@ object ProfileValidator {
         for (d in dups) errors.add("controls: zduplikowane id \"$d\"")
     }
 
+    /**
+     * Jedna gałka pada = jedno źródło (tylko PAD_PLUS; w KEYBOARD_MOUSE joystick wysyła klawisze z `kbmKeys`,
+     * a kamera musi być `mouse_look`). Źródłem jest kontrolka `stick` albo gest kamery z wyjściem `pad_right_stick`
+     * (gest nie ma przełącznika `enabled`, więc zawsze zajmuje prawą gałkę). Silnik przy dwóch źródłach nadpisuje oś
+     * ostatnim zapisem, dlatego taki profil jest odrzucany.
+     */
+    private fun checkStickSources(p: Profile, errors: MutableList<String>) {
+        if (p.mode != ProfileMode.PAD_PLUS) return
+        val owners = HashMap<PadStick, String>()
+        val cameraOnPad = p.gestures.cameraDrag.output == CameraOutput.PAD_RIGHT_STICK
+        if (cameraOnPad) owners[PadStick.RIGHT] = "gestures.cameraDrag (output = pad_right_stick)"
+        p.controls.forEachIndexed { index, c ->
+            if (c !is StickControl) return@forEachIndexed
+            val stick = (c.output as? Output.Stick)?.stick ?: return@forEachIndexed
+            val path = "controls[$index] (id=${c.id})"
+            val owner = owners[stick]
+            if (owner == null) {
+                owners[stick] = path
+                return@forEachIndexed
+            }
+            val name = if (stick == PadStick.LEFT) "left_stick" else "right_stick"
+            val hint = if (stick == PadStick.RIGHT && cameraOnPad) {
+                "; gałka right_stick działa razem z kamerą tylko przy gestures.cameraDrag.output = mouse_look"
+            } else {
+                ""
+            }
+            errors.add("$path.output: $ERR_STICK_AXIS_CONFLICT ($name), oś steruje już $owner; jedna gałka pada może mieć tylko jedno źródło$hint")
+        }
+    }
+
     private fun checkRect(path: String, r: Rect, errors: MutableList<String>) {
         val values = listOf(r.x, r.y, r.w, r.h)
         if (values.any { it.isNaN() || it.isInfinite() }) {
@@ -151,12 +194,14 @@ object ProfileValidator {
     private fun checkButton(path: String, c: ButtonControl, p: Profile, errors: MutableList<String>) {
         if (c.behavior == Behavior.LATCH) errors.add("$path.behavior: latch dozwolone tylko dla kontrolek typu modifier")
         checkDigitalOutput("$path.output", c.output, p.mode, errors)
-        val chord = c.chord ?: return
-        if (!p.global.allowChords) {
-            errors.add("$path.chord: akordy są wyłączone (global.allowChords = false)")
-            return
+        // Od 11.11.2026 akordów nie ma (FAIR_PLAY.md: 1 dotyk = 1 wejście). Pole zostaje w schemacie bez migracji,
+        // ale każda wartość jest błędem, niezależnie od global.allowChords.
+        if (c.chord != null) {
+            errors.add(
+                "$path.chord: $ERR_CHORD_UNSUPPORTED (także przy global.allowChords = true, zasada 1 dotyk = 1 wejście z FAIR_PLAY.md); " +
+                    "użyj osobnej kontrolki typu modifier w trybie hold albo latch"
+            )
         }
-        checkChord(path, c.output, chord, p.mode, errors)
     }
 
     private fun checkModifier(path: String, c: ModifierControl, mode: ProfileMode, errors: MutableList<String>) {
@@ -185,29 +230,6 @@ object ProfileValidator {
     private fun checkApp(path: String, o: Output.App, errors: MutableList<String>) {
         if (o.action !in AppActions.ALL) {
             errors.add("$path.output.app: niedozwolona akcja \"${o.action}\" (dozwolone: ${AppActions.ALL.sorted()})")
-        }
-    }
-
-    /**
-     * Akord: dokładnie 1 modyfikator (chord) + 1 przycisk (output), to samo urządzenie, różne wejścia.
-     * Pad: chord = LB/RB/LT/RT, output = przycisk pada. Klawiatura: chord = SHIFT/CTRL/ALT, output = klawisz niebędący modyfikatorem.
-     */
-    private fun checkChord(path: String, output: Output, chord: Output, mode: ProfileMode, errors: MutableList<String>) {
-        if (!isModifierOutput(chord)) {
-            errors.add("$path.chord: akord musi być modyfikatorem (LB/RB/LT/RT albo SHIFT/CTRL/ALT)")
-            return
-        }
-        if (chord == output) {
-            errors.add("$path.chord: modyfikator akordu musi różnić się od wyjścia")
-            return
-        }
-        val padChord = chord is Output.Pad || chord is Output.Trigger
-        if (padChord) {
-            if (mode == ProfileMode.KEYBOARD_MOUSE) errors.add("$path.chord: akord pada niedozwolony w trybie keyboard_mouse")
-            if (output !is Output.Pad) errors.add("$path.chord: akord pada wymaga wyjścia będącego przyciskiem pada")
-        } else {
-            val ok = output is Output.Key && !KeyCodes.isModifier(output.code)
-            if (!ok) errors.add("$path.chord: akord klawiatury wymaga wyjścia będącego zwykłym klawiszem")
         }
     }
 

@@ -60,25 +60,27 @@ class ProfileValidatorTest {
     @Test fun modifierWithNonModifierOutputBad() = assertInvalid(padWith(f.modifierLt.copy(id = "m", output = Output.Pad(PadButton.A))), "modyfikator musi")
     @Test fun keyboardModifierGood() = assertValid(f.kbmProfile())
 
-    // --- akordy ---
-    @Test fun chordDisabledByDefaultBad() = assertInvalid(padWith(f.buttonA.copy(id = "c", output = Output.Pad(PadButton.Y), chord = Output.Pad(PadButton.LB))), "akordy są wyłączone")
-    @Test fun chordEnabledPadGood() {
+    // --- akordy: nieobsługiwane (decyzja 11.11.2026, FAIR_PLAY.md), także przy allowChords = true ---
+    private val chordFragment = ProfileValidator.ERR_CHORD_UNSUPPORTED
+    @Test fun chordRejectedByDefault() = assertInvalid(padWith(f.buttonA.copy(id = "c", output = Output.Pad(PadButton.Y), chord = Output.Pad(PadButton.LB))), chordFragment)
+    @Test fun chordPadRejectedEvenWhenAllowed() {
         val p = padWith(f.buttonA.copy(id = "c", output = Output.Pad(PadButton.Y), chord = Output.Pad(PadButton.LB)))
-        assertValid(p.copy(global = p.global.copy(allowChords = true)))
+        assertInvalid(p.copy(global = p.global.copy(allowChords = true)), chordFragment)
     }
-    @Test fun chordEnabledKeyGood() {
+    @Test fun chordKeyRejectedEvenWhenAllowed() {
         val base = f.kbmProfile()
         val chordBtn = ButtonControl("s1", Rect(0.6f, 0.2f, 0.07f, 0.15f), "Shift+1", Output.Key("1"), Behavior.HOLD, Shape.ROUNDED_RECT, null, Output.Key("SHIFT"))
-        assertValid(base.copy(global = base.global.copy(allowChords = true), controls = base.controls + chordBtn))
+        assertInvalid(base.copy(global = base.global.copy(allowChords = true), controls = base.controls + chordBtn), chordFragment)
     }
-    @Test fun chordNonModifierBad() {
-        val p = padWith(f.buttonA.copy(id = "c", output = Output.Pad(PadButton.Y), chord = Output.Pad(PadButton.X)))
-        assertInvalid(p.copy(global = p.global.copy(allowChords = true)), "akord musi być modyfikatorem")
+    @Test fun allowChordsFlagWithoutChordsGood() {
+        // Pole zostaje w schemacie (bez migracji); sama flaga niczego nie włącza.
+        val p = f.padProfile()
+        assertValid(p.copy(global = p.global.copy(allowChords = true)))
     }
-    @Test fun chordMixedDevicesBad() {
-        val p = padWith(f.buttonA.copy(id = "c", output = Output.Key("1"), chord = Output.Pad(PadButton.LB)))
-        assertInvalid(p.copy(global = p.global.copy(allowChords = true)), "akord pada wymaga")
-    }
+    @Test fun separateLatchModifierInsteadOfChordGood() = assertValid(padWith(
+        f.modifierLt.copy(id = "lb", output = Output.Pad(PadButton.LB), behavior = Behavior.LATCH),
+        f.buttonA.copy(id = "y", output = Output.Pad(PadButton.Y)),
+    ))
 
     // --- unikalne id ---
     @Test fun uniqueIdsGood() = assertValid(padWith(f.buttonA.copy(id = "b", output = Output.Pad(PadButton.B))))
@@ -123,16 +125,30 @@ class ProfileValidatorTest {
     @Test fun buttonWithMouseWheelBad() = assertInvalid(padWith(f.buttonA.copy(id = "w", output = Output.MouseWheel)), "pinchZoom")
     @Test fun buttonWithMouseLeftGood() = assertValid(padWith(f.buttonA.copy(id = "lmb", output = Output.Mouse(MouseBtn.LEFT))))
 
-    // --- współdzielona oś gałki (ryzyko z HANDOFF.md, do decyzji właściciela) ---
-    // Dziś walidator nie sprawdza, czy dwa źródła piszą do tej samej osi. Silnik nadpisuje wtedy oś
-    // ostatnim zapisem (patrz KnownRisksTest w :control-engine). Po decyzji te asercje trzeba odwrócić.
-    @Test fun stickRightWithPadRightStickCameraAcceptedToday() {
-        val look = f.stick.copy(id = "look", rect = Rect(0.6f, 0.4f, 0.2f, 0.3f), output = Output.Stick(PadStick.RIGHT), floating = false)
-        val p = padWith(look)
+    // --- jedna gałka pada = jedno źródło (decyzja 11.11.2026, opcja A z HANDOFF.md) ---
+    private val axisFragment = ProfileValidator.ERR_STICK_AXIS_CONFLICT
+    private val lookStick = f.stick.copy(id = "look", rect = Rect(0.6f, 0.4f, 0.2f, 0.3f), output = Output.Stick(PadStick.RIGHT), floating = false)
+    @Test fun stickRightWithPadRightStickCameraRejected() {
+        val p = padWith(lookStick)
         assertTrue(p.gestures.cameraDrag.output == CameraOutput.PAD_RIGHT_STICK)
-        assertValid(p)
+        assertInvalid(p, axisFragment)
+        assertInvalid(p, "mouse_look")
     }
-    @Test fun twoSticksOnSameAxisAcceptedToday() = assertValid(padWith(f.stick.copy(id = "move2", rect = Rect(0.6f, 0.4f, 0.2f, 0.3f))))
+    @Test fun stickRightWithMouseLookCameraGood() {
+        val p = padWith(lookStick)
+        assertValid(p.copy(gestures = p.gestures.copy(cameraDrag = p.gestures.cameraDrag.copy(output = CameraOutput.MOUSE_LOOK))))
+    }
+    @Test fun twoSticksOnSameAxisRejected() = assertInvalid(padWith(f.stick.copy(id = "move2", rect = Rect(0.6f, 0.4f, 0.2f, 0.3f))), axisFragment)
+    @Test fun twoRightSticksWithMouseLookCameraRejected() {
+        val p = padWith(lookStick, lookStick.copy(id = "look2", rect = Rect(0.4f, 0.1f, 0.2f, 0.2f)))
+        val errors = ProfileValidator.validate(p.copy(gestures = p.gestures.copy(cameraDrag = p.gestures.cameraDrag.copy(output = CameraOutput.MOUSE_LOOK))))
+        assertTrue(errors.size == 1 && errors[0].contains("id=look2") && errors[0].contains(axisFragment), "oczekiwano jednego błędu dla look2, są: $errors")
+    }
+    @Test fun kbmTwoSticksAreKeysNotAxesGood() {
+        // W keyboard_mouse joystick wysyła klawisze z kbmKeys, więc output = left_stick to tylko rola, a nie oś pada.
+        val second = f.stick.copy(id = "move2", rect = Rect(0.6f, 0.4f, 0.2f, 0.3f), kbmKeys = StickKeys("UP", "DOWN", "LEFT", "RIGHT"))
+        assertValid(f.kbmProfile(listOf(f.stick.copy(kbmKeys = StickKeys("W", "S", "A", "D")), second, f.systemMenu)))
+    }
 
     // --- kody klawiszy ---
     @Test fun keyCodeGood() {

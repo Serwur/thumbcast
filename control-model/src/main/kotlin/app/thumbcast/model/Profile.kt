@@ -32,7 +32,7 @@ data class GlobalSettings(
     val haptics: Haptics = Haptics(),
     val slideToPress: Boolean = false,
     val autoHideOnGamepad: Boolean = true,
-    /** Akordy (plan 6.2 pkt 4): domyślnie wyłączone; bez tej flagi walidator odrzuca pole `chord`. */
+    /** Nic nie włącza: od 11.11.2026 walidator odrzuca każdy `chord` (FAIR_PLAY.md). Pole zostaje bez migracji. */
     val allowChords: Boolean = false,
 )
 

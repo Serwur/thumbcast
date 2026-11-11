@@ -90,7 +90,7 @@ Każde wywołanie sinka może dostać przyczynę (`EmitCause`: id cyklu, rodzaj,
 - `ButtonAndHitTestTest`: HOLD, flagi, LATCH (także po zmianie viewportu), wspólny stan, slide-to-press (X → 0 → A), App, klawisz w Pad+, strefa aktywacji, z-order, `safeArea`, lustro (w silniku i z `HandednessTransform` bez podwójnego odbicia).
 - `GestureRecognizersTest`: tap (układ wideo, letterbox), tap kontra long-press kontra drag, long-press na ticku i przy UP, brak wyjścia bez palca, kamera Pad+ (kierunek, wygaszanie, monotoniczność krzywej), RMB-look z resztami ułamkowymi, pinch (ząbki, kotwica, przerwanie kamery), edge swipe, kilka palców naraz z CANCEL.
 - `ActionPolicyTest`: każda reguła R1–R9 wywołana bezpośrednio.
-- `KnownRisksTest`: obecne zachowanie przy ryzykach z `docs/HANDOFF.md` (gałka RIGHT razem z kamerą, ignorowane `chord` i `sprintLock`, long-press przy tickach co klatkę).
+- `KnownRisksTest`: ryzyka z `docs/HANDOFF.md`. Gałkę RIGHT razem z kamerą `pad_right_stick` i każdy `chord` walidator od 11.11.2026 odrzuca. Testy sprawdzają to odrzucenie i opisują zachowanie silnika na takim profilu niewalidowanym. Poza tym no-op `sprintLock` i long-press przy tickach co klatkę.
 - `ActionPolicyPropertyTest` (Kotest `checkAll`, liczba iteracji z `thumbcast.policy.iterations`). Strumienie są poprawne albo chaotyczne: CANCEL, podwójny DOWN, UP bez DOWN, nieznane palce w MOVE, cofający się czas, `releaseAll` i zmiana viewportu w trakcie. Sprawdzane są tryby Pad+, Pad+ ze slide-to-press i KBM. Właściwości:
   - każda krawędź ma przyczynę z tego samego zdarzenia i żywego palca;
   - jeden dotyk daje najwyżej jedną krawędź, więc liczba krawędzi ≤ liczba DOWN;
@@ -107,7 +107,7 @@ Klasy testów polityki mają w nazwie `Policy`, więc obejmuje je job CI `policy
 ## Znane ograniczenia
 
 - **Kod nie był kompilowany ani uruchamiany** (brak sieci i `kotlinc` w środowisku tworzenia). Sprawdzono go tylko skryptem statycznym: nawiasy, importy, typy modelu.
-- Akordy (`ButtonControl.chord`) i `sprintLock` są w E1 ignorowane. Przycisk daje tylko `output`.
+- Akordy (`ButtonControl.chord`) i `sprintLock` są ignorowane. Przycisk daje tylko `output`. Akordów nie będzie: od 11.11.2026 odrzuca je walidator (FAIR_PLAY.md).
 - W KBM jeden palec na gałce może trzymać dwa klawisze naraz (np. W+D dla skosu). To jedno logiczne wejście (`control:move`) i jedyny wyjątek od „jedna krawędź na dotyk”: wynika z 8 kierunków WASD (plan 4.2).
 - Wygaszanie kamery postępuje tylko przy tickach albo kolejnych zdarzeniach. Jeśli overlay przestanie wołać `onTick` przy nieruchomym palcu, gałka zostaje wychylona do następnego zdarzenia albo UP (ograniczenie bezpieczne: zero przy UP/CANCEL jest zawsze wysyłane).
 - Long-press bez ticków jest rozpoznawany dopiero przy UP (RMB down i up w jednym cyklu), czyli bez możliwości trzymania RMB.

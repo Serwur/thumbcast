@@ -1,6 +1,7 @@
 package app.thumbcast.engine
 
 import app.thumbcast.model.ButtonControl
+import app.thumbcast.model.CameraOutput
 import app.thumbcast.model.Control
 import app.thumbcast.model.Curve
 import app.thumbcast.model.CurveType
@@ -16,13 +17,16 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Testy charakteryzujące trzy otwarte ryzyka z docs/HANDOFF.md („Znane ryzyka”, 11.11.2026).
- * Opisują OBECNE zachowanie. Ryzyka 1 i 2 czekają na decyzję właściciela (patrz HANDOFF.md); gdy zapadnie,
- * asercje oznaczone „ZACHOWANIE DO DECYZJI” trzeba odwrócić razem z poprawką.
+ * Testy ryzyk z docs/HANDOFF.md („Znane ryzyka”, 11.11.2026).
+ * Ryzyka 1 i 2 rozstrzygnął właściciel 11.11.2026, zmiana jest w walidatorze (:control-model), silnik bez zmian:
+ * - gałka RIGHT + kamera `pad_right_stick` (i dwie gałki na jednej osi): walidator odrzuca profil (opcja A);
+ * - `chord`: walidator odrzuca każdy akord, także przy `allowChords = true` (opcja B, FAIR_PLAY.md).
+ * Testy silnika na takich profilach zostają jako opis zachowania dla profilu niewalidowanego
+ * (`ProfileCodec.decodeUnvalidated`, przyszły edytor). `ProfileCodec.decode` takiego profilu nie zwróci.
  */
 class KnownRisksTest {
 
-    // ------------------------------------------------------------------ ryzyko 1: gałka RIGHT + kamera
+    // ------------------------------------------------------------------ ryzyko 1: gałka RIGHT + kamera (rozstrzygnięte: walidator odrzuca)
 
     // Stała gałka „look” na prawej gałce pada: x 1100..1300, y 500..700 (środek 1200, 600, promień 100 px).
     private val lookStick: StickControl = StickControl(
@@ -38,10 +42,19 @@ class KnownRisksTest {
     private fun rightStickProfileRig(): Rig = Rig(testProfile(controls = testControls(false) + lookStick))
 
     @Test
-    fun validatorAcceptsStickRightTogetherWithPadRightStickCamera() {
+    fun validatorRejectsStickRightTogetherWithPadRightStickCamera() {
         // Kamera w testProfile() to PAD_RIGHT_STICK (Pad+), a gestures.cameraDrag nie ma przełącznika enabled.
-        val errors = ProfileValidator.validate(testProfile(controls = testControls(false) + lookStick))
-        assertTrue(errors.isEmpty(), "ZACHOWANIE DO DECYZJI: walidator dziś to przepuszcza, są błędy: $errors")
+        val profile = testProfile(controls = testControls(false) + lookStick)
+        val errors = ProfileValidator.validate(profile)
+        assertTrue(
+            errors.any { it.contains("id=look") && it.contains(ProfileValidator.ERR_STICK_AXIS_CONFLICT) },
+            "decyzja 11.11.2026 (opcja A): dwa źródła prawej gałki są błędem, są: $errors"
+        )
+        // Ta sama gałka RIGHT z kamerą mouse_look jest poprawna.
+        val mouseLook = profile.copy(
+            gestures = profile.gestures.copy(cameraDrag = profile.gestures.cameraDrag.copy(output = CameraOutput.MOUSE_LOOK))
+        )
+        assertTrue(ProfileValidator.validate(mouseLook).isEmpty(), "gałka RIGHT + kamera mouse_look: ${ProfileValidator.validate(mouseLook)}")
     }
 
     @Test
@@ -60,7 +73,7 @@ class KnownRisksTest {
         // Palec 2 w górę: zero kamery nie jest wysyłane, bo oś trzyma jeszcze palec 1 (R8, wspólny stan).
         r.up(2)
         val afterUp = r.sink.lastPad!!.rx.toInt()
-        assertEquals(camRx, afterUp, "ZACHOWANIE DO DECYZJI: po puszczeniu kamery zostaje jej wychylenie, choć palec 1 trzyma +100%")
+        assertEquals(camRx, afterUp, "profil niewalidowany: po puszczeniu kamery zostaje jej wychylenie, choć palec 1 trzyma +100%")
         // Dopiero ruch palca 1 albo jego UP naprawia stan.
         r.up(1)
         assertTrue(r.sink.isZero())
@@ -83,29 +96,34 @@ class KnownRisksTest {
         r.tick()
         assertTrue(
             r.engine.violations.any { it.bindingId == "gesture:camera" && it.reason.contains("upływ czasu") },
-            "ZACHOWANIE DO DECYZJI: poprawny (wg walidatora) profil daje naruszenie R7, są: ${r.engine.violations}"
+            "profil niewalidowany (walidator go odrzuca) daje naruszenie R7, są: ${r.engine.violations}"
         )
         r.up(1)
         r.up(2)
         assertTrue(r.sink.isZero())
     }
 
-    // ------------------------------------------------------------------ ryzyko 2: chord i sprintLock
+    // ------------------------------------------------------------------ ryzyko 2: chord (rozstrzygnięte: walidator odrzuca) i sprintLock
 
     @Test
-    fun chordIsIgnoredByEngineEvenWhenAllowed() {
+    fun chordIsRejectedByValidatorEvenWhenAllowedAndIgnoredByEngine() {
         val chordButton: Control = ButtonControl(
             id = "c", rect = Rect(0.45f, 0.60f, 0.06f, 0.12f), output = Output.Pad(PadButton.Y),
             chord = Output.Pad(PadButton.LB)
         )
         val base = testProfile(controls = testControls(false) + chordButton)
         val profile = base.copy(global = base.global.copy(allowChords = true))
-        assertTrue(ProfileValidator.validate(profile).isEmpty(), "akord LB+Y jest poprawny przy allowChords = true")
+        val errors = ProfileValidator.validate(profile)
+        assertTrue(
+            errors.any { it.contains("id=c") && it.contains(ProfileValidator.ERR_CHORD_UNSUPPORTED) },
+            "decyzja 11.11.2026 (opcja B): akord LB+Y jest błędem także przy allowChords = true, są: $errors"
+        )
+        // Profil niewalidowany: silnik nadal ignoruje chord, więc 1 dotyk daje tylko output (Y), bez LB.
         val r = Rig(profile)
         r.down(1, 960f, 660f)
         val p = r.sink.lastPad
         assertNotNull(p)
-        assertEquals(PadFlags.Y, p.buttons, "ZACHOWANIE DO DECYZJI: silnik wysyła tylko output (Y), bez LB z chord")
+        assertEquals(PadFlags.Y, p.buttons, "silnik wysyła tylko output (Y), bez LB z chord")
         assertEquals(1, r.sink.pressEdges.size)
         r.up(1)
         assertTrue(r.sink.isZero())

@@ -29,12 +29,11 @@ PR-y dodające którąkolwiek z tych funkcji będą zamykane ([CONTRIBUTING.md](
 
 ## Szara strefa: akordy
 
-Akord to jeden dotyk, który wciska dwa wejścia naraz, np. Shift+1 albo LB+RB. Jest to odstępstwo od zasady 1 dotyk = 1 wejście, więc:
-- akordy są domyślnie wyłączone;
-- po włączeniu: maksymalnie 1 modyfikator + 1 przycisk, wciśnięte i zwolnione razem, mapowane na jedno wiązanie w grze;
-- interfejs pokazuje ostrzeżenie.
+Akord to jeden dotyk, który wciska dwa wejścia naraz, np. Shift+1 albo LB+RB. Jest to odstępstwo od zasady 1 dotyk = 1 wejście.
 
-Zalecamy zamiast tego osobne przyciski modyfikatorów w trybie `hold` (trzymaj) lub `latch` (dotknij, by wcisnąć, dotknij ponownie, by zwolnić). `latch` to nadal 1 dotyk = 1 zmiana stanu.
+**Od 11.11.2026 Thumbcast w ogóle nie obsługuje akordów.** Walidator profilu odrzuca każdy przycisk z polem `chord`, także przy `global.allowChords = true`, więc import cudzego profilu z akordem kończy się błędem. Pola `chord` i `allowChords` zostały w schemacie tylko po to, by nie robić migracji, i nic nie włączają.
+
+Zamiast akordu użyj osobnych przycisków modyfikatorów w trybie `hold` (trzymaj) lub `latch` (dotknij, by wcisnąć, dotknij ponownie, by zwolnić). Shift+1 to wtedy dwa dotyki: modyfikator `SHIFT` i przycisk `1`. `latch` to nadal 1 dotyk = 1 zmiana stanu.
 
 ## Ryzyko: uczciwie
 
