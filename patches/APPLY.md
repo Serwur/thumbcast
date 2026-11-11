@@ -8,7 +8,7 @@
 >   („You cannot add Provider instances to the Android SourceSet API”).
 > - Nazwy profili w `thumbcast_profile_names` to zasoby `@string/thumbcast_profile_*` (EN „MMO – Keyboard”, PL „MMO – Klawiatura”).
 > - `onThumbcastAppAction` używa stałych `AppActions.*` z `:control-model` zamiast literałów.
-> - Zmiany w `Game.java` (od 11.11.2026, `ThumbcastSession`): 34 dodane linie w 8 blokach (import, pole, utworzenie sesji,
+> - Zmiany w `Game.java` (od 11.11.2026, `ThumbcastSession`): 34 dodane linie w 9 blokach (import, pole, utworzenie sesji,
 >   PiP ×2, `onDestroy`, `onBackPressed`, palce w `handleMotionEvent`, `stopConnection`), 1 zmieniona linia upstreamu
 >   (warunek bloku VirtualController). Wcześniej ~95 linii z dwiema metodami. Logika jest w `com.limelight.thumbcast.ThumbcastSession`.
 > - Menu strumienia (☰, gest od górnej krawędzi, systemowy Back): Rozłącz, ukryj/pokaż przyciski, klawiatura, rozmiar kontrolek
