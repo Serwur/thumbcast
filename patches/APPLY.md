@@ -8,7 +8,12 @@
 >   („You cannot add Provider instances to the Android SourceSet API”).
 > - Nazwy profili w `thumbcast_profile_names` to zasoby `@string/thumbcast_profile_*` (EN „MMO – Keyboard”, PL „MMO – Klawiatura”).
 > - `onThumbcastAppAction` używa stałych `AppActions.*` z `:control-model` zamiast literałów.
-> - Zmiany w `Game.java`: ok. 95 dodanych linii (z czego ~55 to dwie nowe metody), 1 zmieniona linia upstreamu (warunek bloku VirtualController).
+> - Zmiany w `Game.java` (od 11.11.2026, `ThumbcastSession`): 34 dodane linie w 9 blokach (import, pole, utworzenie sesji,
+>   PiP ×2, `onDestroy`, `onBackPressed`, palce w `handleMotionEvent`, `stopConnection`), 1 zmieniona linia upstreamu
+>   (warunek bloku VirtualController). Wcześniej ~95 linii z dwiema metodami. Logika jest w `com.limelight.thumbcast.ThumbcastSession`.
+> - Menu strumienia (☰, gest od górnej krawędzi, systemowy Back): Rozłącz, ukryj/pokaż przyciski, klawiatura, rozmiar kontrolek
+>   (na żywo), ukrywanie przy podłączonym padzie. Ustawienia: `ThumbcastSettings` (klucze `list_thumbcast_control_scale`,
+>   `checkbox_thumbcast_hide_on_gamepad`), bez zmian w `PreferenceConfiguration`.
 > - Testy ręczne z kroku 6 (stream, overlay, A w „Kontrolery gier”) **nie zrobione**: brak urządzenia i hosta w tej sesji.
 
 Ten katalog zawiera **opis** zmian w upstreamie (`*.patch.md`) i **nowe pliki** do skopiowania
@@ -32,6 +37,8 @@ własny, pewny diff: `git diff v12.2 -- app/ > patches/0001-thumbcast.diff`.
 | `app/src/main/java/com/limelight/thumbcast/HostConnectionImpl.java` | fasada `HostConnection` -> `NvConnection` (delegacja 1:1) |
 | `app/src/main/java/com/limelight/thumbcast/HostPadReporterImpl.java` | fasada `HostPadReporter` -> `ControllerHandler.reportOscState` + retransmisja 25/50/75 ms tego samego stanu |
 | `app/src/main/java/com/limelight/thumbcast/ThumbcastKeyTranslator.java` | `KeyTranslator` -> upstreamowy `KeyboardTranslator` |
+| `app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java` | cała logika Thumbcast w `Game`: profil, skala, overlay, akcje aplikacji, menu, pad, PiP, sprzątanie |
+| `app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java` | rozmiar kontrolek i ukrywanie przy padzie (SharedPreferences, też z menu w grze) |
 
 ## Kolejność kroków
 
@@ -131,5 +138,5 @@ Legenda: ZGODNE = tak jak w planie/kodzie Thumbcast; POPRAWIONE = założenie by
   a na „squarish” tylko przy `onscreenController`. Przy wymuszeniu flagi (pkt 13) zachowanie jest jak przy OSC. Decyzja produktowa
   (czy blokować) zostaje w `docs/DECISIONS.md`, pkt h.
 - `onscreenController` nie wymuszamy na `false`, tylko na **`true`** (odwrotnie niż zakładało pytanie): inaczej maska pada nie ma bitu 0.
-- Menu w grze (plan 7 pkt 5, bottom sheet) nie jest częścią tego patcha; w v12.2 nie znalazłem menu kontekstowego w `Game`,
-  więc `"menu"` jest no-op z logiem.
+- Menu w grze: od 11.11.2026 `AlertDialog` z `ThumbcastSession` (w v12.2 `Game` nie ma własnego menu). Back w trybie Thumbcast
+  otwiera menu zamiast kończyć strumień; w trybie legacy bez zmian.
