@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Manifest biblioteki :control-editor. Pakiet pochodzi z `namespace` w build.gradle.kts. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <!--
+            Edytor układu kontrolek. Kontrakt (control-editor/docs/editor.md): wejście i wynik w extra
+            app.thumbcast.editor.extra.PROFILE_JSON; RESULT_OK = zapisany, zwalidowany JSON; RESULT_CANCELED = anulowano.
+            Uruchamia go tylko aplikacja (biblioteka profili), więc exported=false.
+            configChanges: zmiana rozmiaru okna nie odtwarza aktywności (stos cofania zostaje).
+            sensorLandscape jest w kontrakcie (układ projektuje się poziomo, jak gra). Android 16 ignoruje go tylko
+            na dużych ekranach (sw >= 600 dp), stąd tools:ignore dla ostrzeżenia lint DiscouragedApi.
+        -->
+        <activity
+            android:name="app.thumbcast.editor.LayoutEditorActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.ThumbcastEditor"
+            android:windowSoftInputMode="adjustResize"
+            tools:ignore="DiscouragedApi" />
+    </application>
+
+</manifest>

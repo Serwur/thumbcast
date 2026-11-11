@@ -143,4 +143,6 @@ dependencies {
 
     // THUMBCAST: warstwa dotyku (dociąga :control-engine i :control-model).
     implementation project(':control-android')
+    // THUMBCAST: edytor układu kontrolek (LayoutEditorActivity, Compose).
+    implementation project(':control-editor')
 }

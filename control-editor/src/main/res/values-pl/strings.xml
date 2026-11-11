@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="editor_load_failed">Nie można otworzyć układu: %1$s</string>
+    <string name="editor_missing_profile">Brak układu do edycji.</string>
+
+    <string name="editor_undo">Cofnij</string>
+    <string name="editor_redo">Ponów</string>
+    <string name="editor_save">Zapisz</string>
+    <string name="editor_close">Zamknij</string>
+    <string name="editor_panel_show">Edytuj</string>
+    <string name="editor_panel_hide">Ukryj panel</string>
+    <string name="editor_panel_swap">Przenieś panel na drugą stronę</string>
+
+    <string name="editor_section_layout">Układ</string>
+    <string name="editor_profile_name">Nazwa profilu</string>
+    <string name="editor_opacity">Przezroczystość: %1$d%%</string>
+    <string name="editor_snap" formatted="false">Przyciągaj do siatki 1%</string>
+    <string name="editor_mirror">Lustro układu (lewo/prawo)</string>
+
+    <string name="editor_section_add">Dodaj kontrolkę</string>
+    <string name="editor_kind_button">Przycisk</string>
+    <string name="editor_kind_stick">Gałka</string>
+    <string name="editor_kind_modifier">Modyfikator</string>
+    <string name="editor_kind_system">Systemowy</string>
+
+    <string name="editor_section_selected">Zaznaczona: %1$s</string>
+    <string name="editor_nothing_selected">Dotknij kontrolki, aby ją zaznaczyć. Przeciągnij, aby przesunąć; przeciągnij uchwyt w rogu albo uszczypnij, aby zmienić rozmiar.</string>
+    <string name="editor_duplicate">Duplikuj</string>
+    <string name="editor_delete">Usuń</string>
+    <string name="editor_label">Etykieta</string>
+    <string name="editor_label_hint">Pusta = nazwa wyjścia</string>
+    <string name="editor_size">Rozmiar: %1$d%%</string>
+    <string name="editor_output">Wyjście</string>
+    <string name="editor_shape">Kształt</string>
+    <string name="editor_behavior">Zachowanie</string>
+    <string name="editor_behavior_hold">Trzymaj</string>
+    <string name="editor_behavior_latch">Zatrzask</string>
+    <string name="editor_floating">Pływająca (pojawia się pod kciukiem)</string>
+    <string name="editor_deadzone">Martwa strefa: %1$d%%</string>
+    <string name="editor_sprint_lock">Blokada biegu (pełne wychylenie poza krawędzią)</string>
+    <string name="editor_chord_warning">Ten przycisk ma akord z importowanego pliku. Akordy nie są obsługiwane (1 dotyk = 1 wejście).</string>
+    <string name="editor_chord_remove">Usuń akord</string>
+
+    <string name="editor_shape_circle">Koło</string>
+    <string name="editor_shape_rounded">Zaokrąglony</string>
+    <string name="editor_shape_rect">Prostokąt</string>
+
+    <string name="editor_group_pad">Pad</string>
+    <string name="editor_group_trigger">Triggery</string>
+    <string name="editor_group_key">Klawisze</string>
+    <string name="editor_group_mouse">Mysz</string>
+    <string name="editor_group_stick">Gałka</string>
+    <string name="editor_group_app">Akcja aplikacji</string>
+
+    <string name="editor_stick_left">Lewa gałka</string>
+    <string name="editor_stick_right">Prawa gałka</string>
+    <string name="editor_app_menu">Menu</string>
+    <string name="editor_app_soft_keyboard">Klawiatura</string>
+    <string name="editor_app_toggle_overlay">Ukryj kontrolki</string>
+
+    <plurals name="editor_problems">
+        <item quantity="one">%1$d problem</item>
+        <item quantity="few">%1$d problemy</item>
+        <item quantity="many">%1$d problemów</item>
+        <item quantity="other">%1$d problemu</item>
+    </plurals>
+    <string name="editor_no_problems">Brak problemów</string>
+    <string name="editor_errors_title">Popraw przed zapisem</string>
+    <string name="editor_ok">OK</string>
+
+    <string name="editor_discard_title">Porzucić zmiany?</string>
+    <string name="editor_discard_message">Układ ma niezapisane zmiany.</string>
+    <string name="editor_discard">Porzuć</string>
+    <string name="editor_keep_editing">Edytuj dalej</string>
+</resources>
