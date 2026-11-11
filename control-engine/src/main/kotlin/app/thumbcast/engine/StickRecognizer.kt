@@ -38,6 +38,22 @@ object StickMath {
     }
 
     /**
+     * Czy surowe wychylenie o module [m] daje w [shape] pełne 100% (ta sama arytmetyka co w [shape]:
+     * poza martwą strefą i przeskalowany moduł ≥ 1, czyli m ≥ 1 - outerDeadzone).
+     */
+    fun saturated(m: Float, deadzone: Float, outerDeadzone: Float): Boolean {
+        if (m <= deadzone || m <= 0f) return false
+        val span = 1f - deadzone - outerDeadzone
+        return span <= 0f || (m - deadzone) / span >= 1f
+    }
+
+    /** Pełne wychylenie (moduł 1) w kierunku wektora surowego; wymaga |v| > 0. Przy nasyceniu równe [shape]. */
+    fun full(rawX: Float, rawY: Float): FloatArray {
+        val m = hypot(rawX, rawY)
+        return floatArrayOf(clean(rawX / m), clean(rawY / m))
+    }
+
+    /**
      * 8 kierunków dla trybu KBM. y dodatnie = w górę. Zwraca zbiór 0..2 sąsiednich klawiszy.
      * Sektory po 45 stopni wyśrodkowane na osiach i przekątnych.
      */
@@ -66,6 +82,12 @@ object StickMath {
  * Gałka (pływająca lub stała). Obsługuje jeden palec naraz (pierwszy, który wylądował);
  * kolejny palec w tej samej kontrolce jest przechwycony, ale nic nie generuje.
  * Wyjście: lewa/prawa gałka pada albo (KBM + kbmKeys) klawisze kierunków z progiem 8 kierunków.
+ *
+ * `sprintLock` (histereza nasycenia, decyzja 11.11.2026): gdy palec dojdzie do nasycenia (|v| ≥ 1 - outerDeadzone),
+ * gałka wchodzi w stan „sprint”: moduł wyjścia zostaje 100%, a kierunek idzie za bieżącym kątem palca, także gdy
+ * kciuk cofnie się do obrysu. Stan kończy powrót w martwą strefę (|v| ≤ deadzone; dalej zwykła krzywa),
+ * UP, CANCEL albo releaseAll. Stan istnieje tylko, dopóki ten palec dotyka; zmienia się wyłącznie w cyklu zdarzenia
+ * tego palca (DOWN/MOVE), bez timerów i bez ticków.
  */
 class StickRecognizer(
     val spec: StickSpec,
@@ -81,6 +103,8 @@ class StickRecognizer(
     private var radius: Float = 1f
     private var lastX: Float = 0f
     private var lastY: Float = 0f
+    /** Stan histerezy `sprintLock` (tylko przy aktywnym palcu). */
+    private var sprinting: Boolean = false
     private val keysHeld: LinkedHashSet<String> = LinkedHashSet()
 
     val activePointerId: Int get() = activePointer
@@ -88,6 +112,7 @@ class StickRecognizer(
     fun onDown(pointerId: Int, x: Float, y: Float, rect: PxRect, viewport: Viewport) {
         if (activePointer != -1) return
         activePointer = pointerId
+        sprinting = false
         if (spec.floating) {
             centerX = x
             centerY = y
@@ -117,6 +142,7 @@ class StickRecognizer(
         }
         lastX = 0f
         lastY = 0f
+        sprinting = false
         activePointer = -1
     }
 
@@ -125,6 +151,7 @@ class StickRecognizer(
         activePointer = -1
         lastX = 0f
         lastY = 0f
+        sprinting = false
         keysHeld.clear()
     }
 
@@ -132,7 +159,9 @@ class StickRecognizer(
 
     private fun update(pointerId: Int, x: Float, y: Float) {
         // Ekran: y w dół; gałka: y w górę.
-        val v = StickMath.shape((x - centerX) / radius, -(y - centerY) / radius, spec.deadzone, spec.outerDeadzone, spec.curve)
+        val rawX = (x - centerX) / radius
+        val rawY = -(y - centerY) / radius
+        val v = if (spec.sprintLock) sprintShape(rawX, rawY) else StickMath.shape(rawX, rawY, spec.deadzone, spec.outerDeadzone, spec.curve)
         val keys = spec.kbmKeys
         if (kbm && keys != null) {
             val want = StickMath.directionKeys(v[0], v[1], spec.kbmThreshold, keys)
@@ -153,5 +182,17 @@ class StickRecognizer(
                 emitter.emit(Intent(pointerId, bindingId, BindingKind.HOLD, StickSet(spec.padStick, v[0], v[1])))
             }
         }
+    }
+
+    /** [StickMath.shape] z histerezą `sprintLock`: wejście przy nasyceniu, wyjście w martwej strefie. */
+    private fun sprintShape(rawX: Float, rawY: Float): FloatArray {
+        val m = hypot(rawX, rawY)
+        if (m <= spec.deadzone || m <= 0f) {
+            sprinting = false
+        } else if (StickMath.saturated(m, spec.deadzone, spec.outerDeadzone)) {
+            sprinting = true
+        }
+        if (sprinting) return StickMath.full(rawX, rawY)
+        return StickMath.shape(rawX, rawY, spec.deadzone, spec.outerDeadzone, spec.curve)
     }
 }

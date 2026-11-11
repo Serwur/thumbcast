@@ -45,7 +45,7 @@ TouchEvent (overlay Androida)        tick czasu (onTick, tylko gdy dotyka palec)
 | `EngineConfig`, `EngineTuning` | `EngineConfig.kt` | Jawnie typowana konfiguracja i stałe strojenia (promień gałki, hit slop, prędkość pełnego wychylenia kamery itd.). |
 | `PointerTracker` | `PointerTracker.kt` | `pointerId` → właściciel, do 10 palców. Właściciel ustalany przy DOWN i trzymany do UP/CANCEL. Jedyny transfer to slide-to-press. |
 | `HitTest` | `HitTest.kt` | `rect` 0..1 → px względem `safeArea` (albo całego ekranu), lustro `x → 1 - x - w`, z-order (późniejsza kontrolka na liście leży wyżej), strefa aktywacji większa od grafiki (`max(8 px, 20% krótszego boku)`); grafika ma pierwszeństwo przed strefą, w strefie wygrywa najbliższa grafika. |
-| `StickRecognizer` + `StickMath` | `StickRecognizer.kt` | Gałka pływająca (środek w miejscu DOWN, promień 15% krótszego boku) albo stała (środek i promień z `rect`). Radialna martwa strefa ze skalowaniem „rescaled radial deadzone” i zewnętrzną strefą nasycenia, krzywa linear/power. Wyjście to gałka pada albo, w KBM, klawisze `kbmKeys` z progiem i 8 sektorami po 45° (zawsze najpierw zwolnienia, potem wciśnięcia). |
+| `StickRecognizer` + `StickMath` | `StickRecognizer.kt` | Gałka pływająca (środek w miejscu DOWN, promień 15% krótszego boku) albo stała (środek i promień z `rect`). Radialna martwa strefa ze skalowaniem „rescaled radial deadzone” i zewnętrzną strefą nasycenia, krzywa linear/power. Wyjście to gałka pada albo, w KBM, klawisze `kbmKeys` z progiem i 8 sektorami po 45° (zawsze najpierw zwolnienia, potem wciśnięcia). `sprintLock`: histereza nasycenia (niżej). |
 | `ButtonRecognizer` | `ButtonRecognizer.kt` | HOLD (stan = palec, wielu palców na jednym przycisku = wspólny stan), LATCH (DOWN przełącza, UP nic nie robi), wyjścia jednorazowe (`App`, `MouseWheel` = 1 ząbek) przy DOWN. |
 | `GestureArbiter` | `GestureRecognizers.kt` | Palec wolnej strefy ma stan `PENDING → CAMERA / LONG_PRESS / PINCH / CONSUMED`. Jeden palec dostaje najwyżej jeden gest. |
 | `TapRecognizer` | `GestureRecognizers.kt` | UP w czasie ≤ `maxMs` i ruch ≤ `maxMovePx` daje `mousePosition` (przeliczone przez `videoRect` → `videoRefWidth × videoRefHeight`; dotyk w czarnym pasie letterboxu nic nie daje), potem LMB down i up. |
@@ -55,6 +55,16 @@ TouchEvent (overlay Androida)        tick czasu (onTick, tylko gdy dotyka palec)
 | `EdgeSwipeRecognizer` | `GestureRecognizers.kt` | DOWN w pasku przy górnej krawędzi (5% wysokości, min. 16 px) i ruch w dół ≥ 8% wysokości daje `app("menu")`, raz na palec. |
 | `ActionPolicy` | `ActionPolicy.kt` | Egzekwuje zasadę 1 dotyk = 1 wejście, loguje naruszenia, jest właścicielem `OutputMapper`. |
 | `OutputMapper` | `OutputMapper.kt` | Stan pada → `padState(flagi, osie ±32767, triggery 0..255 jako Byte)`. Przyciski i triggery wysyła od razu, osie zbiera i wysyła raz na cykl, zawsze tylko przy zmianie. Klawisze i przyciski myszy deduplikuje. Flagi = `ControllerPacket` (A=0x1000 …). |
+
+## `sprintLock`: histereza nasycenia (decyzja 11.11.2026)
+
+`StickSpec.sprintLock` (z `StickControl.sprintLock`). Wektor surowy `v` liczony jest od bieżącego środka gałki (pływającej: punkt DOWN, stałej: środek `rect`), `|v| = 1` na obrysie.
+
+- **Wejście:** `|v|` dochodzi do nasycenia, czyli punktu, w którym zwykła krzywa daje 100% (`StickMath.saturated`, ta sama arytmetyka co `StickMath.shape`: `|v| ≥ 1 - outerDeadzone`).
+- **W stanie sprint:** moduł wyjścia = 1 (pełny zakres osi jak przy nasyceniu), kierunek = bieżący kąt palca (`StickMath.full`), także gdy kciuk cofnie się do obrysu. W KBM to samo wyjście idzie do 8 sektorów, więc klawisze kierunku zostają wciśnięte poniżej `kbmThreshold`.
+- **Wyjście:** `|v| ≤ deadzone` (wyjście 0, dalej zwykła krzywa) albo UP, CANCEL, `releaseAll` (zero jak dotąd; `onUp`/`reset` czyszczą stan).
+
+Zgodność z 1 dotyk = 1 wejście: stan należy do aktywnego palca gałki i ginie razem z nim. Zmienia się wyłącznie w `update`, czyli w cyklu DOWN/MOVE tego palca; tick nie dotyka gałek. Każda zmiana wyjścia jest intencją `HOLD` tego samego wiązania (`control:<id>`) z przyczyną w zdarzeniu dotyku, więc reguły R1–R9 działają bez nowych wyjątków. `sprintLock = false` wywołuje dokładnie to samo `StickMath.shape` co wcześniej.
 
 ## Jak ActionPolicy egzekwuje 1 dotyk = 1 wejście
 
@@ -86,12 +96,12 @@ Każde wywołanie sinka może dostać przyczynę (`EmitCause`: id cyklu, rodzaj,
 
 - `Fakes.kt`: `FakeClock`, `FakeInputSink`, czyli rejestr wywołań z przyczyną, śledzenie stanu, krawędzie wciśnięcia i maksimum jednocześnie wciśniętych wejść.
 - `TestSupport.kt`: `testProfile()` budowany inline (bez presetów z dysku), stałe punktów i `Rig` (silnik, sink i zegar).
-- `StickRecognizerTest`: martwe strefy, brak skoku, nasycenie, krzywa power, 8 kierunków, gałka pływająca, capture on down, WASD w KBM.
+- `StickRecognizerTest`: martwe strefy, brak skoku, nasycenie, krzywa power, 8 kierunków, gałka pływająca, capture on down, WASD w KBM, `sprintLock` (wejście tylko przy nasyceniu, 100% z kierunkiem za palcem po cofnięciu, wyjście w martwej strefie i ponowne wejście, UP/CANCEL/`releaseAll` → 0 bez przenoszenia na kolejny dotyk, brak wyjścia na tickach, gałka stała, `false` bez zmian, KBM).
 - `ButtonAndHitTestTest`: HOLD, flagi, LATCH (także po zmianie viewportu), wspólny stan, slide-to-press (X → 0 → A), App, klawisz w Pad+, strefa aktywacji, z-order, `safeArea`, lustro (w silniku i z `HandednessTransform` bez podwójnego odbicia).
 - `GestureRecognizersTest`: tap (układ wideo, letterbox), tap kontra long-press kontra drag, long-press na ticku i przy UP, brak wyjścia bez palca, kamera Pad+ (kierunek, wygaszanie, monotoniczność krzywej), RMB-look z resztami ułamkowymi, pinch (ząbki, kotwica, przerwanie kamery), edge swipe, kilka palców naraz z CANCEL.
 - `ActionPolicyTest`: każda reguła R1–R9 wywołana bezpośrednio.
-- `KnownRisksTest`: obecne zachowanie przy ryzykach z `docs/HANDOFF.md` (gałka RIGHT razem z kamerą, ignorowane `chord` i `sprintLock`, long-press przy tickach co klatkę).
-- `ActionPolicyPropertyTest` (Kotest `checkAll`, liczba iteracji z `thumbcast.policy.iterations`). Strumienie są poprawne albo chaotyczne: CANCEL, podwójny DOWN, UP bez DOWN, nieznane palce w MOVE, cofający się czas, `releaseAll` i zmiana viewportu w trakcie. Sprawdzane są tryby Pad+, Pad+ ze slide-to-press i KBM. Właściwości:
+- `KnownRisksTest`: obecne zachowanie przy ryzykach z `docs/HANDOFF.md` (gałka RIGHT razem z kamerą, ignorowany `chord`, long-press przy tickach co klatkę) oraz rozstrzygnięty `sprintLock` (histereza).
+- `ActionPolicyPropertyTest` (Kotest `checkAll`, liczba iteracji z `thumbcast.policy.iterations`). Strumienie są poprawne albo chaotyczne: CANCEL, podwójny DOWN, UP bez DOWN, nieznane palce w MOVE, cofający się czas, `releaseAll` i zmiana viewportu w trakcie. Sprawdzane są tryby Pad+, Pad+ ze slide-to-press i KBM; mniej więcej połowa strumieni (wybór z ziarna) ma gałkę z `sprintLock = true`. Właściwości:
   - każda krawędź ma przyczynę z tego samego zdarzenia i żywego palca;
   - jeden dotyk daje najwyżej jedną krawędź, więc liczba krawędzi ≤ liczba DOWN;
   - tick nie zmienia stanu poza wygaszaniem;
@@ -107,7 +117,7 @@ Klasy testów polityki mają w nazwie `Policy`, więc obejmuje je job CI `policy
 ## Znane ograniczenia
 
 - **Kod nie był kompilowany ani uruchamiany** (brak sieci i `kotlinc` w środowisku tworzenia). Sprawdzono go tylko skryptem statycznym: nawiasy, importy, typy modelu.
-- Akordy (`ButtonControl.chord`) i `sprintLock` są w E1 ignorowane. Przycisk daje tylko `output`.
+- Akordy (`ButtonControl.chord`) są w E1 ignorowane. Przycisk daje tylko `output`.
 - W KBM jeden palec na gałce może trzymać dwa klawisze naraz (np. W+D dla skosu). To jedno logiczne wejście (`control:move`) i jedyny wyjątek od „jedna krawędź na dotyk”: wynika z 8 kierunków WASD (plan 4.2).
 - Wygaszanie kamery postępuje tylko przy tickach albo kolejnych zdarzeniach. Jeśli overlay przestanie wołać `onTick` przy nieruchomym palcu, gałka zostaje wychylona do następnego zdarzenia albo UP (ograniczenie bezpieczne: zero przy UP/CANCEL jest zawsze wysyłane).
 - Long-press bez ticków jest rozpoznawany dopiero przy UP (RMB down i up w jednym cyklu), czyli bez możliwości trzymania RMB.

@@ -26,7 +26,7 @@
     { "id": "move", "type": "stick", "label": "Ruch", "output": { "pad": "left_stick" },
       "rect": { "x": 0.0, "y": 0.40, "w": 0.35, "h": 0.60 }, "floating": true,
       "deadzone": 0.12, "outerDeadzone": 0.04, "curve": { "type": "linear" },
-      "kbmThreshold": 0.35, "sprintLock": false },
+      "kbmThreshold": 0.35, "sprintLock": true },
 
     { "id": "lt", "type": "modifier", "label": "LT", "output": { "pad": "LT" }, "behavior": "hold",
       "rect": { "x": 0.03, "y": 0.25, "w": 0.10, "h": 0.12 } },

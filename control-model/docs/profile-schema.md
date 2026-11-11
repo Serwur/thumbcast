@@ -92,7 +92,7 @@ Pola wspólne dla wszystkich typów:
 | `curve` | `{ "type": "linear" }` | jak wyżej |
 | `kbmKeys` | brak | `{up,down,left,right}`: cztery różne kody z `KeyCodes`. **Wymagane w trybie `keyboard_mouse`.** |
 | `kbmThreshold` | 0.35 | 0.1..0.9: próg wychylenia dla klawiszy kierunków (8 kierunków). |
-| `sprintLock` | false | Przesunięcie palca poza obrys utrzymuje 100% wychylenia, dopóki palec dotyka ekranu. |
+| `sprintLock` | false | Histereza nasycenia (decyzja 11.11.2026). Gdy palec dojdzie do pełnego wychylenia (\|v\| ≥ 1 - `outerDeadzone`, liczone od bieżącego środka gałki, pływającej lub stałej), wychylenie zostaje 100%, a kierunek idzie za palcem, także gdy kciuk cofnie się do obrysu. Koniec: powrót palca w martwą strefę (\|v\| ≤ `deadzone`, potem zwykła krzywa), podniesienie palca, CANCEL albo `releaseAll`. Nic nie zostaje po palcu i nie ma timerów. W `keyboard_mouse` 100% oznacza trzymane klawisze `kbmKeys`, więc kierunek trzyma się poniżej `kbmThreshold`, aż do martwej strefy. `false`: bez zmian (zwykła krzywa w obie strony). |
 
 ### `button`
 
