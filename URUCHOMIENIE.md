@@ -1,6 +1,6 @@
 # Jak to uruchomić (od zera do pierwszego testu w grze)
 
-Repo ma docelowo nazywać się `thumbcast` (do czasu zmiany w GitHub Settings: `Serwur/wow-portable`). Plan: `docs/PLAN.md`. Decyzje, które mają pierwszeństwo przed planem: `docs/DECISIONS.md`.
+Repo: https://github.com/Serwur/thumbcast. Plan: `docs/PLAN.md`. Decyzje, które mają pierwszeństwo przed planem: `docs/DECISIONS.md`.
 
 Stan projektu: **szkielet napisany offline. Nic nie było kompilowane ani testowane.** Spodziewaj się poprawek przy pierwszym buildzie. Aplikacja nie jest jeszcze gotowa do użycia, to baza do dalszej pracy.
 

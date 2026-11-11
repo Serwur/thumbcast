@@ -16,7 +16,7 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 ## Dokumenty i decyzje
 - `docs/PLAN.md`: plan techniczny (wygenerowany 8.11.2026, kopia źródłowa, nie poprawiać treści).
 - `docs/DECISIONS.md` (10.11.2026) **ma pierwszeństwo przed PLAN.md**. Skrót: host = Sunshine (GPLv3) lub forki Apollo/Vibepollo; pad w Windows = ViGEmBus 1.17+ (darmowy, zarchiwizowany) albo płatny LizardByte Virtual HID Driver; klient wysyła standardowe pakiety pada niezależnie od sterownika hosta; własnego streamingu ani sterownika nie robimy; zdalnie przez Tailscale/ZeroTier (nie port forwarding, nie tunele HTTP); tryb Klawiatura+Mysz to plan awaryjny dla hostów bez pada.
-- Nazwa repo ma być `thumbcast`; do zmiany w GitHub Settings przez właściciela repo nazywa się `Serwur/wow-portable`. Agent nie zmienia ustawień repo.
+- Repo: `Serwur/thumbcast` (nazwa zmieniona 11.11.2026, dawniej `wow-portable`). Agent nie zmienia ustawień repo. Stan i następne kroki: `docs/HANDOFF.md`.
 - Otwarte decyzje: fork vs submoduł, `applicationId`, landscape lock (lista w DECISIONS.md, pkt h).
 - Konfiguracja hosta i testy: `docs/host-setup.md`, `docs/test-plan.md` (hosty H1 Virtual HID, H2 ViGEmBus, H3 bez pada, H4 macOS; scenariusz T-10 dla trybu bez pada).
 

@@ -48,7 +48,7 @@ Tryb Klawiatura+Mysz (profil „MMO – Klawiatura”) jest planem awaryjnym i t
 
 ## (g) Nazwa repozytorium
 
-Repo ma nazywać się **`thumbcast`**. Właściciel zmienia nazwę w GitHub Settings (proxy sesji blokuje zmiany ustawień repo, więc nie robimy tego z poziomu agenta). Do czasu zmiany repo nazywa się **Serwur/wow-portable**. Po zmianie: zaktualizować zdalny adres `origin` w lokalnych klonach (GitHub przekierowuje stare URL-e, ale nie należy na tym polegać) oraz linki w README.
+Repo ma nazywać się **`thumbcast`**. Właściciel zmienia nazwę w GitHub Settings (proxy sesji blokuje zmiany ustawień repo, więc nie robimy tego z poziomu agenta). **Zrobione 11.11.2026** (dawniej Serwur/wow-portable). W lokalnych klonach: `git remote set-url origin https://github.com/Serwur/thumbcast`.
 
 ## (h) Otwarte decyzje
 

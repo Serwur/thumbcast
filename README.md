@@ -2,7 +2,7 @@
 
 > **Start: [URUCHOMIENIE.md](URUCHOMIENIE.md)**. Plan: [docs/PLAN.md](docs/PLAN.md), decyzje (mają pierwszeństwo): [docs/DECISIONS.md](docs/DECISIONS.md).
 
-> Nazwa repozytorium ma być `thumbcast`. Do czasu zmiany nazwy w GitHub Settings repo nazywa się `Serwur/wow-portable`.
+> Repozytorium: https://github.com/Serwur/thumbcast (dawniej `wow-portable`; GitHub przekierowuje stare linki).
 
 > **Status: pre-alpha.** Projekt nie jest zatwierdzony, wspierany ani sponsorowany przez Blizzard Entertainment ani przez projekt Moonlight. Na tym etapie repo zawiera szkielet modułów, dokumentację i CI. Aplikacji nie da się jeszcze zainstalować.
 
