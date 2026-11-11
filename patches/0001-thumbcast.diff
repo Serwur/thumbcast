@@ -207,7 +207,7 @@ index d916899e..3b65fdbf 100644
              android:name=".preferences.AddComputerManually"
              android:resizeableActivity="true"
 diff --git a/app/src/main/java/com/limelight/Game.java b/app/src/main/java/com/limelight/Game.java
-index 8d369b3e..a10f9eba 100644
+index 8d369b3e..55b540bd 100644
 --- a/app/src/main/java/com/limelight/Game.java
 +++ b/app/src/main/java/com/limelight/Game.java
 @@ -36,6 +36,9 @@ import com.limelight.utils.ServerHelper;
@@ -274,7 +274,43 @@ index 8d369b3e..a10f9eba 100644
          if (controllerHandler != null) {
              controllerHandler.destroy();
          }
-@@ -1504,6 +1524,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1326,6 +1346,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+ 
+     @Override
+     public boolean handleKeyDown(KeyEvent event) {
++        // THUMBCAST: otwarte menu w grze zjada klawisze i przyciski pada (nawigacja), do hosta nic nie idzie.
++        if (thumbcast != null) {
++            int route = thumbcast.routeKeyEvent(event);
++            if (route != ThumbcastSession.KEY_PASS) return route == ThumbcastSession.KEY_CONSUMED;
++        }
++        // THUMBCAST END
+         // Pass-through virtual navigation keys
+         if ((event.getFlags() & KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0) {
+             return false;
+@@ -1408,6 +1434,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+ 
+     @Override
+     public boolean handleKeyUp(KeyEvent event) {
++        // THUMBCAST: otwarte menu w grze zjada klawisze i przyciski pada (nawigacja), do hosta nic nie idzie.
++        if (thumbcast != null) {
++            int route = thumbcast.routeKeyEvent(event);
++            if (route != ThumbcastSession.KEY_PASS) return route == ThumbcastSession.KEY_CONSUMED;
++        }
++        // THUMBCAST END
+         // Pass-through virtual navigation keys
+         if ((event.getFlags() & KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0) {
+             return false;
+@@ -1471,6 +1503,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+     }
+ 
+     private boolean handleKeyMultiple(KeyEvent event) {
++        // THUMBCAST: tekst z klawiatury nie trafia do hosta przy otwartym menu w grze.
++        if (thumbcast != null && thumbcast.routeKeyEvent(event) == ThumbcastSession.KEY_CONSUMED) return true;
++        // THUMBCAST END
+         // We can receive keys from a software keyboard that don't correspond to any existing
+         // KEYCODE value. Android will give those to us as an ACTION_MULTIPLE KeyEvent.
+         //
+@@ -1504,6 +1539,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
          inputManager.toggleSoftInput(0, 0);
      }
  
@@ -288,7 +324,17 @@ index 8d369b3e..a10f9eba 100644
      private byte getLiTouchTypeFromEvent(MotionEvent event) {
          switch (event.getActionMasked()) {
              case MotionEvent.ACTION_DOWN:
-@@ -1993,6 +2020,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1783,6 +1825,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+     // Returns true if the event was consumed
+     // NB: View is only present if called from a view callback
+     private boolean handleMotionEvent(View view, MotionEvent event) {
++        // THUMBCAST: przy otwartym menu w grze pad, mysz i touchpad nie trafiają do hosta (krzyżak i gałka nawigują).
++        if (thumbcast != null && thumbcast.consumeMotionEvent(event)) return true;
++        // THUMBCAST END
+         // Pass through mouse/touch/joystick input if we're not grabbing
+         if (!grabbedInput) {
+             return false;
+@@ -1993,6 +2038,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
              // This case is for fingers
              else
              {
@@ -298,7 +344,7 @@ index 8d369b3e..a10f9eba 100644
                  if (virtualController != null &&
                          (virtualController.getControllerMode() == VirtualController.ControllerMode.MoveButtons ||
                           virtualController.getControllerMode() == VirtualController.ControllerMode.ResizeButtons)) {
-@@ -2227,6 +2257,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -2227,6 +2275,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
  
      private void stopConnection() {
          if (connecting || connected) {
@@ -307,6 +353,63 @@ index 8d369b3e..a10f9eba 100644
 +            // THUMBCAST END
              connecting = connected = false;
              updatePipAutoEnter();
+ 
+diff --git a/app/src/main/java/com/limelight/binding/input/ControllerHandler.java b/app/src/main/java/com/limelight/binding/input/ControllerHandler.java
+index 0fffe5d0..9a165bfd 100644
+--- a/app/src/main/java/com/limelight/binding/input/ControllerHandler.java
++++ b/app/src/main/java/com/limelight/binding/input/ControllerHandler.java
+@@ -2802,6 +2802,42 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
+         sendControllerInputPacket(defaultContext);
+     }
+ 
++    // THUMBCAST: true przy otwartym menu w grze; reportControllerState (sterownik USB) nie wysyła wtedy stanu.
++    private boolean thumbcastInputBlocked;
++
++    public void setThumbcastInputBlocked(boolean blocked) {
++        thumbcastInputBlocked = blocked;
++    }
++
++    // Menu w grze zatrzymuje wejście z padów fizycznych (Game ich nie przekazuje, gdy menu jest otwarte).
++    // Przy otwarciu menu każdy pad, który coś trzyma, dostaje stan zerowy: przyciski puszczone, gałki na środku,
++    // triggery 0. Stan nakładki (defaultContext) zeruje osobno ThumbcastOverlay.releaseAll().
++    public void releaseAllControllerInput() {
++        for (int i = 0; i < inputDeviceContexts.size(); i++) {
++            releaseControllerInput(inputDeviceContexts.valueAt(i));
++        }
++        for (int i = 0; i < usbDeviceContexts.size(); i++) {
++            releaseControllerInput(usbDeviceContexts.valueAt(i));
++        }
++    }
++
++    private void releaseControllerInput(GenericControllerContext context) {
++        boolean active = context.inputMap != 0 || context.leftTrigger != 0 || context.rightTrigger != 0 ||
++                context.leftStickX != 0 || context.leftStickY != 0 ||
++                context.rightStickX != 0 || context.rightStickY != 0;
++        context.inputMap = 0;
++        context.leftTrigger = 0;
++        context.rightTrigger = 0;
++        context.leftStickX = 0;
++        context.leftStickY = 0;
++        context.rightStickX = 0;
++        context.rightStickY = 0;
++        if (active && context.assignedControllerNumber) {
++            sendControllerInputPacket(context);
++        }
++    }
++    // THUMBCAST END
++
+     @Override
+     public void reportControllerState(int controllerId, int buttonFlags,
+                                       float leftStickX, float leftStickY,
+@@ -2838,6 +2874,9 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
+ 
+         context.inputMap = buttonFlags;
+ 
++        // THUMBCAST: pady z własnego sterownika USB omijają Game, więc menu w grze blokuje je tutaj.
++        if (thumbcastInputBlocked) return;
++        // THUMBCAST END
+         sendControllerInputPacket(context);
+     }
  
 diff --git a/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java b/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java
 index 8ed01e36..1985674b 100644
@@ -1592,10 +1695,10 @@ index 00000000..c8101011
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuView.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuView.java
 new file mode 100644
-index 00000000..0062942d
+index 00000000..96b0b137
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuView.java
-@@ -0,0 +1,359 @@
+@@ -0,0 +1,463 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Menu w grze jako widok w oknie aktywności, nie osobne okno (AlertDialog).
@@ -1607,13 +1710,20 @@ index 00000000..0062942d
 +// nic nie dostaje; tap w tło = „Wróć do gry”. Panel boczny (przy krawędzi END) na pełną wysokość,
 +// przewijany, wiersze min. 52 dp. Żaden element nie bierze fokusu: StreamView go zachowuje
 +// (klawiatura ekranowa i klawisze trafiają tam jak bez menu).
++//
++// Nawigacja klawiaturą i padem (12.11.2026): klawisze i osie odbiera Game (bramka w ThumbcastSession,
++// MenuInputRouter), a widok dostaje gotowe polecenia w handleCommand: góra/dół przesuwa zaznaczenie wiersza
++// (obramowanie, bez fokusu Androida), lewo/prawo zmienia wartość wiersza − / +, A/Enter uruchamia wiersz.
++// Zaznaczenie pojawia się dopiero po pierwszym poleceniu z klawiatury lub pada, więc dotyk wygląda jak dawniej.
 +
 +import android.annotation.SuppressLint;
 +import android.content.Context;
 +import android.content.res.TypedArray;
 +import android.graphics.Typeface;
++import android.graphics.Rect;
 +import android.graphics.drawable.ColorDrawable;
 +import android.graphics.drawable.Drawable;
++import android.graphics.drawable.GradientDrawable;
 +import android.os.Build;
 +import android.util.TypedValue;
 +import android.view.Gravity;
@@ -1627,6 +1737,9 @@ index 00000000..0062942d
 +import android.widget.TextView;
 +
 +import com.limelight.R;
++
++import app.thumbcast.android.menu.MenuCommand;
++import app.thumbcast.android.menu.MenuFocus;
 +
 +import java.util.ArrayList;
 +import java.util.Collections;
@@ -1650,6 +1763,8 @@ index 00000000..0062942d
 +    private static final int TITLE_COLOR = 0xB3FFFFFF;
 +    private static final int DESTRUCTIVE_COLOR = 0xFFFF8A80;
 +    private static final int PRIMARY_COLOR = 0xFF8AB4F8;
++    private static final int SELECTED_FILL_COLOR = 0x268AB4F8;
++    private static final int SELECTED_STROKE_DP = 2;
 +    private static final float DISABLED_ALPHA = 0.35f;
 +
 +    /** Wiersz i przyciski − / +: powyżej minimum 48 dp celu dotyku. */
@@ -1671,6 +1786,9 @@ index 00000000..0062942d
 +    /** Wiersze pozycji (po tytule); indeks = indeks w {@link #items}. */
 +    private final List<View> rows = new ArrayList<>();
 +    private List<ThumbcastMenuModel.Item> items = Collections.emptyList();
++    /** Wiersz zaznaczony klawiaturą lub padem; -1 = brak (menu obsługiwane dotykiem). */
++    private int selected = -1;
++    private final TextView title;
 +    private int insetLeft;
 +    private int insetTop;
 +    private int insetRight;
@@ -1705,7 +1823,7 @@ index 00000000..0062942d
 +        list.setOrientation(LinearLayout.VERTICAL);
 +        scroll.addView(list, new ScrollView.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 +
-+        TextView title = new TextView(context);
++        title = new TextView(context);
 +        title.setText(R.string.thumbcast_menu_title);
 +        title.setTextColor(TITLE_COLOR);
 +        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
@@ -1735,15 +1853,104 @@ index 00000000..0062942d
 +                rows.add(row);
 +                list.addView(row, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 +            }
++            // Nowa lista: zaznaczenie (jeśli było) wraca na wiersz domyślny.
++            if (selected >= 0) {
++                selected = defaultIndex();
++            }
++        }
++        if (selected >= newItems.size()) {
++            selected = newItems.isEmpty() ? -1 : newItems.size() - 1;
 +        }
 +        for (int i = 0; i < newItems.size(); i++) {
 +            updateRow(rows.get(i), newItems.get(i));
 +        }
++        updateSelection();
++    }
++
++    /** Tytuł panelu (strona główna menu albo podstrona). */
++    void setTitle(CharSequence text) {
++        title.setText(text);
 +    }
 +
 +    /** Na górę listy (każde otwarcie menu zaczyna od pierwszej pozycji). */
 +    void scrollToTop() {
 +        scroll.scrollTo(0, 0);
++    }
++
++    /** Bez zaznaczenia (nowe otwarcie menu). */
++    void clearSelection() {
++        selected = -1;
++        updateSelection();
++    }
++
++    /**
++     * Polecenie z klawiatury lub pada (BACK obsługuje sesja). Pierwsze polecenie kierunku tylko pokazuje
++     * zaznaczenie na wierszu domyślnym (Wróć do gry, aktywny profil), A/Enter bez zaznaczenia też.
++     */
++    void handleCommand(MenuCommand command) {
++        if (items.isEmpty()) {
++            return;
++        }
++        boolean fresh = selected < 0 || selected >= items.size();
++        switch (command) {
++            case UP:
++                select(MenuFocus.move(selected, -1, items.size(), defaultIndex()));
++                break;
++            case DOWN:
++                select(MenuFocus.move(selected, 1, items.size(), defaultIndex()));
++                break;
++            case LEFT:
++            case RIGHT:
++                if (fresh) {
++                    select(defaultIndex());
++                } else if (items.get(selected).kind == ThumbcastMenuModel.Kind.STEPPER) {
++                    fire(selected, command == MenuCommand.LEFT ? Which.DECREASE : Which.INCREASE);
++                }
++                break;
++            case ACTIVATE:
++                if (fresh) {
++                    select(defaultIndex());
++                } else if (items.get(selected).kind == ThumbcastMenuModel.Kind.BUTTON) {
++                    fire(selected, Which.ACTION);
++                }
++                break;
++            default:
++                break;
++        }
++    }
++
++    /** Wiersz domyślny zaznaczenia: pierwszy PRIMARY (Wróć do gry, aktywny profil), inaczej pierwszy. */
++    private int defaultIndex() {
++        for (int i = 0; i < items.size(); i++) {
++            if (items.get(i).style == ThumbcastMenuModel.Style.PRIMARY) {
++                return i;
++            }
++        }
++        return 0;
++    }
++
++    private void select(int index) {
++        selected = index;
++        updateSelection();
++        if (index >= 0 && index < rows.size()) {
++            final View row = rows.get(index);
++            // Po layoucie (nowa lista nie ma jeszcze wymiarów): przewiń tak, żeby wiersz był widoczny.
++            row.post(() -> row.requestRectangleOnScreen(new Rect(0, 0, row.getWidth(), row.getHeight()), false));
++        }
++    }
++
++    private void updateSelection() {
++        for (int i = 0; i < rows.size(); i++) {
++            rows.get(i).setForeground(i == selected ? newSelectionDrawable() : null);
++        }
++    }
++
++    private Drawable newSelectionDrawable() {
++        GradientDrawable d = new GradientDrawable();
++        d.setColor(SELECTED_FILL_COLOR);
++        d.setStroke(dp(SELECTED_STROKE_DP), PRIMARY_COLOR);
++        d.setCornerRadius(dp(4));
++        return d;
 +    }
 +
 +    // =====================================================================================
@@ -1957,10 +2164,10 @@ index 00000000..0062942d
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
 new file mode 100644
-index 00000000..492e6d75
+index 00000000..b4f7e690
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
-@@ -0,0 +1,425 @@
+@@ -0,0 +1,528 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Cała logika Thumbcast w aktywności Game: Game trzyma jedno pole
@@ -1971,6 +2178,11 @@ index 00000000..492e6d75
 +// aplikacji (Command: mapa akcja -> Runnable), menu w grze (☰, gest od górnej krawędzi, systemowy Back;
 +// widok ThumbcastMenuView nad overlayem, pozycje w ThumbcastMenuModel),
 +// ukrywanie kontrolek przy podłączonym padzie, PiP i sprzątanie.
++//
++// Otwarte menu (12.11.2026) zatrzymuje wejście fizyczne: Game pyta sesję o każdy klawisz (routeKeyEvent)
++// i zdarzenie ruchu (consumeMotionEvent), zanim cokolwiek wyśle do hosta. Klawisze i przyciski pada nawigują
++// po menu (MenuInputRouter z :control-android), osie pada też, a do hosta nic nie trafia. Przy otwarciu menu
++// stan nakładki i padów fizycznych jest zerowany (przyciski puszczone, gałki na środku).
 +
 +import android.app.Activity;
 +import android.content.Context;
@@ -1979,6 +2191,8 @@ index 00000000..492e6d75
 +import android.os.Handler;
 +import android.os.Looper;
 +import android.view.InputDevice;
++import android.view.KeyEvent;
++import android.view.MotionEvent;
 +import android.view.View;
 +import android.widget.FrameLayout;
 +import android.widget.Toast;
@@ -1993,16 +2207,27 @@ index 00000000..492e6d75
 +
 +import java.util.Collections;
 +import java.util.HashMap;
++import java.util.List;
 +import java.util.Map;
 +
 +import app.thumbcast.android.ThumbcastOverlayFactory;
 +import app.thumbcast.android.ThumbcastProfiles;
++import app.thumbcast.android.menu.MenuCommand;
++import app.thumbcast.android.menu.MenuInputRouter;
++import app.thumbcast.android.menu.MenuKeyResult;
 +import app.thumbcast.android.overlay.ThumbcastOverlay;
 +import app.thumbcast.model.AppActions;
 +import app.thumbcast.model.Profile;
 +import app.thumbcast.model.ScaleTransform;
 +
 +public final class ThumbcastSession {
++
++    /** {@link #routeKeyEvent}: zwykła ścieżka Game (host). */
++    public static final int KEY_PASS = 0;
++    /** {@link #routeKeyEvent}: zjedzone przez menu (Game zwraca true). */
++    public static final int KEY_CONSUMED = 1;
++    /** {@link #routeKeyEvent}: do systemu, nie do hosta (Game zwraca false). */
++    public static final int KEY_SYSTEM = 2;
 +
 +    /** Zwrotne wywołania do aktywności strumienia. */
 +    public interface Host {
@@ -2017,6 +2242,8 @@ index 00000000..492e6d75
 +    private final ThumbcastSettings settings;
 +    private final ThumbcastOverlay overlay;
 +    private final HostPadReporterImpl padReporter;
++    private final ControllerHandler controllerHandler;
++    private final MenuInputRouter menuInput = new MenuInputRouter();
 +    /** Profil z pliku z wyłączonym autoHideOnGamepad (ukrywaniem przy padzie steruje sesja), bez skalowania. */
 +    private final Profile baseProfile;
 +    private final Map<String, Runnable> commands;
@@ -2098,6 +2325,7 @@ index 00000000..492e6d75
 +        this.baseProfile = ThumbcastOverlayFactory.withAutoHideOnGamepad(profile, false);
 +        this.commands = buildCommands();
 +
++        this.controllerHandler = controllerHandler;
 +        padReporter = new HostPadReporterImpl(controllerHandler);
 +        overlay = ThumbcastOverlayFactory.create(
 +                activity,
@@ -2140,9 +2368,53 @@ index 00000000..492e6d75
 +            return false;
 +        }
 +        if (isMenuShown()) {
-+            hideMenu();
++            onMenuBack();
 +        } else {
 +            showMenu();
++        }
++        return true;
++    }
++
++    /**
++     * handleKeyDown / handleKeyUp / handleKeyMultiple, przed czymkolwiek innym: przy otwartym menu klawisze
++     * i przyciski pada nawigują po menu i nie trafiają do hosta. Zwraca {@link #KEY_PASS} (zwykła ścieżka),
++     * {@link #KEY_CONSUMED} albo {@link #KEY_SYSTEM} (głośność, zasilanie: obsługuje system).
++     */
++    public int routeKeyEvent(KeyEvent event) {
++        if (destroyed) {
++            return KEY_PASS;
++        }
++        MenuKeyResult r = menuInput.onKey(isMenuShown(), event.getAction(), event.getKeyCode(),
++                event.getRepeatCount(), event.getDeviceId());
++        if (r.getCommand() != MenuCommand.NONE) {
++            onMenuCommand(r.getCommand());
++        }
++        switch (r.getRoute()) {
++            case CONSUME:
++                return KEY_CONSUMED;
++            case SYSTEM:
++                return KEY_SYSTEM;
++            default:
++                return KEY_PASS;
++        }
++    }
++
++    /**
++     * handleMotionEvent, przed czymkolwiek innym: przy otwartym menu żadne zdarzenie ruchu (pad, mysz, touchpad)
++     * nie trafia do hosta. Krzyżak i lewa gałka pada przesuwają zaznaczenie. true = zjedzone.
++     */
++    public boolean consumeMotionEvent(MotionEvent event) {
++        if (destroyed || !isMenuShown()) {
++            return false;
++        }
++        if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0
++                && event.getActionMasked() == MotionEvent.ACTION_MOVE) {
++            List<MenuCommand> commands = menuInput.onAxes(event.getDeviceId(),
++                    event.getAxisValue(MotionEvent.AXIS_HAT_X), event.getAxisValue(MotionEvent.AXIS_HAT_Y),
++                    event.getAxisValue(MotionEvent.AXIS_X), event.getAxisValue(MotionEvent.AXIS_Y));
++            for (MenuCommand command : commands) {
++                onMenuCommand(command);
++            }
 +        }
 +        return true;
 +    }
@@ -2289,23 +2561,61 @@ index 00000000..492e6d75
 +        }
 +        // Nic nie może zostać wciśnięte na hoście. Palce, które jeszcze leżą na overlayu, po releaseAll
 +        // nie są śledzone (translator ignoruje ich MOVE), a nowe trafiają w menu, które konsumuje każdy dotyk.
-+        overlay.releaseAll();
++        releaseHostInput();
 +        if (menuView == null) {
 +            menuView = new ThumbcastMenuView(activity, menuListener);
 +        }
 +        if (menuView.getParent() == null) {
++            menuInput.resetAxes();
++            setPhysicalInputBlocked(true);
 +            // Ostatnie dziecko: rysowane nad overlayem i pierwsze w kolejce dotyku.
 +            overlayParent.addView(menuView, new FrameLayout.LayoutParams(
 +                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
++            menuView.clearSelection();
 +            menuView.scrollToTop();
 +        }
 +        refreshMenu();
++    }
++
++    /**
++     * Zerowy stan na hoście: nakładka (pad, klawisze, mysz; releaseAll jak przy ukryciu, PiP i utracie fokusu)
++     * i pady fizyczne (Game nie przekazuje ich zdarzeń, dopóki menu jest otwarte, więc puszczenie przycisku
++     * albo powrót gałki nie dotarłby do hosta). Klawisze klawiatury fizycznej wciśnięte przed menu puszcza ich
++     * własne zdarzenie ACTION_UP, które MenuInputRouter przepuszcza do hosta.
++     */
++    private void releaseHostInput() {
++        overlay.releaseAll();
++        controllerHandler.releaseAllControllerInput();
++    }
++
++    /** Pady z własnego sterownika USB omijają Game: ControllerHandler blokuje je sam, dopóki menu jest otwarte. */
++    private void setPhysicalInputBlocked(boolean blocked) {
++        controllerHandler.setThumbcastInputBlocked(blocked);
 +    }
 +
 +    /** Zamknięcie bez akcji (Wróć do gry, tap w tło, Back, PiP, onDestroy). */
 +    private void hideMenu() {
 +        if (isMenuShown()) {
 +            overlayParent.removeView(menuView);
++        }
++        menuInput.resetAxes();
++        setPhysicalInputBlocked(false);
++    }
++
++    /** B, Back, Escape przy otwartym menu. */
++    private void onMenuBack() {
++        hideMenu();
++    }
++
++    /** Polecenie z klawiatury lub pada przy otwartym menu. */
++    private void onMenuCommand(MenuCommand command) {
++        if (!isMenuShown()) {
++            return;
++        }
++        if (command == MenuCommand.BACK) {
++            onMenuBack();
++        } else {
++            menuView.handleCommand(command);
 +        }
 +    }
 +

@@ -99,6 +99,14 @@ Publiczne API overlaya: `setProfile(Profile)`, `setVideoRect(...)`, `setStreamRe
 `setProfileTransforms(List<ProfileStep>)`, `releaseAll()`, `debugEnabled`.
 Wszystko na wątku UI.
 
+## Menu w grze: klawiatura i pad (`menu/MenuInputRouter`, 12.11.2026)
+
+`MenuInputRouter` decyduje, co zrobić z klawiszem przy menu w grze (`PASS` = zwykła ścieżka `Game` do hosta,
+`CONSUME` = zjedzone, `SYSTEM` = głośność i zasilanie do systemu) i tłumaczy klawisze oraz osie pada na
+`MenuCommand` (UP/DOWN/LEFT/RIGHT/ACTIVATE/BACK). `MenuFocus.move` liczy zaznaczenie wiersza. Używa go
+`ThumbcastSession` w `:app`; widok menu (`ThumbcastMenuView`) dostaje tylko polecenia. Bez timerów: krzyżak
+i gałka dają jeden krok na wychylenie.
+
 ## Fasady (dlaczego nie wołamy upstreamu wprost)
 
 Kod upstreamu nie jest w tym repozytorium, więc moduł kompiluje się względem cienkich interfejsów:
@@ -126,7 +134,9 @@ powtarza ten sam stan po 25/50/75 ms, tak jak upstreamowy `VirtualController.sen
   (adaptery na fałszywych fasadach, pokrycie `KeyCodes.ALL`), `GeometryTest` (letterbox, limit 200 dp,
   układ i hit test, percentyle), `VideoGeometryTest`, `EffectiveProfileTest`, `GamepadPresenceMonitorTest`
   (reguła „fizyczny pad”, callback tylko przy zmianie), `OverlaySnapshotTest` (migawka z prawdziwym silnikiem:
-  wciśnięcie w strefie aktywacji, slide-to-press, LATCH, promień i gałka z silnika, haptyka z przejść). Testy nie dotykają klas Androida w czasie wykonania (stałe
+  wciśnięcie w strefie aktywacji, slide-to-press, LATCH, promień i gałka z silnika, haptyka z przejść),
+  `MenuInputRouterTest` (menu w grze: które klawisze menu zjada, które idą do systemu albo do hosta, puszczenia
+  po zamknięciu menu, krzyżak i gałka z histerezą, duplikaty hat + D-pad, zaznaczenie wiersza). Testy nie dotykają klas Androida w czasie wykonania (stałe
   `KeyEvent.KEYCODE_*` są wklejane przez kompilator), więc Robolectric nie jest potrzebny. Jeśli kompilator
   jednak nie wklei stałych (np. zmiana w android.jar), `unitTests.isReturnDefaultValues` nie wystarczy:
   wtedy dodać Robolectric (`libs.robolectric`) do `SinksTest`.

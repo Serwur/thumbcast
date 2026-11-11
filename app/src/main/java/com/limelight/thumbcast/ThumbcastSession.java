@@ -8,6 +8,11 @@ package com.limelight.thumbcast;
 // aplikacji (Command: mapa akcja -> Runnable), menu w grze (☰, gest od górnej krawędzi, systemowy Back;
 // widok ThumbcastMenuView nad overlayem, pozycje w ThumbcastMenuModel),
 // ukrywanie kontrolek przy podłączonym padzie, PiP i sprzątanie.
+//
+// Otwarte menu (12.11.2026) zatrzymuje wejście fizyczne: Game pyta sesję o każdy klawisz (routeKeyEvent)
+// i zdarzenie ruchu (consumeMotionEvent), zanim cokolwiek wyśle do hosta. Klawisze i przyciski pada nawigują
+// po menu (MenuInputRouter z :control-android), osie pada też, a do hosta nic nie trafia. Przy otwarciu menu
+// stan nakładki i padów fizycznych jest zerowany (przyciski puszczone, gałki na środku).
 
 import android.app.Activity;
 import android.content.Context;
@@ -16,6 +21,8 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.InputDevice;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -30,16 +37,27 @@ import com.limelight.ui.GameGestures;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import app.thumbcast.android.ThumbcastOverlayFactory;
 import app.thumbcast.android.ThumbcastProfiles;
+import app.thumbcast.android.menu.MenuCommand;
+import app.thumbcast.android.menu.MenuInputRouter;
+import app.thumbcast.android.menu.MenuKeyResult;
 import app.thumbcast.android.overlay.ThumbcastOverlay;
 import app.thumbcast.model.AppActions;
 import app.thumbcast.model.Profile;
 import app.thumbcast.model.ScaleTransform;
 
 public final class ThumbcastSession {
+
+    /** {@link #routeKeyEvent}: zwykła ścieżka Game (host). */
+    public static final int KEY_PASS = 0;
+    /** {@link #routeKeyEvent}: zjedzone przez menu (Game zwraca true). */
+    public static final int KEY_CONSUMED = 1;
+    /** {@link #routeKeyEvent}: do systemu, nie do hosta (Game zwraca false). */
+    public static final int KEY_SYSTEM = 2;
 
     /** Zwrotne wywołania do aktywności strumienia. */
     public interface Host {
@@ -54,6 +72,8 @@ public final class ThumbcastSession {
     private final ThumbcastSettings settings;
     private final ThumbcastOverlay overlay;
     private final HostPadReporterImpl padReporter;
+    private final ControllerHandler controllerHandler;
+    private final MenuInputRouter menuInput = new MenuInputRouter();
     /** Profil z pliku z wyłączonym autoHideOnGamepad (ukrywaniem przy padzie steruje sesja), bez skalowania. */
     private final Profile baseProfile;
     private final Map<String, Runnable> commands;
@@ -135,6 +155,7 @@ public final class ThumbcastSession {
         this.baseProfile = ThumbcastOverlayFactory.withAutoHideOnGamepad(profile, false);
         this.commands = buildCommands();
 
+        this.controllerHandler = controllerHandler;
         padReporter = new HostPadReporterImpl(controllerHandler);
         overlay = ThumbcastOverlayFactory.create(
                 activity,
@@ -177,9 +198,53 @@ public final class ThumbcastSession {
             return false;
         }
         if (isMenuShown()) {
-            hideMenu();
+            onMenuBack();
         } else {
             showMenu();
+        }
+        return true;
+    }
+
+    /**
+     * handleKeyDown / handleKeyUp / handleKeyMultiple, przed czymkolwiek innym: przy otwartym menu klawisze
+     * i przyciski pada nawigują po menu i nie trafiają do hosta. Zwraca {@link #KEY_PASS} (zwykła ścieżka),
+     * {@link #KEY_CONSUMED} albo {@link #KEY_SYSTEM} (głośność, zasilanie: obsługuje system).
+     */
+    public int routeKeyEvent(KeyEvent event) {
+        if (destroyed) {
+            return KEY_PASS;
+        }
+        MenuKeyResult r = menuInput.onKey(isMenuShown(), event.getAction(), event.getKeyCode(),
+                event.getRepeatCount(), event.getDeviceId());
+        if (r.getCommand() != MenuCommand.NONE) {
+            onMenuCommand(r.getCommand());
+        }
+        switch (r.getRoute()) {
+            case CONSUME:
+                return KEY_CONSUMED;
+            case SYSTEM:
+                return KEY_SYSTEM;
+            default:
+                return KEY_PASS;
+        }
+    }
+
+    /**
+     * handleMotionEvent, przed czymkolwiek innym: przy otwartym menu żadne zdarzenie ruchu (pad, mysz, touchpad)
+     * nie trafia do hosta. Krzyżak i lewa gałka pada przesuwają zaznaczenie. true = zjedzone.
+     */
+    public boolean consumeMotionEvent(MotionEvent event) {
+        if (destroyed || !isMenuShown()) {
+            return false;
+        }
+        if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0
+                && event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+            List<MenuCommand> commands = menuInput.onAxes(event.getDeviceId(),
+                    event.getAxisValue(MotionEvent.AXIS_HAT_X), event.getAxisValue(MotionEvent.AXIS_HAT_Y),
+                    event.getAxisValue(MotionEvent.AXIS_X), event.getAxisValue(MotionEvent.AXIS_Y));
+            for (MenuCommand command : commands) {
+                onMenuCommand(command);
+            }
         }
         return true;
     }
@@ -326,23 +391,61 @@ public final class ThumbcastSession {
         }
         // Nic nie może zostać wciśnięte na hoście. Palce, które jeszcze leżą na overlayu, po releaseAll
         // nie są śledzone (translator ignoruje ich MOVE), a nowe trafiają w menu, które konsumuje każdy dotyk.
-        overlay.releaseAll();
+        releaseHostInput();
         if (menuView == null) {
             menuView = new ThumbcastMenuView(activity, menuListener);
         }
         if (menuView.getParent() == null) {
+            menuInput.resetAxes();
+            setPhysicalInputBlocked(true);
             // Ostatnie dziecko: rysowane nad overlayem i pierwsze w kolejce dotyku.
             overlayParent.addView(menuView, new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+            menuView.clearSelection();
             menuView.scrollToTop();
         }
         refreshMenu();
+    }
+
+    /**
+     * Zerowy stan na hoście: nakładka (pad, klawisze, mysz; releaseAll jak przy ukryciu, PiP i utracie fokusu)
+     * i pady fizyczne (Game nie przekazuje ich zdarzeń, dopóki menu jest otwarte, więc puszczenie przycisku
+     * albo powrót gałki nie dotarłby do hosta). Klawisze klawiatury fizycznej wciśnięte przed menu puszcza ich
+     * własne zdarzenie ACTION_UP, które MenuInputRouter przepuszcza do hosta.
+     */
+    private void releaseHostInput() {
+        overlay.releaseAll();
+        controllerHandler.releaseAllControllerInput();
+    }
+
+    /** Pady z własnego sterownika USB omijają Game: ControllerHandler blokuje je sam, dopóki menu jest otwarte. */
+    private void setPhysicalInputBlocked(boolean blocked) {
+        controllerHandler.setThumbcastInputBlocked(blocked);
     }
 
     /** Zamknięcie bez akcji (Wróć do gry, tap w tło, Back, PiP, onDestroy). */
     private void hideMenu() {
         if (isMenuShown()) {
             overlayParent.removeView(menuView);
+        }
+        menuInput.resetAxes();
+        setPhysicalInputBlocked(false);
+    }
+
+    /** B, Back, Escape przy otwartym menu. */
+    private void onMenuBack() {
+        hideMenu();
+    }
+
+    /** Polecenie z klawiatury lub pada przy otwartym menu. */
+    private void onMenuCommand(MenuCommand command) {
+        if (!isMenuShown()) {
+            return;
+        }
+        if (command == MenuCommand.BACK) {
+            onMenuBack();
+        } else {
+            menuView.handleCommand(command);
         }
     }
 

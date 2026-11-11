@@ -9,13 +9,20 @@ package com.limelight.thumbcast;
 // nic nie dostaje; tap w tło = „Wróć do gry”. Panel boczny (przy krawędzi END) na pełną wysokość,
 // przewijany, wiersze min. 52 dp. Żaden element nie bierze fokusu: StreamView go zachowuje
 // (klawiatura ekranowa i klawisze trafiają tam jak bez menu).
+//
+// Nawigacja klawiaturą i padem (12.11.2026): klawisze i osie odbiera Game (bramka w ThumbcastSession,
+// MenuInputRouter), a widok dostaje gotowe polecenia w handleCommand: góra/dół przesuwa zaznaczenie wiersza
+// (obramowanie, bez fokusu Androida), lewo/prawo zmienia wartość wiersza − / +, A/Enter uruchamia wiersz.
+// Zaznaczenie pojawia się dopiero po pierwszym poleceniu z klawiatury lub pada, więc dotyk wygląda jak dawniej.
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Typeface;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -29,6 +36,9 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.limelight.R;
+
+import app.thumbcast.android.menu.MenuCommand;
+import app.thumbcast.android.menu.MenuFocus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,6 +62,8 @@ public final class ThumbcastMenuView extends FrameLayout {
     private static final int TITLE_COLOR = 0xB3FFFFFF;
     private static final int DESTRUCTIVE_COLOR = 0xFFFF8A80;
     private static final int PRIMARY_COLOR = 0xFF8AB4F8;
+    private static final int SELECTED_FILL_COLOR = 0x268AB4F8;
+    private static final int SELECTED_STROKE_DP = 2;
     private static final float DISABLED_ALPHA = 0.35f;
 
     /** Wiersz i przyciski − / +: powyżej minimum 48 dp celu dotyku. */
@@ -73,6 +85,9 @@ public final class ThumbcastMenuView extends FrameLayout {
     /** Wiersze pozycji (po tytule); indeks = indeks w {@link #items}. */
     private final List<View> rows = new ArrayList<>();
     private List<ThumbcastMenuModel.Item> items = Collections.emptyList();
+    /** Wiersz zaznaczony klawiaturą lub padem; -1 = brak (menu obsługiwane dotykiem). */
+    private int selected = -1;
+    private final TextView title;
     private int insetLeft;
     private int insetTop;
     private int insetRight;
@@ -107,7 +122,7 @@ public final class ThumbcastMenuView extends FrameLayout {
         list.setOrientation(LinearLayout.VERTICAL);
         scroll.addView(list, new ScrollView.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
-        TextView title = new TextView(context);
+        title = new TextView(context);
         title.setText(R.string.thumbcast_menu_title);
         title.setTextColor(TITLE_COLOR);
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
@@ -137,15 +152,104 @@ public final class ThumbcastMenuView extends FrameLayout {
                 rows.add(row);
                 list.addView(row, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
             }
+            // Nowa lista: zaznaczenie (jeśli było) wraca na wiersz domyślny.
+            if (selected >= 0) {
+                selected = defaultIndex();
+            }
+        }
+        if (selected >= newItems.size()) {
+            selected = newItems.isEmpty() ? -1 : newItems.size() - 1;
         }
         for (int i = 0; i < newItems.size(); i++) {
             updateRow(rows.get(i), newItems.get(i));
         }
+        updateSelection();
+    }
+
+    /** Tytuł panelu (strona główna menu albo podstrona). */
+    void setTitle(CharSequence text) {
+        title.setText(text);
     }
 
     /** Na górę listy (każde otwarcie menu zaczyna od pierwszej pozycji). */
     void scrollToTop() {
         scroll.scrollTo(0, 0);
+    }
+
+    /** Bez zaznaczenia (nowe otwarcie menu). */
+    void clearSelection() {
+        selected = -1;
+        updateSelection();
+    }
+
+    /**
+     * Polecenie z klawiatury lub pada (BACK obsługuje sesja). Pierwsze polecenie kierunku tylko pokazuje
+     * zaznaczenie na wierszu domyślnym (Wróć do gry, aktywny profil), A/Enter bez zaznaczenia też.
+     */
+    void handleCommand(MenuCommand command) {
+        if (items.isEmpty()) {
+            return;
+        }
+        boolean fresh = selected < 0 || selected >= items.size();
+        switch (command) {
+            case UP:
+                select(MenuFocus.move(selected, -1, items.size(), defaultIndex()));
+                break;
+            case DOWN:
+                select(MenuFocus.move(selected, 1, items.size(), defaultIndex()));
+                break;
+            case LEFT:
+            case RIGHT:
+                if (fresh) {
+                    select(defaultIndex());
+                } else if (items.get(selected).kind == ThumbcastMenuModel.Kind.STEPPER) {
+                    fire(selected, command == MenuCommand.LEFT ? Which.DECREASE : Which.INCREASE);
+                }
+                break;
+            case ACTIVATE:
+                if (fresh) {
+                    select(defaultIndex());
+                } else if (items.get(selected).kind == ThumbcastMenuModel.Kind.BUTTON) {
+                    fire(selected, Which.ACTION);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    /** Wiersz domyślny zaznaczenia: pierwszy PRIMARY (Wróć do gry, aktywny profil), inaczej pierwszy. */
+    private int defaultIndex() {
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i).style == ThumbcastMenuModel.Style.PRIMARY) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    private void select(int index) {
+        selected = index;
+        updateSelection();
+        if (index >= 0 && index < rows.size()) {
+            final View row = rows.get(index);
+            // Po layoucie (nowa lista nie ma jeszcze wymiarów): przewiń tak, żeby wiersz był widoczny.
+            row.post(() -> row.requestRectangleOnScreen(new Rect(0, 0, row.getWidth(), row.getHeight()), false));
+        }
+    }
+
+    private void updateSelection() {
+        for (int i = 0; i < rows.size(); i++) {
+            rows.get(i).setForeground(i == selected ? newSelectionDrawable() : null);
+        }
+    }
+
+    private Drawable newSelectionDrawable() {
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(SELECTED_FILL_COLOR);
+        d.setStroke(dp(SELECTED_STROKE_DP), PRIMARY_COLOR);
+        d.setCornerRadius(dp(4));
+        return d;
     }
 
     // =====================================================================================

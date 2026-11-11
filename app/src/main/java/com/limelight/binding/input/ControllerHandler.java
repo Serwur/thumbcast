@@ -2802,6 +2802,42 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
         sendControllerInputPacket(defaultContext);
     }
 
+    // THUMBCAST: true przy otwartym menu w grze; reportControllerState (sterownik USB) nie wysyła wtedy stanu.
+    private boolean thumbcastInputBlocked;
+
+    public void setThumbcastInputBlocked(boolean blocked) {
+        thumbcastInputBlocked = blocked;
+    }
+
+    // Menu w grze zatrzymuje wejście z padów fizycznych (Game ich nie przekazuje, gdy menu jest otwarte).
+    // Przy otwarciu menu każdy pad, który coś trzyma, dostaje stan zerowy: przyciski puszczone, gałki na środku,
+    // triggery 0. Stan nakładki (defaultContext) zeruje osobno ThumbcastOverlay.releaseAll().
+    public void releaseAllControllerInput() {
+        for (int i = 0; i < inputDeviceContexts.size(); i++) {
+            releaseControllerInput(inputDeviceContexts.valueAt(i));
+        }
+        for (int i = 0; i < usbDeviceContexts.size(); i++) {
+            releaseControllerInput(usbDeviceContexts.valueAt(i));
+        }
+    }
+
+    private void releaseControllerInput(GenericControllerContext context) {
+        boolean active = context.inputMap != 0 || context.leftTrigger != 0 || context.rightTrigger != 0 ||
+                context.leftStickX != 0 || context.leftStickY != 0 ||
+                context.rightStickX != 0 || context.rightStickY != 0;
+        context.inputMap = 0;
+        context.leftTrigger = 0;
+        context.rightTrigger = 0;
+        context.leftStickX = 0;
+        context.leftStickY = 0;
+        context.rightStickX = 0;
+        context.rightStickY = 0;
+        if (active && context.assignedControllerNumber) {
+            sendControllerInputPacket(context);
+        }
+    }
+    // THUMBCAST END
+
     @Override
     public void reportControllerState(int controllerId, int buttonFlags,
                                       float leftStickX, float leftStickY,
@@ -2838,6 +2874,9 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
 
         context.inputMap = buttonFlags;
 
+        // THUMBCAST: pady z własnego sterownika USB omijają Game, więc menu w grze blokuje je tutaj.
+        if (thumbcastInputBlocked) return;
+        // THUMBCAST END
         sendControllerInputPacket(context);
     }
 

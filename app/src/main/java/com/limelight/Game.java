@@ -1346,6 +1346,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     @Override
     public boolean handleKeyDown(KeyEvent event) {
+        // THUMBCAST: otwarte menu w grze zjada klawisze i przyciski pada (nawigacja), do hosta nic nie idzie.
+        if (thumbcast != null) {
+            int route = thumbcast.routeKeyEvent(event);
+            if (route != ThumbcastSession.KEY_PASS) return route == ThumbcastSession.KEY_CONSUMED;
+        }
+        // THUMBCAST END
         // Pass-through virtual navigation keys
         if ((event.getFlags() & KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0) {
             return false;
@@ -1428,6 +1434,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     @Override
     public boolean handleKeyUp(KeyEvent event) {
+        // THUMBCAST: otwarte menu w grze zjada klawisze i przyciski pada (nawigacja), do hosta nic nie idzie.
+        if (thumbcast != null) {
+            int route = thumbcast.routeKeyEvent(event);
+            if (route != ThumbcastSession.KEY_PASS) return route == ThumbcastSession.KEY_CONSUMED;
+        }
+        // THUMBCAST END
         // Pass-through virtual navigation keys
         if ((event.getFlags() & KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0) {
             return false;
@@ -1491,6 +1503,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     }
 
     private boolean handleKeyMultiple(KeyEvent event) {
+        // THUMBCAST: tekst z klawiatury nie trafia do hosta przy otwartym menu w grze.
+        if (thumbcast != null && thumbcast.routeKeyEvent(event) == ThumbcastSession.KEY_CONSUMED) return true;
+        // THUMBCAST END
         // We can receive keys from a software keyboard that don't correspond to any existing
         // KEYCODE value. Android will give those to us as an ACTION_MULTIPLE KeyEvent.
         //
@@ -1810,6 +1825,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     // Returns true if the event was consumed
     // NB: View is only present if called from a view callback
     private boolean handleMotionEvent(View view, MotionEvent event) {
+        // THUMBCAST: przy otwartym menu w grze pad, mysz i touchpad nie trafiają do hosta (krzyżak i gałka nawigują).
+        if (thumbcast != null && thumbcast.consumeMotionEvent(event)) return true;
+        // THUMBCAST END
         // Pass through mouse/touch/joystick input if we're not grabbing
         if (!grabbedInput) {
             return false;

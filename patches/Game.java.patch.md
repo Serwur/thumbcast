@@ -185,3 +185,14 @@ W PiP sesja woła `releaseAll()`, zamyka menu i chowa overlay.
   (ukrywanie kontrolek przy podłączonym padzie, ustawienie `checkbox_thumbcast_hide_on_gamepad`), więc nic nie dodajemy w `Game`.
 - Połączenie z padem fizycznym: `sendControllerInputPacket` łączy `defaultContext` (nasz `reportOscState`) z padami
   fizycznymi tego samego `controllerNumber` przez OR przycisków i `maxByMagnitude` osi, więc nasz stan i fizyczny pad 0 się sumują.
+
+## 9. Menu w grze zatrzymuje klawiaturę i pada (12.11.2026)
+
+- Na początku `handleKeyDown` i `handleKeyUp` blok THUMBCAST pyta `thumbcast.routeKeyEvent(event)`:
+  `KEY_PASS` = dalej jak w upstreamie, `KEY_CONSUMED` = `return true`, `KEY_SYSTEM` = `return false` (głośność, zasilanie).
+  `handleKeyMultiple` zwraca `true`, gdy `routeKeyEvent` zjada zdarzenie.
+- Na początku `handleMotionEvent` blok THUMBCAST: `if (thumbcast != null && thumbcast.consumeMotionEvent(event)) return true;`
+  (przy otwartym menu nic z pada, myszy ani touchpada nie idzie do hosta; krzyżak i lewa gałka nawigują po menu).
+- `ControllerHandler` (bloki THUMBCAST): `releaseAllControllerInput()` zeruje stan każdego pada fizycznego, który coś
+  trzymał (sesja woła to przy otwarciu menu, razem z `overlay.releaseAll()`), a `setThumbcastInputBlocked(boolean)`
+  blokuje `reportControllerState` (pady z własnego sterownika USB omijają `Game`).
