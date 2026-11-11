@@ -32,6 +32,8 @@ android {
         // Testy JVM nie dotykają klas Androida w ścieżce wykonania, ale na wszelki wypadek
         // stuby android.jar zwracają wartości domyślne zamiast rzucać wyjątek.
         unitTests.isReturnDefaultValues = true
+        // ProfileRepositoryTest sprawdza prawdziwe presety z katalogu głównego projektu.
+        unitTests.all { it.systemProperty("thumbcast.presetsDir", rootProject.file("presets").absolutePath) }
     }
 }
 
