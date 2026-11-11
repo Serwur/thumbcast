@@ -68,7 +68,40 @@ class ProfileCodecTest {
         assertEquals(Output.Pad(PadButton.A), a.output)
         assertEquals(Behavior.HOLD, a.behavior)
         assertEquals(null, a.chord)
+        // Profil bez pola freeZone (wszystkie sprzed 11.11.2026) ma kamerę jak dotąd.
+        assertEquals(FreeZoneMode.CAMERA, p.gestures.freeZone)
+        assertEquals(Touchpad(), p.gestures.touchpad)
     }
+
+    @Test
+    fun touchpadFreeZoneDecodesAndRoundTrips() {
+        val json = TestFixtures.MINIMAL_JSON.replace(
+            "\"mode\": \"pad_plus\",",
+            "\"mode\": \"pad_plus\", \"gestures\": { \"freeZone\": \"touchpad\", " +
+                "\"touchpad\": { \"sensitivity\": 1.4, \"scrollPxPerNotch\": 30 } },",
+        )
+        val p = ProfileCodec.decode(json).getOrThrow()
+        assertEquals(FreeZoneMode.TOUCHPAD, p.gestures.freeZone)
+        assertEquals(Touchpad(1.4f, 30f), p.gestures.touchpad)
+        val text = ProfileCodec.encode(p)
+        assertTrue(text.contains("\"freeZone\": \"touchpad\""), text)
+        assertEquals(p, ProfileCodec.decode(text).getOrThrow())
+    }
+
+    @Test
+    fun rejectsUnknownFreeZone() = assertRejected(
+        TestFixtures.MINIMAL_JSON.replace("\"mode\": \"pad_plus\",", "\"mode\": \"pad_plus\", \"gestures\": { \"freeZone\": \"both\" },"),
+        "nieznana wartość freeZone",
+    )
+
+    @Test
+    fun rejectsUnknownTouchpadField() = assertRejected(
+        TestFixtures.MINIMAL_JSON.replace(
+            "\"mode\": \"pad_plus\",",
+            "\"mode\": \"pad_plus\", \"gestures\": { \"freeZone\": \"touchpad\", \"touchpad\": { \"autoClick\": true } },",
+        ),
+        "nieznane pole touchpada",
+    )
 
     @Test
     fun outputVariantsRoundTrip() {

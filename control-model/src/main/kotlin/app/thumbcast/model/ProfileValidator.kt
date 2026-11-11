@@ -25,6 +25,8 @@ object ProfileValidator {
     const val POWER_EXPONENT_MIN = 1.0f
     const val POWER_EXPONENT_MAX = 3.0f
     const val OPACITY_MIN = 0.1f
+    const val TOUCHPAD_SCROLL_PX_MIN = 4f
+    const val TOUCHPAD_SCROLL_PX_MAX = 400f
     private const val EPS = 1e-4f
 
     /** Modyfikatory pada dozwolone w ModifierControl. */
@@ -108,6 +110,11 @@ object ProfileValidator {
             errors.add("gestures.longPress.minMs: musi być większe niż tapTarget.maxMs (tap i long-press się wykluczają)")
         }
         if (!(g.pinchZoom.pxPerNotch > 0f)) errors.add("gestures.pinchZoom.pxPerNotch: musi być dodatnie")
+        val tp = g.touchpad
+        if (!(tp.sensitivity > 0f && tp.sensitivity <= 10f)) errors.add("gestures.touchpad.sensitivity: poza zakresem (0..10]")
+        if (!inRange(tp.scrollPxPerNotch, TOUCHPAD_SCROLL_PX_MIN, TOUCHPAD_SCROLL_PX_MAX)) {
+            errors.add("gestures.touchpad.scrollPxPerNotch: poza zakresem $TOUCHPAD_SCROLL_PX_MIN..$TOUCHPAD_SCROLL_PX_MAX")
+        }
     }
 
     private fun checkUniqueIds(controls: List<Control>, errors: MutableList<String>) {
@@ -122,13 +129,15 @@ object ProfileValidator {
     /**
      * Jedna gałka pada = jedno źródło (tylko PAD_PLUS; w KEYBOARD_MOUSE joystick wysyła klawisze z `kbmKeys`,
      * a kamera musi być `mouse_look`). Źródłem jest kontrolka `stick` albo gest kamery z wyjściem `pad_right_stick`
-     * (gest nie ma przełącznika `enabled`, więc zawsze zajmuje prawą gałkę). Silnik przy dwóch źródłach nadpisuje oś
-     * ostatnim zapisem, dlatego taki profil jest odrzucany.
+     * (gest nie ma przełącznika `enabled`, więc przy `freeZone = camera` zawsze zajmuje prawą gałkę; przy
+     * `freeZone = touchpad` kamery nie ma i prawa gałka jest wolna dla kontrolki). Silnik przy dwóch źródłach
+     * nadpisuje oś ostatnim zapisem, dlatego taki profil jest odrzucany.
      */
     private fun checkStickSources(p: Profile, errors: MutableList<String>) {
         if (p.mode != ProfileMode.PAD_PLUS) return
         val owners = HashMap<PadStick, String>()
-        val cameraOnPad = p.gestures.cameraDrag.output == CameraOutput.PAD_RIGHT_STICK
+        val cameraOnPad = p.gestures.freeZone == FreeZoneMode.CAMERA &&
+            p.gestures.cameraDrag.output == CameraOutput.PAD_RIGHT_STICK
         if (cameraOnPad) owners[PadStick.RIGHT] = "gestures.cameraDrag (output = pad_right_stick)"
         p.controls.forEachIndexed { index, c ->
             if (c !is StickControl) return@forEachIndexed
@@ -141,7 +150,8 @@ object ProfileValidator {
             }
             val name = if (stick == PadStick.LEFT) "left_stick" else "right_stick"
             val hint = if (stick == PadStick.RIGHT && cameraOnPad) {
-                "; gałka right_stick działa razem z kamerą tylko przy gestures.cameraDrag.output = mouse_look"
+                "; gałka right_stick działa razem z kamerą tylko przy gestures.cameraDrag.output = mouse_look " +
+                    "albo bez kamery (gestures.freeZone = touchpad)"
             } else {
                 ""
             }

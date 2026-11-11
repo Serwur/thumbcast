@@ -63,6 +63,16 @@ enum class GestureZone {
     @SerialName("left_free") LEFT_FREE,
 }
 
+// Właściciel wolnej strefy (część ekranu bez kontrolek). Jeden na profil: jedno przeciągnięcie nigdy nie daje
+// jednocześnie kamery i ruchu myszy.
+// CAMERA: tabela gestów Pad+ (kamera z cameraDrag, tap, long-press, pinch, edge swipe).
+// TOUCHPAD: tabela gestów touchpada (ruch kursora, kliknięcia w miejscu kursora, przewijanie dwoma palcami).
+@Serializable
+enum class FreeZoneMode {
+    @SerialName("camera") CAMERA,
+    @SerialName("touchpad") TOUCHPAD,
+}
+
 // Wyjście gestu przeciągania kamery.
 // PAD_RIGHT_STICK: prędkość palca -> wychylenie prawej gałki (tylko PAD_PLUS).
 // MOUSE_LOOK: prawy przycisk myszy trzymany przez cały gest + ruch względny (RMB-look).

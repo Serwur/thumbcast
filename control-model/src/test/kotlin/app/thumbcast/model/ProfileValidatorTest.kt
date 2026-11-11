@@ -144,6 +144,33 @@ class ProfileValidatorTest {
         val errors = ProfileValidator.validate(p.copy(gestures = p.gestures.copy(cameraDrag = p.gestures.cameraDrag.copy(output = CameraOutput.MOUSE_LOOK))))
         assertTrue(errors.size == 1 && errors[0].contains("id=look2") && errors[0].contains(axisFragment), "oczekiwano jednego błędu dla look2, są: $errors")
     }
+    // --- wolna strefa: touchpad (11.11.2026) ---
+    private fun touchpad(p: Profile): Profile = p.copy(gestures = p.gestures.copy(freeZone = FreeZoneMode.TOUCHPAD))
+    @Test fun defaultFreeZoneIsCamera() = assertTrue(GesturesConfig().freeZone == FreeZoneMode.CAMERA)
+    @Test fun touchpadFreeZoneFreesRightStickForControl() {
+        // Kamera pad_right_stick (domyślna) nie działa przy touchpadzie, więc nie jest drugim źródłem prawej gałki.
+        val p = touchpad(padWith(lookStick))
+        assertTrue(p.gestures.cameraDrag.output == CameraOutput.PAD_RIGHT_STICK)
+        assertValid(p)
+    }
+    @Test fun touchpadFreeZoneStillRejectsTwoRightSticks() =
+        assertInvalid(touchpad(padWith(lookStick, lookStick.copy(id = "look2", rect = Rect(0.4f, 0.1f, 0.2f, 0.2f)))), axisFragment)
+    @Test fun touchpadFreeZoneInKbmGood() = assertValid(touchpad(f.kbmProfile()))
+    @Test fun touchpadWithoutPadControlsGood() = assertValid(touchpad(f.padProfile(listOf(f.systemMenu))))
+    @Test fun touchpadSensitivityBad() {
+        val p = touchpad(f.padProfile())
+        assertInvalid(p.copy(gestures = p.gestures.copy(touchpad = Touchpad(sensitivity = 0f))), "touchpad.sensitivity")
+        assertInvalid(p.copy(gestures = p.gestures.copy(touchpad = Touchpad(sensitivity = 11f))), "touchpad.sensitivity")
+    }
+    @Test fun touchpadScrollPxBad() {
+        val p = touchpad(f.padProfile())
+        assertInvalid(p.copy(gestures = p.gestures.copy(touchpad = Touchpad(scrollPxPerNotch = 1f))), "scrollPxPerNotch")
+        assertInvalid(p.copy(gestures = p.gestures.copy(touchpad = Touchpad(scrollPxPerNotch = Float.NaN))), "scrollPxPerNotch")
+        assertValid(p.copy(gestures = p.gestures.copy(touchpad = Touchpad(sensitivity = 2.5f, scrollPxPerNotch = 30f))))
+    }
+    @Test fun touchpadLongPressMustNotOverlapTap() =
+        assertInvalid(touchpad(f.padProfile()).copy(gestures = GesturesConfig(freeZone = FreeZoneMode.TOUCHPAD, longPress = LongPress(minMs = 200))), "longPress")
+
     @Test fun kbmTwoSticksAreKeysNotAxesGood() {
         // W keyboard_mouse joystick wysyła klawisze z kbmKeys, więc output = left_stick to tylko rola, a nie oś pada.
         val second = f.stick.copy(id = "move2", rect = Rect(0.6f, 0.4f, 0.2f, 0.3f), kbmKeys = StickKeys("UP", "DOWN", "LEFT", "RIGHT"))
