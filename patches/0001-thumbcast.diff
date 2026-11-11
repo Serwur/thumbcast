@@ -152,165 +152,103 @@ index c9cc3e47..9a5709d6 100644
 +    implementation project(':control-android')
  }
 diff --git a/app/src/main/java/com/limelight/Game.java b/app/src/main/java/com/limelight/Game.java
-index 8d369b3e..d7a4c10a 100644
+index 8d369b3e..a10f9eba 100644
 --- a/app/src/main/java/com/limelight/Game.java
 +++ b/app/src/main/java/com/limelight/Game.java
-@@ -36,6 +36,16 @@ import com.limelight.utils.ServerHelper;
+@@ -36,6 +36,9 @@ import com.limelight.utils.ServerHelper;
  import com.limelight.utils.ShortcutHelper;
  import com.limelight.utils.SpinnerDialog;
  import com.limelight.utils.UiHelper;
 +// THUMBCAST:
-+import com.limelight.thumbcast.HostConnectionImpl;
-+import com.limelight.thumbcast.HostPadReporterImpl;
-+import com.limelight.thumbcast.ThumbcastKeyTranslator;
-+import app.thumbcast.android.ThumbcastOverlayFactory;
-+import app.thumbcast.android.ThumbcastProfiles;
-+import app.thumbcast.android.overlay.ThumbcastOverlay;
-+import app.thumbcast.model.AppActions;
-+import app.thumbcast.model.Profile;
++import com.limelight.thumbcast.ThumbcastSession;
 +// THUMBCAST END
  
  import android.annotation.SuppressLint;
  import android.annotation.TargetApi;
-@@ -112,6 +122,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -112,6 +115,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
      private ControllerHandler controllerHandler;
      private KeyboardTranslator keyboardTranslator;
      private VirtualController virtualController;
 +    // THUMBCAST:
-+    private ThumbcastOverlay thumbcastOverlay;          // null = tryb legacy
-+    private HostPadReporterImpl thumbcastPadReporter;
++    private ThumbcastSession thumbcast; // null = tryb legacy
 +    // THUMBCAST END
  
      private PreferenceConfiguration prefConfig;
      private SharedPreferences tombstonePrefs;
-@@ -504,7 +518,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -504,7 +510,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
              }
          }
  
 -        if (prefConfig.onscreenController) {
 +        // THUMBCAST:
-+        boolean thumbcastActive = createThumbcastOverlay();
++        thumbcast = ThumbcastSession.createOrNull(this, ThumbcastSession.activityHost(this, this), prefConfig,
++                conn, controllerHandler, keyboardTranslator, streamView);
 +        // THUMBCAST END
-+        if (prefConfig.onscreenController && !thumbcastActive) {
++        if (prefConfig.onscreenController && thumbcast == null) {
              // create virtual onscreen controller
              virtualController = new VirtualController(controllerHandler,
                      (FrameLayout)streamView.getParent(),
-@@ -594,6 +611,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -594,6 +604,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                  if (virtualController != null) {
                      virtualController.hide();
                  }
 +                // THUMBCAST:
-+                if (thumbcastOverlay != null) {
-+                    thumbcastOverlay.releaseAll();
-+                    thumbcastOverlay.setVisibility(View.GONE);
-+                }
++                if (thumbcast != null) thumbcast.onPictureInPictureChanged(true);
 +                // THUMBCAST END
  
                  performanceOverlayView.setVisibility(View.GONE);
                  notificationOverlayView.setVisibility(View.GONE);
-@@ -612,6 +635,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -612,6 +625,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                  if (virtualController != null) {
                      virtualController.show();
                  }
 +                // THUMBCAST:
-+                if (thumbcastOverlay != null) {
-+                    thumbcastOverlay.setVisibility(View.VISIBLE);
-+                }
++                if (thumbcast != null) thumbcast.onPictureInPictureChanged(false);
 +                // THUMBCAST END
  
                  if (prefConfig.enablePerfOverlay) {
                      performanceOverlayView.setVisibility(View.VISIBLE);
-@@ -1036,6 +1064,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1036,6 +1052,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
      protected void onDestroy() {
          super.onDestroy();
  
 +        // THUMBCAST:
-+        if (thumbcastPadReporter != null) {
-+            thumbcastPadReporter.cancelPending();
-+        }
++        if (thumbcast != null) thumbcast.onDestroy();
 +        // THUMBCAST END
 +
          if (controllerHandler != null) {
              controllerHandler.destroy();
          }
-@@ -1504,6 +1538,57 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1504,6 +1524,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
          inputManager.toggleSoftInput(0, 0);
      }
  
-+    // THUMBCAST:
-+    private boolean createThumbcastOverlay() {
-+        if (prefConfig.controlLayer != PreferenceConfiguration.ControlLayer.THUMBCAST) {
-+            return false;
-+        }
-+        Profile profile = ThumbcastProfiles.loadOrNull(this, prefConfig.thumbcastProfileFile);
-+        if (profile == null) {
-+            // Błąd odczytu/walidacji: komunikat i powrót do VirtualController (onscreenController jest wymuszone).
-+            Toast.makeText(this, getString(R.string.thumbcast_profile_error,
-+                    String.valueOf(ThumbcastProfiles.getLastError())), Toast.LENGTH_LONG).show();
-+            return false;
-+        }
-+        thumbcastPadReporter = new HostPadReporterImpl(controllerHandler);
-+        thumbcastOverlay = ThumbcastOverlayFactory.create(
-+                this,
-+                profile,
-+                new HostConnectionImpl(conn),
-+                thumbcastPadReporter,
-+                this::onThumbcastAppAction,
-+                new ThumbcastKeyTranslator(keyboardTranslator));
-+        FrameLayout parent = (FrameLayout) streamView.getParent();
-+        // Ostatnie dziecko FrameLayout jest rysowane na wierzchu i pierwsze dostaje dotyk.
-+        parent.addView(thumbcastOverlay, new FrameLayout.LayoutParams(
-+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-+        thumbcastOverlay.setDebugEnabled(prefConfig.thumbcastDebugOverlay);
-+        thumbcastOverlay.setStreamResolution(prefConfig.width, prefConfig.height);
-+        // Prostokąt wideo = rozmiar StreamView po layoucie (onMeasure dopasowuje proporcje, layout_gravity=center
-+        // wyśrodkowuje). l/t/r/b są w układzie rodzica, tym samym co overlay (MATCH_PARENT, bez paddingu).
-+        streamView.addOnLayoutChangeListener((v, l, t, r, b, oldL, oldT, oldR, oldB) ->
-+                thumbcastOverlay.setVideoRect(l, t, r, b, prefConfig.width, prefConfig.height));
-+        return true;
-+    }
-+
-+    private void onThumbcastAppAction(String action) {
-+        switch (action) {
-+            case AppActions.SOFT_KEYBOARD:
-+                toggleKeyboard();
-+                break;
-+            case AppActions.MENU:
-+                // v12.2 nie ma w Game menu do otwarcia; E2: bottom sheet.
-+                LimeLog.info("Thumbcast: menu requested");
-+                break;
-+            case AppActions.TOGGLE_OVERLAY:
-+                // Overlay już przełączył widoczność kontrolek (fabryka).
-+                break;
-+            default:
-+                break;
-+        }
++    // THUMBCAST: systemowy Back w trybie Thumbcast otwiera menu strumienia (Rozłącz jest w menu).
++    @Override
++    public void onBackPressed() {
++        if (thumbcast == null || !thumbcast.onBackPressed()) super.onBackPressed();
 +    }
 +    // THUMBCAST END
 +
      private byte getLiTouchTypeFromEvent(MotionEvent event) {
          switch (event.getActionMasked()) {
              case MotionEvent.ACTION_DOWN:
-@@ -1993,6 +2078,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1993,6 +2020,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
              // This case is for fingers
              else
              {
 +                // THUMBCAST: overlay obsługuje palce w całości (do 10 wskaźników); touchContextMap pomijamy.
-+                if (thumbcastOverlay != null) {
-+                    return true;
-+                }
++                if (thumbcast != null && thumbcast.consumesFingerTouches()) return true;
 +                // THUMBCAST END
                  if (virtualController != null &&
                          (virtualController.getControllerMode() == VirtualController.ControllerMode.MoveButtons ||
                           virtualController.getControllerMode() == VirtualController.ControllerMode.ResizeButtons)) {
-@@ -2227,6 +2317,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -2227,6 +2257,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
  
      private void stopConnection() {
          if (connecting || connected) {
 +            // THUMBCAST: zerowy stan na hosta przed zamknięciem połączenia.
-+            if (thumbcastOverlay != null) {
-+                thumbcastOverlay.releaseAll();
-+            }
++            if (thumbcast != null) thumbcast.onStopConnection();
 +            // THUMBCAST END
              connecting = connected = false;
              updatePipAutoEnter();
@@ -359,10 +297,10 @@ index 8ed01e36..fbf6c6e7 100644
          config.showGuideButton = prefs.getBoolean(SHOW_GUIDE_BUTTON_PREF_STRING, SHOW_GUIDE_BUTTON_DEFAULT);
          config.enableHdr = prefs.getBoolean(ENABLE_HDR_PREF_STRING, DEFAULT_ENABLE_HDR) && !isShieldAtvFirmwareWithBrokenHdr();
 diff --git a/app/src/main/java/com/limelight/preferences/StreamSettings.java b/app/src/main/java/com/limelight/preferences/StreamSettings.java
-index 70701041..edbbc721 100644
+index 70701041..2ee1bed8 100644
 --- a/app/src/main/java/com/limelight/preferences/StreamSettings.java
 +++ b/app/src/main/java/com/limelight/preferences/StreamSettings.java
-@@ -351,6 +351,26 @@ public class StreamSettings extends Activity {
+@@ -351,6 +351,32 @@ public class StreamSettings extends Activity {
                  category_gamepad_settings.removePreference(findPreference("seekbar_vibrate_fallback_strength"));
              }
  
@@ -378,7 +316,13 @@ index 70701041..edbbc721 100644
 +                    if (oscPref != null) oscPref.setEnabled(!tc);
 +                    // Wibracja telefonu przy rumble (vibrateOsc) działa też w trybie Thumbcast, więc nie może zależeć
 +                    // od checkbox_show_onscreen_controls (w tym trybie wyszarzonego i zwykle równego false).
-+                    if (vibrateOscPref != null) vibrateOscPref.setDependency(tc ? null : "checkbox_show_onscreen_controls");
++                    if (vibrateOscPref != null) {
++                        vibrateOscPref.setDependency(tc ? null : "checkbox_show_onscreen_controls");
++                        // setDependency(null) tylko wyrejestrowuje zależność i nie zeruje flagi "zależność niespełniona"
++                        // ustawionej chwilę wcześniej przez oscPref.setEnabled(false), więc odblokowujemy ręcznie
++                        // (błąd znaleziony w smoke teście na emulatorze 11.11.2026).
++                        if (tc && oscPref != null) vibrateOscPref.onDependencyChanged(oscPref, false);
++                    }
 +                    return true;
 +                };
 +                layerListener.onPreferenceChange(controlLayer, controlLayer.getValue());
@@ -566,12 +510,514 @@ index 00000000..056ba4cc
 +        return translator.translate(androidKeyCode, -1);
 +    }
 +}
+diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
+new file mode 100644
+index 00000000..8dc4518c
+--- /dev/null
++++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
+@@ -0,0 +1,429 @@
++package com.limelight.thumbcast;
++
++// NOWY PLIK (moduł :app). Cała logika Thumbcast w aktywności Game: Game trzyma jedno pole
++// (`thumbcast`, null = tryb legacy) i woła kilka jednolinijkowych haków (patches/Game.java.patch.md).
++//
++// Sesja odpowiada za: wczytanie profilu (błąd = null, Game tworzy wtedy VirtualController), rozmiar
++// kontrolek (ScaleTransform), overlay nad StreamView, prostokąt wideo, HostPadReporterImpl, akcje
++// aplikacji (Command: mapa akcja -> Runnable), menu w grze (☰, gest od górnej krawędzi, systemowy Back),
++// ukrywanie kontrolek przy podłączonym padzie, PiP i sprzątanie.
++
++import android.app.Activity;
++import android.app.AlertDialog;
++import android.content.Context;
++import android.hardware.input.InputManager;
++import android.os.Build;
++import android.os.Handler;
++import android.os.Looper;
++import android.view.InputDevice;
++import android.view.View;
++import android.view.Window;
++import android.view.WindowManager;
++import android.widget.FrameLayout;
++import android.widget.Toast;
++
++import com.limelight.LimeLog;
++import com.limelight.R;
++import com.limelight.binding.input.ControllerHandler;
++import com.limelight.binding.input.KeyboardTranslator;
++import com.limelight.nvstream.NvConnection;
++import com.limelight.preferences.PreferenceConfiguration;
++import com.limelight.ui.GameGestures;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++
++import app.thumbcast.android.ThumbcastOverlayFactory;
++import app.thumbcast.android.ThumbcastProfiles;
++import app.thumbcast.android.overlay.ThumbcastOverlay;
++import app.thumbcast.model.AppActions;
++import app.thumbcast.model.Profile;
++import app.thumbcast.model.ScaleTransform;
++
++public final class ThumbcastSession {
++
++    /** Zwrotne wywołania do aktywności strumienia. */
++    public interface Host {
++        void toggleKeyboard();
++
++        /** Koniec strumienia tak jak w upstreamie po Back: finish() -> onStop() -> stopConnection(). */
++        void disconnect();
++    }
++
++    /** Klawiatura ekranowa po zamknięciu menu: okno aktywności musi najpierw odzyskać fokus. */
++    private static final long KEYBOARD_AFTER_DIALOG_MS = 200;
++    private static final int DIALOG_THEME = android.R.style.Theme_DeviceDefault_Dialog_Alert;
++
++    private final Activity activity;
++    private final Host host;
++    private final ThumbcastSettings settings;
++    private final ThumbcastOverlay overlay;
++    private final HostPadReporterImpl padReporter;
++    /** Profil z pliku z wyłączonym autoHideOnGamepad (ukrywaniem przy padzie steruje sesja), bez skalowania. */
++    private final Profile baseProfile;
++    private final Map<String, Runnable> commands;
++    private final Handler mainHandler = new Handler(Looper.getMainLooper());
++    private final InputManager inputManager;
++
++    private int scalePercent;
++    private boolean hideOnGamepad;
++    private boolean gamepadConnected;
++    /** Wybór z menu / akcji toggle_overlay; null = reguła automatyczna (pad + ustawienie). */
++    private Boolean manualHidden;
++    private AlertDialog dialog;
++    private Runnable afterDialog;
++    private long afterDialogDelayMs;
++    private boolean destroyed;
++
++    private final InputManager.InputDeviceListener deviceListener = new InputManager.InputDeviceListener() {
++        @Override
++        public void onInputDeviceAdded(int deviceId) {
++            refreshGamepadState();
++        }
++
++        @Override
++        public void onInputDeviceRemoved(int deviceId) {
++            refreshGamepadState();
++        }
++
++        @Override
++        public void onInputDeviceChanged(int deviceId) {
++            refreshGamepadState();
++        }
++    };
++
++    /**
++     * Tworzy sesję i dokłada overlay jako ostatnie dziecko rodzica StreamView (FrameLayout).
++     * Zwraca null, gdy wybrano tryb legacy albo profil się nie wczytał (wtedy Toast z błędem):
++     * Game tworzy wtedy VirtualController jak w upstreamie (onscreenController jest wymuszone).
++     */
++    public static ThumbcastSession createOrNull(Activity activity, Host host, PreferenceConfiguration prefConfig,
++                                                NvConnection conn, ControllerHandler controllerHandler,
++                                                KeyboardTranslator keyboardTranslator, View streamView) {
++        if (prefConfig.controlLayer != PreferenceConfiguration.ControlLayer.THUMBCAST) {
++            return null;
++        }
++        Profile profile = ThumbcastProfiles.loadOrNull(activity, prefConfig.thumbcastProfileFile);
++        if (profile == null) {
++            Toast.makeText(activity, activity.getString(R.string.thumbcast_profile_error,
++                    String.valueOf(ThumbcastProfiles.getLastError())), Toast.LENGTH_LONG).show();
++            return null;
++        }
++        return new ThumbcastSession(activity, host, prefConfig, conn, controllerHandler, keyboardTranslator,
++                streamView, profile);
++    }
++
++    /** Host dla aktywności z upstreamowym `toggleKeyboard()` (GameGestures) i zakończeniem przez finish(). */
++    public static Host activityHost(final Activity activity, final GameGestures gestures) {
++        return new Host() {
++            @Override
++            public void toggleKeyboard() {
++                gestures.toggleKeyboard();
++            }
++
++            @Override
++            public void disconnect() {
++                activity.finish();
++            }
++        };
++    }
++
++    private ThumbcastSession(Activity activity, Host host, final PreferenceConfiguration prefConfig,
++                             NvConnection conn, ControllerHandler controllerHandler,
++                             KeyboardTranslator keyboardTranslator, View streamView, Profile profile) {
++        this.activity = activity;
++        this.host = host;
++        this.settings = new ThumbcastSettings(activity);
++        this.scalePercent = settings.getControlScalePercent();
++        this.hideOnGamepad = settings.isHideOnGamepad();
++        this.baseProfile = ThumbcastOverlayFactory.withAutoHideOnGamepad(profile, false);
++        this.commands = buildCommands();
++
++        padReporter = new HostPadReporterImpl(controllerHandler);
++        overlay = ThumbcastOverlayFactory.create(
++                activity,
++                effectiveProfile(),
++                new HostConnectionImpl(conn),
++                padReporter,
++                this::onAppAction,
++                new ThumbcastKeyTranslator(keyboardTranslator));
++        FrameLayout parent = (FrameLayout) streamView.getParent();
++        // Ostatnie dziecko FrameLayout jest rysowane na wierzchu i pierwsze dostaje dotyk.
++        parent.addView(overlay, new FrameLayout.LayoutParams(
++                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
++        overlay.setDebugEnabled(prefConfig.thumbcastDebugOverlay);
++        overlay.setStreamResolution(prefConfig.width, prefConfig.height);
++        // Prostokąt wideo = rozmiar StreamView po layoucie (onMeasure dopasowuje proporcje, layout_gravity=center
++        // wyśrodkowuje). l/t/r/b są w układzie rodzica, tym samym co overlay (MATCH_PARENT, bez paddingu).
++        streamView.addOnLayoutChangeListener((v, l, t, r, b, oldL, oldT, oldR, oldB) ->
++                overlay.setVideoRect(l, t, r, b, prefConfig.width, prefConfig.height));
++
++        inputManager = (InputManager) activity.getSystemService(Context.INPUT_SERVICE);
++        if (inputManager != null) {
++            inputManager.registerInputDeviceListener(deviceListener, mainHandler);
++        }
++        gamepadConnected = isPhysicalGamepadConnected();
++        applyControlsHidden();
++    }
++
++    // =====================================================================================
++    // Haki z Game (każdy to jedna linia w bloku THUMBCAST)
++    // =====================================================================================
++
++    /** handleMotionEvent: palce obsługuje overlay (do 10 wskaźników), touchContextMap pomijamy. */
++    public boolean consumesFingerTouches() {
++        return !destroyed;
++    }
++
++    /** Systemowy Back (przycisk lub gest): zamiast wyjścia otwiera menu. true = obsłużone. */
++    public boolean onBackPressed() {
++        if (destroyed) {
++            return false;
++        }
++        showMenu();
++        return true;
++    }
++
++    /** PiP: overlay i menu znikają, wszystkie wejścia zwolnione. */
++    public void onPictureInPictureChanged(boolean inPip) {
++        if (inPip) {
++            overlay.releaseAll();
++            dismissDialog();
++            overlay.setVisibility(View.GONE);
++        } else {
++            overlay.setVisibility(View.VISIBLE);
++        }
++    }
++
++    /** stopConnection: zerowy stan na hosta przed zamknięciem połączenia. */
++    public void onStopConnection() {
++        overlay.releaseAll();
++    }
++
++    /** onDestroy: bez zaległych retransmisji, listenerów i okien. */
++    public void onDestroy() {
++        destroyed = true;
++        padReporter.cancelPending();
++        mainHandler.removeCallbacksAndMessages(null);
++        if (inputManager != null) {
++            inputManager.unregisterInputDeviceListener(deviceListener);
++        }
++        dismissDialog();
++    }
++
++    // =====================================================================================
++    // Akcje aplikacji (Command)
++    // =====================================================================================
++
++    private Map<String, Runnable> buildCommands() {
++        Map<String, Runnable> map = new HashMap<>();
++        map.put(AppActions.MENU, this::showMenu);
++        map.put(AppActions.SOFT_KEYBOARD, host::toggleKeyboard);
++        map.put(AppActions.TOGGLE_OVERLAY, this::toggleControls);
++        return Collections.unmodifiableMap(map);
++    }
++
++    /**
++     * Akcja z overlaya (przycisk systemowy albo gest). Silnik woła ją w trakcie obsługi dotyku, więc
++     * wykonujemy ją po zakończeniu tego cyklu (releaseAll z menu nie może wejść w środek silnika).
++     */
++    private void onAppAction(String action) {
++        final Runnable command = commands.get(action);
++        if (command == null) {
++            LimeLog.warning("Thumbcast: unknown app action " + action);
++            return;
++        }
++        mainHandler.post(() -> {
++            if (!destroyed) {
++                command.run();
++            }
++        });
++    }
++
++    // =====================================================================================
++    // Ukrywanie kontrolek
++    // =====================================================================================
++
++    private void toggleControls() {
++        manualHidden = !overlay.getControlsHidden();
++        applyControlsHidden();
++    }
++
++    private void applyControlsHidden() {
++        boolean hidden = manualHidden != null ? manualHidden : (hideOnGamepad && gamepadConnected);
++        overlay.setControlsHidden(hidden);
++    }
++
++    private void refreshGamepadState() {
++        boolean now = isPhysicalGamepadConnected();
++        if (now == gamepadConnected) {
++            return;
++        }
++        gamepadConnected = now;
++        // Podłączenie/odłączenie pada przywraca regułę automatyczną.
++        manualHidden = null;
++        applyControlsHidden();
++    }
++
++    /** Fizyczny pad: nie wirtualny, źródło GAMEPAD lub JOYSTICK, od Androida 10 tylko zewnętrzny. */
++    private static boolean isPhysicalGamepadConnected() {
++        for (int id : InputDevice.getDeviceIds()) {
++            InputDevice dev = InputDevice.getDevice(id);
++            if (dev == null || dev.isVirtual()) {
++                continue;
++            }
++            int sources = dev.getSources();
++            boolean isPad = (sources & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD
++                    || (sources & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK;
++            if (!isPad) {
++                continue;
++            }
++            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !dev.isExternal()) {
++                continue;
++            }
++            return true;
++        }
++        return false;
++    }
++
++    // =====================================================================================
++    // Rozmiar kontrolek (na żywo: setProfile zwalnia wejścia i przelicza układ)
++    // =====================================================================================
++
++    private Profile effectiveProfile() {
++        return ScaleTransform.INSTANCE.scale(baseProfile, scalePercent / 100f);
++    }
++
++    private void applyScale(int percent) {
++        if (percent == scalePercent) {
++            return;
++        }
++        scalePercent = percent;
++        settings.setControlScalePercent(percent);
++        overlay.setProfile(effectiveProfile());
++    }
++
++    private void setHideOnGamepad(boolean hide) {
++        hideOnGamepad = hide;
++        settings.setHideOnGamepad(hide);
++        manualHidden = null;
++        applyControlsHidden();
++    }
++
++    // =====================================================================================
++    // Menu w grze
++    // =====================================================================================
++
++    private void showMenu() {
++        if (destroyed || activity.isFinishing()) {
++            return;
++        }
++        // Palce schodzą z overlaya na okno dialogu: nic nie może zostać wciśnięte na hoście.
++        overlay.releaseAll();
++        dismissDialog();
++
++        final List<CharSequence> labels = new ArrayList<>();
++        final List<Runnable> actions = new ArrayList<>();
++        final List<Long> delays = new ArrayList<>();
++        addItem(labels, actions, delays, activity.getString(R.string.thumbcast_menu_disconnect), host::disconnect, 0);
++        addItem(labels, actions, delays, activity.getString(overlay.getControlsHidden()
++                ? R.string.thumbcast_menu_show_controls : R.string.thumbcast_menu_hide_controls),
++                this::toggleControls, 0);
++        addItem(labels, actions, delays, activity.getString(R.string.thumbcast_menu_keyboard),
++                host::toggleKeyboard, KEYBOARD_AFTER_DIALOG_MS);
++        addItem(labels, actions, delays, activity.getString(R.string.thumbcast_menu_control_size, scalePercent),
++                this::showScaleDialog, 0);
++        addItem(labels, actions, delays, activity.getString(hideOnGamepad
++                ? R.string.thumbcast_menu_hide_on_gamepad_on : R.string.thumbcast_menu_hide_on_gamepad_off),
++                () -> setHideOnGamepad(!hideOnGamepad), 0);
++
++        AlertDialog d = new AlertDialog.Builder(activity, DIALOG_THEME)
++                .setTitle(R.string.thumbcast_menu_title)
++                .setItems(labels.toArray(new CharSequence[0]), (di, which) -> {
++                    afterDialog = actions.get(which);
++                    afterDialogDelayMs = delays.get(which);
++                })
++                .setNegativeButton(R.string.thumbcast_menu_resume, null)
++                .create();
++        show(d);
++    }
++
++    private static void addItem(List<CharSequence> labels, List<Runnable> actions, List<Long> delays,
++                                CharSequence label, Runnable action, long delayMs) {
++        labels.add(label);
++        actions.add(action);
++        delays.add(delayMs);
++    }
++
++    private void showScaleDialog() {
++        if (destroyed || activity.isFinishing()) {
++            return;
++        }
++        final int[] values = ThumbcastSettings.SCALE_PERCENTS;
++        CharSequence[] labels = new CharSequence[values.length];
++        int checked = -1;
++        for (int i = 0; i < values.length; i++) {
++            labels[i] = activity.getString(R.string.thumbcast_percent, values[i]);
++            if (values[i] == scalePercent) {
++                checked = i;
++            }
++        }
++        AlertDialog d = new AlertDialog.Builder(activity, DIALOG_THEME)
++                .setTitle(R.string.title_thumbcast_control_scale)
++                .setSingleChoiceItems(labels, checked, (di, which) -> {
++                    final int percent = values[which];
++                    afterDialog = () -> applyScale(percent);
++                    afterDialogDelayMs = 0;
++                    di.dismiss();
++                })
++                .setNegativeButton(android.R.string.cancel, null)
++                .create();
++        show(d);
++    }
++
++    /**
++     * Pokazuje dialog bez zrywania trybu immersive (okno bez fokusu w chwili show() dostaje flagi UI
++     * aktywności) i wykonuje wybraną akcję dopiero po zamknięciu, gdy fokus wraca do strumienia.
++     */
++    @SuppressWarnings("deprecation")
++    private void show(AlertDialog d) {
++        d.setOnDismissListener(di -> {
++            if (dialog == di) {
++                dialog = null;
++            }
++            Runnable action = afterDialog;
++            afterDialog = null;
++            if (action != null && !destroyed) {
++                mainHandler.postDelayed(() -> {
++                    if (!destroyed) {
++                        action.run();
++                    }
++                }, afterDialogDelayMs);
++            }
++        });
++        afterDialog = null;
++        dialog = d;
++        Window w = d.getWindow();
++        if (w != null) {
++            w.setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
++        }
++        d.show();
++        if (w != null) {
++            w.getDecorView().setSystemUiVisibility(activity.getWindow().getDecorView().getSystemUiVisibility());
++            w.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
++        }
++    }
++
++    /** Zamknięcie bez wykonywania wybranej akcji (PiP, onDestroy, ponowne otwarcie menu). */
++    private void dismissDialog() {
++        AlertDialog d = dialog;
++        dialog = null;
++        afterDialog = null;
++        if (d != null && d.isShowing()) {
++            d.dismiss();
++        }
++    }
++}
+diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java
+new file mode 100644
+index 00000000..ffa9fcc4
+--- /dev/null
++++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java
+@@ -0,0 +1,61 @@
++package com.limelight.thumbcast;
++
++// NOWY PLIK (moduł :app). Ustawienia Thumbcast zmieniane także z menu w grze, więc mają własny
++// odczyt/zapis zamiast pól w upstreamowym PreferenceConfiguration (ten czyta wszystko raz, przy starcie).
++// Klucze są te same, co w kategorii „Sterowanie dotykowe” w preferences.xml.
++
++import android.content.Context;
++import android.content.SharedPreferences;
++import android.preference.PreferenceManager;
++
++public final class ThumbcastSettings {
++
++    /** ListPreference: wartości tekstowe "60" … "130" (procent rozmiaru kontrolek). */
++    public static final String KEY_CONTROL_SCALE = "list_thumbcast_control_scale";
++    public static final String KEY_HIDE_ON_GAMEPAD = "checkbox_thumbcast_hide_on_gamepad";
++
++    /** Telefon: przyciski i gałka z presetów są za duże przy 100% (test właściciela 11.11.2026). */
++    public static final int DEFAULT_SCALE_PERCENT = 85;
++    public static final boolean DEFAULT_HIDE_ON_GAMEPAD = true;
++
++    /** Wartości z menu w grze i z ekranu ustawień (thumbcast_control_scale_values). */
++    static final int[] SCALE_PERCENTS = {60, 70, 85, 100, 115, 130};
++
++    private final SharedPreferences prefs;
++
++    public ThumbcastSettings(Context context) {
++        prefs = PreferenceManager.getDefaultSharedPreferences(context);
++    }
++
++    public int getControlScalePercent() {
++        String raw = prefs.getString(KEY_CONTROL_SCALE, null);
++        if (raw == null) {
++            return DEFAULT_SCALE_PERCENT;
++        }
++        try {
++            int v = Integer.parseInt(raw.trim());
++            if (v < SCALE_PERCENTS[0] || v > SCALE_PERCENTS[SCALE_PERCENTS.length - 1]) {
++                return DEFAULT_SCALE_PERCENT;
++            }
++            return v;
++        } catch (NumberFormatException e) {
++            return DEFAULT_SCALE_PERCENT;
++        }
++    }
++
++    public float getControlScale() {
++        return getControlScalePercent() / 100f;
++    }
++
++    public void setControlScalePercent(int percent) {
++        prefs.edit().putString(KEY_CONTROL_SCALE, String.valueOf(percent)).apply();
++    }
++
++    public boolean isHideOnGamepad() {
++        return prefs.getBoolean(KEY_HIDE_ON_GAMEPAD, DEFAULT_HIDE_ON_GAMEPAD);
++    }
++
++    public void setHideOnGamepad(boolean hide) {
++        prefs.edit().putBoolean(KEY_HIDE_ON_GAMEPAD, hide).apply();
++    }
++}
 diff --git a/app/src/main/res/values-pl/thumbcast_strings.xml b/app/src/main/res/values-pl/thumbcast_strings.xml
 new file mode 100644
-index 00000000..624132ba
+index 00000000..ac2bd282
 --- /dev/null
 +++ b/app/src/main/res/values-pl/thumbcast_strings.xml
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,28 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -585,13 +1031,27 @@ index 00000000..624132ba
 +    <string name="title_thumbcast_debug">Nakładka debug wejścia</string>
 +    <string name="summary_thumbcast_debug">Pokazuje aktywne wskaźniki, wysłane flagi pada i opóźnienie dotyk→wysyłka</string>
 +    <string name="thumbcast_profile_error">Nie udało się wczytać profilu, używam klasycznego kontrolera: %1$s</string>
++    <string name="title_thumbcast_control_scale">Rozmiar kontrolek</string>
++    <string name="title_thumbcast_hide_on_gamepad">Ukryj przyciski przy podłączonym padzie</string>
++    <string name="summary_thumbcast_hide_on_gamepad">Przyciski i gałki znikają, gdy podłączony jest fizyczny pad; gesty i przycisk menu zostają</string>
++    <string name="thumbcast_percent">%1$d%%</string>
++    <!-- Menu w grze (☰, gest od górnej krawędzi, systemowy Back). -->
++    <string name="thumbcast_menu_title">Menu strumienia</string>
++    <string name="thumbcast_menu_disconnect">Rozłącz</string>
++    <string name="thumbcast_menu_hide_controls">Ukryj przyciski</string>
++    <string name="thumbcast_menu_show_controls">Pokaż przyciski</string>
++    <string name="thumbcast_menu_keyboard">Klawiatura</string>
++    <string name="thumbcast_menu_control_size">Rozmiar kontrolek: %1$d%%</string>
++    <string name="thumbcast_menu_hide_on_gamepad_on">Ukryj przyciski przy podłączonym padzie: wł.</string>
++    <string name="thumbcast_menu_hide_on_gamepad_off">Ukryj przyciski przy podłączonym padzie: wył.</string>
++    <string name="thumbcast_menu_resume">Wróć do gry</string>
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_arrays.xml b/app/src/main/res/values/thumbcast_arrays.xml
 new file mode 100644
-index 00000000..2354d453
+index 00000000..f7171266
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_arrays.xml
-@@ -0,0 +1,20 @@
+@@ -0,0 +1,37 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: tablice preferencji warstwy sterowania (patches/preferences.patch.md, pkt 2). -->
 +<resources>
@@ -611,13 +1071,30 @@ index 00000000..2354d453
 +        <item>mmo-pad-plus.thumbcast.json</item>
 +        <item>mmo-keyboard.thumbcast.json</item>
 +    </string-array>
++    <!-- Rozmiar kontrolek (ThumbcastSettings.SCALE_PERCENTS, domyślnie 85). -->
++    <string-array name="thumbcast_control_scale_names" translatable="false">
++        <item>60%</item>
++        <item>70%</item>
++        <item>85%</item>
++        <item>100%</item>
++        <item>115%</item>
++        <item>130%</item>
++    </string-array>
++    <string-array name="thumbcast_control_scale_values" translatable="false">
++        <item>60</item>
++        <item>70</item>
++        <item>85</item>
++        <item>100</item>
++        <item>115</item>
++        <item>130</item>
++    </string-array>
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_strings.xml b/app/src/main/res/values/thumbcast_strings.xml
 new file mode 100644
-index 00000000..594cca8c
+index 00000000..cb9bacb8
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_strings.xml
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,28 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -631,12 +1108,26 @@ index 00000000..594cca8c
 +    <string name="title_thumbcast_debug">Input debug overlay</string>
 +    <string name="summary_thumbcast_debug">Shows active pointers, sent pad flags and touch-to-send latency</string>
 +    <string name="thumbcast_profile_error">Control profile could not be loaded, using classic controller: %1$s</string>
++    <string name="title_thumbcast_control_scale">Control size</string>
++    <string name="title_thumbcast_hide_on_gamepad">Hide controls when a gamepad is connected</string>
++    <string name="summary_thumbcast_hide_on_gamepad">Buttons and sticks disappear while a physical gamepad is connected; gestures and the menu button stay</string>
++    <string name="thumbcast_percent">%1$d%%</string>
++    <!-- Menu w grze (☰, gest od górnej krawędzi, systemowy Back). -->
++    <string name="thumbcast_menu_title">Stream menu</string>
++    <string name="thumbcast_menu_disconnect">Disconnect</string>
++    <string name="thumbcast_menu_hide_controls">Hide controls</string>
++    <string name="thumbcast_menu_show_controls">Show controls</string>
++    <string name="thumbcast_menu_keyboard">Keyboard</string>
++    <string name="thumbcast_menu_control_size">Control size: %1$d%%</string>
++    <string name="thumbcast_menu_hide_on_gamepad_on">Hide controls when a gamepad is connected: on</string>
++    <string name="thumbcast_menu_hide_on_gamepad_off">Hide controls when a gamepad is connected: off</string>
++    <string name="thumbcast_menu_resume">Back to game</string>
 +</resources>
 diff --git a/app/src/main/res/xml/preferences.xml b/app/src/main/res/xml/preferences.xml
-index 5b09082b..e02d48f6 100644
+index 5b09082b..d1929e7f 100644
 --- a/app/src/main/res/xml/preferences.xml
 +++ b/app/src/main/res/xml/preferences.xml
-@@ -145,6 +145,34 @@
+@@ -145,6 +145,48 @@
              android:summary="@string/summary_checkbox_absolute_mouse_mode"
              android:defaultValue="false" />
      </PreferenceCategory>
@@ -661,6 +1152,20 @@ index 5b09082b..e02d48f6 100644
 +            android:entryValues="@array/thumbcast_profile_values"
 +            android:defaultValue="mmo-pad-plus.thumbcast.json" />
 +
++        <ListPreference
++            android:key="list_thumbcast_control_scale"
++            android:title="@string/title_thumbcast_control_scale"
++            android:summary="%s"
++            android:entries="@array/thumbcast_control_scale_names"
++            android:entryValues="@array/thumbcast_control_scale_values"
++            android:defaultValue="85" />
++
++        <CheckBoxPreference
++            android:key="checkbox_thumbcast_hide_on_gamepad"
++            android:title="@string/title_thumbcast_hide_on_gamepad"
++            android:summary="@string/summary_thumbcast_hide_on_gamepad"
++            android:defaultValue="true" />
++
 +        <CheckBoxPreference
 +            android:key="checkbox_thumbcast_debug"
 +            android:title="@string/title_thumbcast_debug"
@@ -671,3 +1176,962 @@ index 5b09082b..e02d48f6 100644
      <PreferenceCategory android:title="@string/category_on_screen_controls_settings"
          android:key="category_onscreen_controls">
          <CheckBoxPreference
+diff --git a/app/src/nonRoot/res/drawable-xhdpi/atv_banner.xml b/app/src/nonRoot/res/drawable-xhdpi/atv_banner.xml
+new file mode 100644
+index 00000000..d24810ea
+--- /dev/null
++++ b/app/src/nonRoot/res/drawable-xhdpi/atv_banner.xml
+@@ -0,0 +1,26 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje baner Android TV upstreamu app/src/main/res/drawable-xhdpi/atv_banner.png
++     (android:banner w manifeście). Ten sam kwalifikator i nazwa, więc flavor wygrywa.
++     TYMCZASOWY baner 320x180 px (160x90 dp) bez napisu, do czasu właściwego projektu graficznego.
++     Patrz docs/branding.md. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="160dp"
++    android:height="90dp"
++    android:viewportWidth="160"
++    android:viewportHeight="90">
++    <path
++        android:pathData="M0,0 h160 v90 h-160 z"
++        android:fillColor="#1D6B5F" />
++    <path
++        android:pathData="M58,45 a22,22 0 1,0 44,0 a22,22 0 1,0 -44,0"
++        android:strokeColor="#FFFFFF"
++        android:strokeAlpha="0.55"
++        android:strokeWidth="2.5" />
++    <path
++        android:pathData="M66,45 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0"
++        android:strokeColor="#FFFFFF"
++        android:strokeWidth="3.5" />
++    <path
++        android:pathData="M73,45 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 z"
++        android:fillColor="#FFFFFF" />
++</vector>
+diff --git a/app/src/nonRoot/res/drawable-xhdpi/ouya_icon.xml b/app/src/nonRoot/res/drawable-xhdpi/ouya_icon.xml
+new file mode 100644
+index 00000000..0a0f90e7
+--- /dev/null
++++ b/app/src/nonRoot/res/drawable-xhdpi/ouya_icon.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje app/src/main/res/drawable-xhdpi/ouya_icon.png (baner upstreamu z napisem
++     „Moonlight Game Streaming” dla konsoli OUYA). OUYA czyta ten plik po ścieżce .png, więc po
++     nadpisaniu nie zobaczy baneru; platforma jest martwa, a nie chcemy wysyłać cudzego logo.
++     TYMCZASOWO wskazuje na baner TV (drawable-xhdpi/atv_banner.xml). Patrz docs/branding.md. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/atv_banner"
++    android:inset="0dp" />
+diff --git a/app/src/nonRoot/res/drawable/app_icon.xml b/app/src/nonRoot/res/drawable/app_icon.xml
+new file mode 100644
+index 00000000..ab03f5b2
+--- /dev/null
++++ b/app/src/nonRoot/res/drawable/app_icon.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje app/src/main/res/drawable/app_icon.png (logo upstreamu). Kod upstreamu
++     v12.2 się do niego nie odwołuje, ale plik trafiałby do APK. Zastępujemy go TYMCZASOWĄ ikoną
++     (drawable/thumbcast_launcher_legacy.xml). Patrz docs/branding.md. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/thumbcast_launcher_legacy"
++    android:inset="0dp" />
+diff --git a/app/src/nonRoot/res/drawable/ic_lime_layer.xml b/app/src/nonRoot/res/drawable/ic_lime_layer.xml
+new file mode 100644
+index 00000000..3afc3018
+--- /dev/null
++++ b/app/src/nonRoot/res/drawable/ic_lime_layer.xml
+@@ -0,0 +1,23 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje app/src/main/res/drawable/ic_lime_layer.xml (wektorowe logo upstreamu).
++     Używane przez drawable/ic_channel.xml jako logo kanału na ekranie głównym Android TV
++     (TvChannelHelper), więc jest widoczne dla użytkownika. TYMCZASOWY znak, ten sam co w ikonie
++     aplikacji (drawable/thumbcast_launcher_foreground.xml), tylko bez marginesu. Patrz docs/branding.md. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="56"
++    android:viewportHeight="56">
++    <path
++        android:pathData="M2,28 a26,26 0 1,0 52,0 a26,26 0 1,0 -52,0"
++        android:strokeColor="#FFFFFF"
++        android:strokeAlpha="0.55"
++        android:strokeWidth="3" />
++    <path
++        android:pathData="M11,28 a17,17 0 1,0 34,0 a17,17 0 1,0 -34,0"
++        android:strokeColor="#FFFFFF"
++        android:strokeWidth="4" />
++    <path
++        android:pathData="M20,28 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 z"
++        android:fillColor="#FFFFFF" />
++</vector>
+diff --git a/app/src/nonRoot/res/drawable/thumbcast_launcher_foreground.xml b/app/src/nonRoot/res/drawable/thumbcast_launcher_foreground.xml
+new file mode 100644
+index 00000000..af24c8d4
+--- /dev/null
++++ b/app/src/nonRoot/res/drawable/thumbcast_launcher_foreground.xml
+@@ -0,0 +1,26 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: TYMCZASOWY znak aplikacji (placeholder do czasu właściwego projektu graficznego).
++     Punkt dotyku z dwoma kręgami fali: ogólny symbol dotyku, bez znaków towarowych.
++     Rysunek mieści się w bezpiecznej strefie ikony adaptacyjnej (koło r=33 w siatce 108x108).
++     Używany jako foreground i monochrome w mipmap-anydpi-v26/ic_launcher.xml. Patrz docs/branding.md. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="108dp"
++    android:height="108dp"
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++    <!-- zewnętrzny krąg fali -->
++    <path
++        android:pathData="M28,54 a26,26 0 1,0 52,0 a26,26 0 1,0 -52,0"
++        android:strokeColor="#FFFFFF"
++        android:strokeAlpha="0.55"
++        android:strokeWidth="3" />
++    <!-- wewnętrzny krąg fali -->
++    <path
++        android:pathData="M37,54 a17,17 0 1,0 34,0 a17,17 0 1,0 -34,0"
++        android:strokeColor="#FFFFFF"
++        android:strokeWidth="4" />
++    <!-- punkt dotyku -->
++    <path
++        android:pathData="M46,54 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 z"
++        android:fillColor="#FFFFFF" />
++</vector>
+diff --git a/app/src/nonRoot/res/drawable/thumbcast_launcher_legacy.xml b/app/src/nonRoot/res/drawable/thumbcast_launcher_legacy.xml
+new file mode 100644
+index 00000000..3a4a9e60
+--- /dev/null
++++ b/app/src/nonRoot/res/drawable/thumbcast_launcher_legacy.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: TYMCZASOWA ikona bez adaptacji (placeholder). Przy minSdk 26 launcher zawsze bierze
++     mipmap-anydpi-v26/ic_launcher.xml; ten rysunek istnieje tylko po to, żeby nadpisać rastrowe
++     mipmap-*/ic_launcher.png upstreamu i nie wkładać ich do APK. Patrz docs/branding.md. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item>
++        <shape android:shape="oval">
++            <solid android:color="@color/ic_launcher_background" />
++        </shape>
++    </item>
++    <item android:drawable="@drawable/thumbcast_launcher_foreground" />
++</layer-list>
+diff --git a/app/src/nonRoot/res/mipmap-anydpi-v26/ic_launcher.xml b/app/src/nonRoot/res/mipmap-anydpi-v26/ic_launcher.xml
+new file mode 100644
+index 00000000..b8e318f4
+--- /dev/null
++++ b/app/src/nonRoot/res/mipmap-anydpi-v26/ic_launcher.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml (ikona upstreamu).
++     TYMCZASOWA ikona adaptacyjna do czasu właściwego projektu graficznego. Patrz docs/branding.md. -->
++<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
++    <background android:drawable="@color/ic_launcher_background" />
++    <foreground android:drawable="@drawable/thumbcast_launcher_foreground" />
++    <monochrome android:drawable="@drawable/thumbcast_launcher_foreground" />
++</adaptive-icon>
+diff --git a/app/src/nonRoot/res/mipmap-hdpi/ic_launcher.xml b/app/src/nonRoot/res/mipmap-hdpi/ic_launcher.xml
+new file mode 100644
+index 00000000..96dc7291
+--- /dev/null
++++ b/app/src/nonRoot/res/mipmap-hdpi/ic_launcher.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje rastrowy plik ikony upstreamu app/src/main/res/mipmap-hdpi/ic_launcher.png,
++     żeby nie trafił do APK (zasób o tej samej nazwie i kwalifikatorze z flavoru wygrywa).
++     Przy minSdk 26 launcher i tak bierze mipmap-anydpi-v26/ic_launcher.xml. Patrz docs/branding.md. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/thumbcast_launcher_legacy"
++    android:inset="0dp" />
+diff --git a/app/src/nonRoot/res/mipmap-hdpi/ic_launcher_foreground.xml b/app/src/nonRoot/res/mipmap-hdpi/ic_launcher_foreground.xml
+new file mode 100644
+index 00000000..5c2bbb46
+--- /dev/null
++++ b/app/src/nonRoot/res/mipmap-hdpi/ic_launcher_foreground.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje rastrowy foreground ikony upstreamu app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png,
++     żeby nie trafił do APK (zasób o tej samej nazwie i kwalifikatorze z flavoru wygrywa).
++     Nasza ikona adaptacyjna używa @drawable/thumbcast_launcher_foreground. Patrz docs/branding.md. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/thumbcast_launcher_foreground"
++    android:inset="0dp" />
+diff --git a/app/src/nonRoot/res/mipmap-mdpi/ic_launcher.xml b/app/src/nonRoot/res/mipmap-mdpi/ic_launcher.xml
+new file mode 100644
+index 00000000..ac9821a1
+--- /dev/null
++++ b/app/src/nonRoot/res/mipmap-mdpi/ic_launcher.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje rastrowy plik ikony upstreamu app/src/main/res/mipmap-mdpi/ic_launcher.png,
++     żeby nie trafił do APK (zasób o tej samej nazwie i kwalifikatorze z flavoru wygrywa).
++     Przy minSdk 26 launcher i tak bierze mipmap-anydpi-v26/ic_launcher.xml. Patrz docs/branding.md. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/thumbcast_launcher_legacy"
++    android:inset="0dp" />
+diff --git a/app/src/nonRoot/res/mipmap-mdpi/ic_launcher_foreground.xml b/app/src/nonRoot/res/mipmap-mdpi/ic_launcher_foreground.xml
+new file mode 100644
+index 00000000..14059285
+--- /dev/null
++++ b/app/src/nonRoot/res/mipmap-mdpi/ic_launcher_foreground.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje rastrowy foreground ikony upstreamu app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png,
++     żeby nie trafił do APK (zasób o tej samej nazwie i kwalifikatorze z flavoru wygrywa).
++     Nasza ikona adaptacyjna używa @drawable/thumbcast_launcher_foreground. Patrz docs/branding.md. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/thumbcast_launcher_foreground"
++    android:inset="0dp" />
+diff --git a/app/src/nonRoot/res/mipmap-xhdpi/ic_launcher.xml b/app/src/nonRoot/res/mipmap-xhdpi/ic_launcher.xml
+new file mode 100644
+index 00000000..6c02415a
+--- /dev/null
++++ b/app/src/nonRoot/res/mipmap-xhdpi/ic_launcher.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje rastrowy plik ikony upstreamu app/src/main/res/mipmap-xhdpi/ic_launcher.png,
++     żeby nie trafił do APK (zasób o tej samej nazwie i kwalifikatorze z flavoru wygrywa).
++     Przy minSdk 26 launcher i tak bierze mipmap-anydpi-v26/ic_launcher.xml. Patrz docs/branding.md. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/thumbcast_launcher_legacy"
++    android:inset="0dp" />
+diff --git a/app/src/nonRoot/res/mipmap-xhdpi/ic_launcher_foreground.xml b/app/src/nonRoot/res/mipmap-xhdpi/ic_launcher_foreground.xml
+new file mode 100644
+index 00000000..589120fd
+--- /dev/null
++++ b/app/src/nonRoot/res/mipmap-xhdpi/ic_launcher_foreground.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje rastrowy foreground ikony upstreamu app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png,
++     żeby nie trafił do APK (zasób o tej samej nazwie i kwalifikatorze z flavoru wygrywa).
++     Nasza ikona adaptacyjna używa @drawable/thumbcast_launcher_foreground. Patrz docs/branding.md. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/thumbcast_launcher_foreground"
++    android:inset="0dp" />
+diff --git a/app/src/nonRoot/res/mipmap-xxhdpi/ic_launcher.xml b/app/src/nonRoot/res/mipmap-xxhdpi/ic_launcher.xml
+new file mode 100644
+index 00000000..4e3be63d
+--- /dev/null
++++ b/app/src/nonRoot/res/mipmap-xxhdpi/ic_launcher.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje rastrowy plik ikony upstreamu app/src/main/res/mipmap-xxhdpi/ic_launcher.png,
++     żeby nie trafił do APK (zasób o tej samej nazwie i kwalifikatorze z flavoru wygrywa).
++     Przy minSdk 26 launcher i tak bierze mipmap-anydpi-v26/ic_launcher.xml. Patrz docs/branding.md. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/thumbcast_launcher_legacy"
++    android:inset="0dp" />
+diff --git a/app/src/nonRoot/res/mipmap-xxhdpi/ic_launcher_foreground.xml b/app/src/nonRoot/res/mipmap-xxhdpi/ic_launcher_foreground.xml
+new file mode 100644
+index 00000000..4dd6e403
+--- /dev/null
++++ b/app/src/nonRoot/res/mipmap-xxhdpi/ic_launcher_foreground.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje rastrowy foreground ikony upstreamu app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png,
++     żeby nie trafił do APK (zasób o tej samej nazwie i kwalifikatorze z flavoru wygrywa).
++     Nasza ikona adaptacyjna używa @drawable/thumbcast_launcher_foreground. Patrz docs/branding.md. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/thumbcast_launcher_foreground"
++    android:inset="0dp" />
+diff --git a/app/src/nonRoot/res/mipmap-xxxhdpi/ic_launcher.xml b/app/src/nonRoot/res/mipmap-xxxhdpi/ic_launcher.xml
+new file mode 100644
+index 00000000..c46acf61
+--- /dev/null
++++ b/app/src/nonRoot/res/mipmap-xxxhdpi/ic_launcher.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje rastrowy plik ikony upstreamu app/src/main/res/mipmap-xxxhdpi/ic_launcher.png,
++     żeby nie trafił do APK (zasób o tej samej nazwie i kwalifikatorze z flavoru wygrywa).
++     Przy minSdk 26 launcher i tak bierze mipmap-anydpi-v26/ic_launcher.xml. Patrz docs/branding.md. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/thumbcast_launcher_legacy"
++    android:inset="0dp" />
+diff --git a/app/src/nonRoot/res/mipmap-xxxhdpi/ic_launcher_foreground.xml b/app/src/nonRoot/res/mipmap-xxxhdpi/ic_launcher_foreground.xml
+new file mode 100644
+index 00000000..0bed151c
+--- /dev/null
++++ b/app/src/nonRoot/res/mipmap-xxxhdpi/ic_launcher_foreground.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje rastrowy foreground ikony upstreamu app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png,
++     żeby nie trafił do APK (zasób o tej samej nazwie i kwalifikatorze z flavoru wygrywa).
++     Nasza ikona adaptacyjna używa @drawable/thumbcast_launcher_foreground. Patrz docs/branding.md. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/thumbcast_launcher_foreground"
++    android:inset="0dp" />
+diff --git a/app/src/nonRoot/res/values-bg/strings_branding.xml b/app/src/nonRoot/res/values-bg/strings_branding.xml
+new file mode 100644
+index 00000000..371734ff
+--- /dev/null
++++ b/app/src/nonRoot/res/values-bg/strings_branding.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-bg/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast тества мрежовата връзка, за да определи дали някой от необходимите портове не е блокиран.\n\nТова може да отнеме няколко секунди…</string>
++    <string name="nettest_text_success">Вашата мрежа изглежда не блокира Thumbcast. Ако все още имате проблеми със свързването, проверете настройките на защитната стена на компютъра си.\n\nАко се опитвате да осъществите достъп през Интернет, инсталирайте „Moonlight Internet Hosting Tool“ на компютъра си и стартирайте включения тестер за достъп през Интернет, за да проверите връзката на компютъра си с Интернет.</string>
++    <string name="nettest_text_failure">Текущата мрежова връзка на устройството изглежда блокира Thumbcast. Достъпът през Интернет може да не работи, докато компютърът е свързан към тази мрежа.\n\nСледните мрежови портове са блокирани:\n</string>
++    <string name="nettest_text_blocked">Текущата мрежова връзка на устройството блокира Thumbcast. Достъпът през Интернет може да не работи, докато компютърът е свързан към тази мрежа.</string>
++    <string name="message_decoding_error">Thumbcast претърпя срив поради несъвместимост с декодера за видео на това устройство. Опитайте да коригирате настройките за поточно предаване, ако сривовете продължат.</string>
++    <string name="summary_seekbar_deadzone">Забележка: някои игри може да налагат по-голяма мъртва зона от тази, която е настроена в Thumbcast.</string>
++    <string name="summary_checkbox_usb_bind_all">Използване на USB драйвера на Thumbcast за всички поддържани контролери, дори ако е налична собствена поддръжка на контролери за Xbox</string>
++    <string name="summary_language_list">Езикът, който да ползва Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-cs/strings_branding.xml b/app/src/nonRoot/res/values-cs/strings_branding.xml
+new file mode 100644
+index 00000000..2c42523e
+--- /dev/null
++++ b/app/src/nonRoot/res/values-cs/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-cs/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast testuje vaše síťové připojení, aby zjistil, jestli je NVIDIA GameStream zablokován.
++\n
++\nTo může chvilku zabrat…</string>
++    <string name="nettest_text_success">Vypadá to, že vaše síť Thumbcast neblokuje. Pokud máte i tak potíže s připojením, zkontrolujte nastavení firewallu vašeho PC.
++\n
++\nPokud se pokoušíte streamovat po internetu, nainstalujte si na svůj počítač Moonlight Internet Hosting Tool a spusťte přiložený program Internet Streaming Tester pro kontrolu vašeho připojení k Internetu.</string>
++    <string name="nettest_text_failure">Současná síť vašeho počítače nejspíš blokuje Thumbcast. Streamování přes Internet nemusí během připojení k této síti fungovat.
++\n
++\nNásledující porty byly zablokovány:
++\n</string>
++    <string name="nettest_text_blocked">Vaše současné připojení k síti blokuje Thumbcast. Streamování přes Internet nemusí fungovat, dokud jste připojeni k této síti.</string>
++    <string name="message_decoding_error">Thumbcast spadnul kvůli nekompatibilnímu video dekodéru na tomto zařízení. Ujistěte se, že je GeForce Experience na vašem PC aktualizováno na nejnovější verzi. Zkuste upravit nastavení streamování, pokud aplikace padá opakovaně.</string>
++    <string name="summary_seekbar_deadzone">Poznámka: Některé hry mohou vynutit větší deadzone, než jaká je nastavena v Thumbcastu.</string>
++    <string name="summary_checkbox_usb_bind_all">Použít USB ovladač Thumbcastu pro všechny podporované gamepady, i když existuje nativní podpora pro Xbox ovladač</string>
++    <string name="summary_language_list">Jazyk, který bude Thumbcast používat</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-de/strings_branding.xml b/app/src/nonRoot/res/values-de/strings_branding.xml
+new file mode 100644
+index 00000000..1287d70f
+--- /dev/null
++++ b/app/src/nonRoot/res/values-de/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-de/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast testet Ihre Netzwerkverbindung, um festzustellen, ob benötigte Ports blockiert sind.
++\n
++\nDies kann einige Sekunden dauern…</string>
++    <string name="nettest_text_success">Dein Netzwerk scheint Thumbcast nicht zu blockieren. Wenn du weiterhin Probleme mit der Verbindung hast, überprüfe die Firewall-Einstellungen deines Hosts
++\n
++\nWenn du versuchst, über das Internet zu streamen, installiere das Moonlight Internet Hosting Tool auf deinem Host und führe den mitgelieferten Internet-Streaming-Tester aus, um die Internetverbindung des Hosts zu überprüfen.</string>
++    <string name="nettest_text_failure">Die aktuelle Netzwerkverbindung deines Geräts scheint Thumbcast zu blockieren. Das Streaming über das Internet funktioniert möglicherweise nicht, während du mit diesem Netzwerk verbunden bist.
++\n
++\nFolgende Netzwerkports wurden blockiert:
++\n</string>
++    <string name="nettest_text_blocked">Die aktuelle Netzwerkverbindung deines Geräts blockiert Thumbcast. Das Streaming über das Internet funktioniert möglicherweise nicht, während du mit diesem Netzwerk verbunden bist.</string>
++    <string name="message_decoding_error">Thumbcast ist wegen einer Inkompatibilität zu dem Video Dekodierer deines Gerätes abgestürzt. Sollten weiterhin Abstürze auftreten, ändere deine Streaming Einstellungen.</string>
++    <string name="summary_seekbar_deadzone">Hinweis: Einige Spiele können eine größere Controller-Totzone erzwingen als die, die in Thumbcast konfiguriert ist.</string>
++    <string name="summary_checkbox_usb_bind_all">Erzwingt die Verwendung von Thumbcasts USB Treiber für alle Xbox kompatiblen Controller</string>
++    <string name="summary_language_list">Sprache die Thumbcast verwenden soll</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-el/strings_branding.xml b/app/src/nonRoot/res/values-el/strings_branding.xml
+new file mode 100644
+index 00000000..eab68dbf
+--- /dev/null
++++ b/app/src/nonRoot/res/values-el/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-el/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Το Thumbcast δοκιμάζει τη σύνδεση δικτύου σας για να διαπιστώσει εάν κάποια θύρα είναι αποκλεισμένη.
++\n
++\n
++\nΑυτό μπορεί να πάρει μερικά δευτερόλεπτα…</string>
++    <string name="nettest_text_success">Το δίκτυό σας δεν φαίνεται να μπλοκάρει το Thumbcast. Αν εξακολουθείτε να έχετε πρόβλημα σύνδεσης, ελέγξτε τις ρυθμίσεις του τείχους προστασίας του υπολογιστή σας.
++\n
++\nΕάν προσπαθείτε να κάνετε streaming μέσω του Διαδικτύου, εγκαταστήστε το Moonlight Internet Hosting Tool στον υπολογιστή σας και εκτελέστε το συμπεριλαμβανόμενο Internet Streaming Tester για να ελέγξετε τη σύνδεση του υπολογιστή σας στο Διαδίκτυο.</string>
++    <string name="nettest_text_failure">Η τρέχουσα σύνδεση δικτύου της συσκευής σας φαίνεται να εμποδίζει το Thumbcast. Η ροή μέσω του Internet ενδέχεται να μην λειτουργεί ενώ είστε συνδεδεμένοι σε αυτό το δίκτυο.
++\n
++\nΟι ακόλουθες θύρες δικτύου αποκλείστηκαν:
++\n</string>
++    <string name="nettest_text_blocked">Η τρέχουσα σύνδεση δικτύου της συσκευής σας εμποδίζει το Thumbcast. Η ροή μέσω του Internet ενδέχεται να μην λειτουργεί ενώ είστε συνδεδεμένοι σε αυτό το δίκτυο.</string>
++    <string name="message_decoding_error">Το Thumbcast κατέρρευσε λόγω ασυμβατότητας με τον αποκωδικοποιητή βίντεο αυτής της συσκευής. Βεβαιωθείτε ότι το GeForce Experience έχει ενημερωθεί στην τελευταία έκδοση στον υπολογιστή σας. Δοκιμάστε να προσαρμόσετε τις ρυθμίσεις ροής, εάν οι καταρρεύσεις συνεχίζονται.</string>
++    <string name="summary_checkbox_usb_bind_all">Χρησιμοποιήστε το πρόγραμμα οδήγησης USB του Thumbcast για όλα τα υποστηριζόμενα gamepad, ακόμα και αν υπάρχει υποστήριξη εγγενούς ελεγκτή Xbox</string>
++    <string name="summary_language_list">Γλώσσα που χρησιμοποιείται για το Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-es/strings_branding.xml b/app/src/nonRoot/res/values-es/strings_branding.xml
+new file mode 100644
+index 00000000..0700124c
+--- /dev/null
++++ b/app/src/nonRoot/res/values-es/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-es/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast está probando tu conexión a la red para determinar si algún puerto necesario está bloqueado.
++\n
++\nEsto puede tardar unos segundos…</string>
++    <string name="nettest_text_success">Tu red parece no estar bloqueando Thumbcast. Si aun tienes problemas de conexión, comprueba la configuración del firewall de tu PC.
++\n
++\nSi estas intentado transmitir mediante Internet, instala en tu pc la Moonlight Internet Hosting Tool y ejecuta el Internet Streaming Tester incluido para comprobar la conexión de tu PC a internet.</string>
++    <string name="nettest_text_failure">La actual conexión de red de tu dispositivo parece estar bloqueando Thumbcast. La Transmisión mediante Internet puede no funcionar mientras estes conectado a esta red.
++\n
++\nSe han bloqueado los siguientes puertos de red:
++\n</string>
++    <string name="nettest_text_blocked">La conexión de red actual de tu dispositivo esta bloqueando Thumbcast. La Transmisión mediante Internet puede no funcionar mientras estés conectado a esta red.</string>
++    <string name="message_decoding_error">Thumbcast se ha bloqueado debido a una incompatibilidad con el descodificador de vídeo de este dispositivo. Intenta ajustar la configuración de streaming si los bloqueos continúan.</string>
++    <string name="summary_seekbar_deadzone">Nota: Algunos juegos pueden forzar una zona muerta mayor a la que Thumbcast esta configurada a usar.</string>
++    <string name="summary_checkbox_usb_bind_all">Usar el controlador de USB de Thumbcast para todos los mandos soportados, incluso si el control de Xbox se encuentra presente</string>
++    <string name="summary_language_list">Idioma a usar por Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-fr/strings_branding.xml b/app/src/nonRoot/res/values-fr/strings_branding.xml
+new file mode 100644
+index 00000000..15b6f981
+--- /dev/null
++++ b/app/src/nonRoot/res/values-fr/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-fr/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast teste votre connexion réseau pour déterminer si les ports requis sont bloqués.
++\n
++\nCela peut prendre quelques secondes…</string>
++    <string name="nettest_text_success">Votre réseau ne semble pas bloquer Thumbcast. Si vous avez encore des difficultés à vous connecter, vérifiez les paramètres du pare-feu de votre PC.
++\n
++\nSi vous essayez de streamer depuis Internet, installez l\'outil Moonlight Internet Hosting Tool sur votre PC et exécutez le testeur de streaming Internet inclus pour vérifier la connexion Internet de votre PC.</string>
++    <string name="nettest_text_failure">La connexion réseau actuelle de votre appareil semble bloquer Thumbcast. Le streaming sur Internet peut ne pas fonctionner lorsque vous êtes connecté à ce réseau.
++\n
++\nLes ports réseau suivants ont été bloqués :
++\n</string>
++    <string name="nettest_text_blocked">La connexion réseau actuelle de votre appareil bloque Thumbcast. Le streaming sur Internet peut ne pas fonctionner lorsque vous êtes connecté à ce réseau.</string>
++    <string name="message_decoding_error">Thumbcast a planté en raison d\'une incompatibilité avec le décodeur vidéo de cet appareil. Essayez d\'ajuster les paramètres de streaming si les plantages continuent.</string>
++    <string name="summary_seekbar_deadzone">Remarque : Certains jeux peuvent imposer une zone morte plus grande que celle que Thumbcast est configuré pour utiliser.</string>
++    <string name="summary_checkbox_usb_bind_all">Utiliser le pilote USB de Thumbcast pour toutes les manettes prises en charge, même si l\'appareil supporte nativement celles-ci</string>
++    <string name="summary_language_list">Langue à utiliser pour Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-hu/strings_branding.xml b/app/src/nonRoot/res/values-hu/strings_branding.xml
+new file mode 100644
+index 00000000..a11c53a8
+--- /dev/null
++++ b/app/src/nonRoot/res/values-hu/strings_branding.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-hu/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">A Thumbcast teszteli a hálózati kapcsolatot, hogy megállapítsa, nem blokkoltak-e szükséges portokat.\n\nEz eltarthat néhány másodpercig…</string>
++    <string name="nettest_text_success">Úgy tűnik, a hálózatod nem blokkolja a Thumbcastot. Ha továbbra is problémáid vannak a csatlakozással, ellenőrizd a számítógép tűzfalbeállításait.\n\nHa az interneten keresztül szeretnél streamelni, telepítsd a Moonlight Internet Hosting Toolt a számítógépedre, és futtassd a mellékelt Internet Streaming Testert a számítógép internetkapcsolatának ellenőrzéséhez.</string>
++    <string name="nettest_text_failure">Úgy tűnik, hogy az eszköz jelenlegi hálózati kapcsolata blokkolja a Thumbcast-ot. Előfordulhat, hogy az interneten keresztüli streamelés nem működik, ha csatlakozik ehhez a hálózathoz.\n\nA következő hálózati portokat blokkolták:\n</string>
++    <string name="nettest_text_blocked">Az eszköz jelenlegi hálózati kapcsolata blokkolja a Thumbcast-ot. Előfordulhat, hogy az interneten keresztüli streamelés nem működik, ha csatlakozik ehhez a hálózathoz.</string>
++    <string name="message_decoding_error">A Thumbcast összeomlott az eszköz videódekóderével való inkompatibilitás miatt. Próbáld meg módosítani a streamelési beállításokat, ha az összeomlások továbbra is fennállnak.</string>
++    <string name="summary_seekbar_deadzone">Megjegyzés: Egyes játékok nagyobb holtteret kényszeríthetnek ki, mint amire a Thumbcast be van állítva.</string>
++    <string name="summary_checkbox_usb_bind_all">A Thumbcast USB-illesztőprogramjának használata az összes támogatott játékvezérlőhöz, még akkor is, ha natív Xbox-vezérlő támogatás van jelen</string>
++    <string name="summary_language_list">A Thumbcast-hoz használt nyelv</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-in/strings_branding.xml b/app/src/nonRoot/res/values-in/strings_branding.xml
+new file mode 100644
+index 00000000..2b66e106
+--- /dev/null
++++ b/app/src/nonRoot/res/values-in/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-in/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast sedang menguji koneksi jaringan untuk mencari tahu apakah jalur diblokir.
++\n
++\nIni mungkin membutuhkan beberapa saat…</string>
++    <string name="nettest_text_success">Jaringan Anda sepertinya tidak memblokir Thumbcast. Jika Anda masih mengalami masalah menghubungkan, cek pengaturan firewall komputer Anda.
++\n
++\nJika anda mencoba stream lewat internet, install Moonlight Internet Hosting Tool pada komputer anda dan jalankan Internet Streaming Tester untuk mengecek koneksi Internet komputer Anda.</string>
++    <string name="nettest_text_failure">Koneksi jaringan perangkat anda sepertinya memblokir Thumbcast. Streaming lewat Internet mungkin tidak bekerja ketika terhubung dengan jaringan ini.
++\n
++\nPort-port ini telah diblokir:
++\n</string>
++    <string name="nettest_text_blocked">Koneksi jaringan perangkat anda memblokir Thumbcast. Streaming lewat Internet mungkin tidak bekerja ketika terhubung dengan jaringan ini.</string>
++    <string name="message_decoding_error">Thumbcast telah berhenti bekerja dikarenakan inkompatibilitas dengan dekoder video perangkat ini. Coba ganti pengaturan stream jika masih berlanjut.</string>
++    <string name="summary_seekbar_deadzone">Catatan: Beberapa game dapat menerapkan zona mati yang lebih besar daripada yang dikonfigurasi untuk digunakan oleh Thumbcast.</string>
++    <string name="summary_checkbox_usb_bind_all">Gunakan driver USB Thumbcast untuk semua gamepad yang didukung, meskipun ada dukungan pengontrol Xbox asli</string>
++    <string name="summary_language_list">Bahasa yang digunakan untuk Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-it/strings_branding.xml b/app/src/nonRoot/res/values-it/strings_branding.xml
+new file mode 100644
+index 00000000..3950a6e0
+--- /dev/null
++++ b/app/src/nonRoot/res/values-it/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-it/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast sta testando la tua connessione di rete per controllare se ogni porta richiesta sia bloccata.
++\n
++\nPotrebbero volerci alcuni secondi…</string>
++    <string name="nettest_text_success">La tua rete non sembra bloccare Thumbcast. Se hai ancora problemi di connessione, controlla le impostazioni del firewall del PC.
++\n
++\nSe stai cercando di trasmettere via Internet, installa il Moonlight Internet Hosting Tool sul tuo PC ed avvia il Test per la trasmissione via Internet incluso per controllare la connessione ad Internet del tuo PC.</string>
++    <string name="nettest_text_failure">Sembra che l\'attuale connessione di rete del tuo dispositivo stia bloccando Thumbcast. Trasmettere via Internet potrebbe non funzionare mentre sei connesso a questa rete.
++\n
++\nQueste porte di rete sono bloccate:
++\n</string>
++    <string name="nettest_text_blocked">L\'attuale connessione di rete del tuo dispositivo sta bloccando Thumbcast. Trasmettere via Internet potrebbe non funzionare mentre sei connesso a questa rete.</string>
++    <string name="message_decoding_error">Thumbcast ha smesso di funzionare per colpa di un problema al decodificatore video di questo dispositivo. Prova a modificare le impostazioni di stream se il problema persiste.</string>
++    <string name="summary_seekbar_deadzone">Nota: Alcuni giochi possono imporre una deadzone più grande di quella che Thumbcast è configurato per utilizzare.</string>
++    <string name="summary_checkbox_usb_bind_all">Forza i driver USB di Thumbcast di assumere il controllo su tutti i controller Xbox supportati</string>
++    <string name="summary_language_list">Lingua da usare in Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-ja/strings_branding.xml b/app/src/nonRoot/res/values-ja/strings_branding.xml
+new file mode 100644
+index 00000000..c237d38b
+--- /dev/null
++++ b/app/src/nonRoot/res/values-ja/strings_branding.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-ja/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast はポートがブロックされていないか確かめるためネットワーク接続をてすとしています。
++\n
++\n少々お待ちください…</string>
++    <string name="nettest_text_success">ネットワークは Thumbcast をブロックしていません。接続に問題があるようでしたらコンピュータのファイアーウォールの設定を確認してください。
++\n
++\nインターネット上でゲームをストリームする場合は Moonlight Internet Hosting Tool をインストールして付属のInternet Streaming Tester をはしらせコンピュータの接続を確認してください。</string>
++    <string name="nettest_text_failure">デバイスの設定が Thumbcast をブロックしているようです。このネットワークに接続している間ストリーミングが使えないかもしれません。
++\n
++\n次のネットワークポートがブロックされています:
++\n</string>
++    <string name="nettest_text_blocked">デバイスの設定が Thumbcast をブロックしているようです。このネットワークに接続している間ストリーミングが使えないかもしれません。</string>
++    <string name="message_decoding_error">このデバイスのビデオデコーダーが Thumbcast と非対応なため Thumbcast がクラッシュしました。クラッシュが継続するようでしたらストリームの設定を変更してください。</string>
++    <string name="summary_language_list">Thumbcastで使用する言語</string>
++    <string name="error_manager_not_running">ComputerManagerサービスが動作していません。しばらく待つか、Thumbcastを再起動してください</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-ko/strings_branding.xml b/app/src/nonRoot/res/values-ko/strings_branding.xml
+new file mode 100644
+index 00000000..2fdfe827
+--- /dev/null
++++ b/app/src/nonRoot/res/values-ko/strings_branding.xml
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-ko/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast는 필요한 포트가 차단되었는지 확인하기 위해 네트워크 연결을 테스트하고 있습니다.
++\n
++\n잠시 기다려 주세요…</string>
++    <string name="nettest_text_success">네트워크가 Thumbcast를 차단하지 않는 것 같습니다. 여전히 연결에 문제가 있으면 PC의 방화벽 설정을 확인하십시오
++\n
++\n인터넷을 통해 연결하려는 경우 PC에 Moonlight Internet Hosting Tool을 설치하고 Internet Streaming Tester를 실행하여 PC의 인터넷 연결을 확인하십시오.</string>
++    <string name="nettest_text_failure">기기의 현재 네트워크가 Thumbcast를 차단하는 것 같습니다. 이 네트워크에 연결되어 있으면 인터넷을 통한 스트리밍이 작동하지 않을 수 있습니다.
++\n
++\n차단된 네트워크 포트:
++\n</string>
++    <string name="nettest_text_blocked">기기의 현재 네트워크가 Thumbcast를 차단하고 있습니다. 이 네트워크에 연결되어 있으면 인터넷을 통한 스트리밍이 작동하지 않을 수 있습니다.</string>
++    <string name="message_decoding_error">이 장치의 비디오 디코더와 호환되지 않아 Thumbcast에서 오류가 발생했습니다. 충돌이 계속되면 스트리밍 설정을 조정 해보십시오.</string>
++    <string name="summary_checkbox_usb_bind_all">Xbox 컨트롤러를 기본으로 지원하는 경우에도 지원되는 모든 컨트롤러에 Thumbcast의 USB 드라이버를 사용합니다</string>
++    <string name="summary_language_list">Thumbcast에서 사용할 언어를 선택합니다</string>
++    <string name="text_native_res_dialog">네이티브 해상도 및 FPS는 스트리밍 서버에서 지원하지 않을 수 있습니다. 호스트 PC에 대해 일치하는 사용자 지정 디스플레이 모드를 수동으로 구성해야 할 수 있습니다.
++\n
++\n화면 설정과 일치하도록 NVIDIA 제어판에서 사용자 정의 해상도를 생성 할 경우 모니터 손상, PC 불안정 및 기타 잠재적인 문제에 대한 NVIDIA의 경고를 읽고 이해했는지 확인하십시오.
++\n
++\nThumbcast는 PC에서 사용자 지정 해상도를 생성하여 발생하는 문제에 대해 책임을 지지 않습니다.
++\n
++\n모니터가 필요한 디스플레이 구성을 지원하지 않을 경우 가상 모니터 설정을 시도할 수 있습니다. 장치나 호스트 PC가 특정 해상도나 새로 고침 빈도로 스트리밍을 지원하지 않을 수 있습니다.</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-nb-rNO/strings_branding.xml b/app/src/nonRoot/res/values-nb-rNO/strings_branding.xml
+new file mode 100644
+index 00000000..474ebf84
+--- /dev/null
++++ b/app/src/nonRoot/res/values-nb-rNO/strings_branding.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-nb-rNO/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast tester din nettverksforbindelse for å fastsette hvorvidt NVIDIA GameStream er blokkert.
++\n
++\nDette kan ta noen sekunder …</string>
++    <string name="nettest_text_success">Det ser ikke ut til at nettverket ditt blokkerer Thumbcast. Hvis du fremdeles har problemer bør du sjekke PC-ens brannmursinnstillinger.
++\n
++\nHvis du prøver å strømme over Internett, kan du installere Moonlight Internett-vertstjeningsverktøyet på din PC og kjøre den inkluderte Internett-strømmingstesteren for å sjekke PC-ens tilkobling til Internett.</string>
++    <string name="nettest_text_failure">Nettverkstilkoblingen på din enhet ser ut til å blokkere Thumbcast. Strømming over Internett vil muligens ikke fungere når tilkoblet gjennom dette nettverket.
++\n
++\nFølgende nettverksporter ble blokkert:
++\n</string>
++    <string name="nettest_text_blocked">Nettverkstilkoblingen på din enhet ser ut til å blokkere Thumbcast. Strømming over Internett vil muligens ikke fungere tilkoblet gjennom dette nettverket.</string>
++    <string name="message_decoding_error">Thumbcast har krasjet som følge av inkompatibilitet med denne enhetens videodekoder. Prøv å justere strømmingsinnstillingene hvis problemet vedvarer.</string>
++    <string name="summary_checkbox_usb_bind_all">Bruk Thumbcast sin USB-driver for alle støttede spillkontrollere, selv når systemspesifikk kontrollerstøtte er tilgjengelig</string>
++    <string name="summary_language_list">Språk brukt i Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-nl/strings_branding.xml b/app/src/nonRoot/res/values-nl/strings_branding.xml
+new file mode 100644
+index 00000000..9216784a
+--- /dev/null
++++ b/app/src/nonRoot/res/values-nl/strings_branding.xml
+@@ -0,0 +1,20 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-nl/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast test uw netwerkverbinding om te bepalen of er vereiste poorten geblokkeerd zijn.\n\nDit kan enkele seconden duren…</string>
++    <string name="nettest_text_success">Uw netwerk lijkt Thumbcast niet te blokkeren. Als u nog steeds problemen ondervindt met verbinden, controleer de firewall instellingen van uw PC.
++\n
++\nAls u probeert te streamen over het internet, installeer de Moonlight Internet Hosting Tool op uw PC en voer de inbegrepen Internet Streaming Tester uit om uw PC\'s internetverbinding te controleren.</string>
++    <string name="nettest_text_failure">De internetverbinding van dit toestel lijkt Thumbcast te blokkeren. Streamen over het internet werkt mogelijks niet wanneer u verbonden bent met dit netwerk.
++\n
++\nDe volgende netwerkpoorten zijn geblokkeerd:
++\n</string>
++    <string name="nettest_text_blocked">De internetverbinding van dit toestel blokkeert Thumbcast. Streamen over het internet werkt mogelijks niet wanneer u verbonden bent met dit netwerk.</string>
++    <string name="message_decoding_error">Thumbcast is gecrasht vanwege een incompatibiliteit met de videodecoder van dit apparaat. Probeer de streaminginstellingen aan te passen als de crashes aanhouden.</string>
++    <string name="summary_seekbar_deadzone">Let op: Sommige spellen kunnen een grotere dode zone afdwingen dan waar Thumbcast voor is geconfigureerd.</string>
++    <string name="summary_checkbox_usb_bind_all">Gebruik Thumbcast\'s USB driver voor alle ondersteunde gamepads, zelfs als een standaard Xbox controller aanwezig is</string>
++    <string name="summary_language_list">Taal te gebruiken in Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-pl/strings_branding.xml b/app/src/nonRoot/res/values-pl/strings_branding.xml
+new file mode 100644
+index 00000000..d41a20b3
+--- /dev/null
++++ b/app/src/nonRoot/res/values-pl/strings_branding.xml
+@@ -0,0 +1,20 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisania tekstów upstreamu (app/src/main/res/values-pl/strings.xml), w których
++     „Moonlight” oznaczało tę aplikację. Aplikacja nazywa się Thumbcast i nie może udawać
++     oficjalnej aplikacji Moonlight (docs/naming.md, zasada 2). Plik upstreamu zostaje bez zmian,
++     żeby nie generować konfliktów przy scalaniu; flavor nonRoot ma pierwszeństwo przed main.
++     Atrybucja („serwery projektu Moonlight”, „Moonlight Internet Hosting Tool”) zostaje.
++     Pisane ręcznie (nazwa w formie nieodmiennej: „aplikacja Thumbcast”).
++     local_network_rationale nie ma polskiego tłumaczenia w upstreamie, więc go tu nie ma.
++     Audyt i decyzje: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast testuje połączenie sieciowe w celu ustalenia, czy wymagane porty są zablokowane.\n\nMoże to potrwać kilka sekund…</string>
++    <string name="nettest_text_success">Wygląda na to, że sieć nie blokuje aplikacji Thumbcast. Jeśli nadal masz problemy z połączeniem, sprawdź ustawienia zapory sieciowej na swoim komputerze.\n\nJeśli próbujesz przesyłać strumieniowo przez Internet, zainstaluj narzędzie Moonlight Internet Hosting Tool na swoim komputerze i uruchom dołączony tester przesyłania strumieniowego przez Internet, aby sprawdzić połączenie internetowe komputera.</string>
++    <string name="nettest_text_inconclusive">Nie można było wykonać testu sieci, ponieważ żaden z serwerów projektu Moonlight testujących połączenie nie był osiągalny. Sprawdź połączenie internetowe lub spróbuj ponownie później.</string>
++    <string name="nettest_text_failure">Bieżące połączenie sieciowe urządzenia wydaje się blokować aplikację Thumbcast. Przesyłanie strumieniowe przez Internet może nie działać podczas połączenia z tą siecią.\n\nNastępujące porty sieciowe zostały zablokowane:\n</string>
++    <string name="nettest_text_blocked">Bieżące połączenie sieciowe urządzenia blokuje aplikację Thumbcast. Przesyłanie strumieniowe przez Internet może nie działać podczas połączenia z tą siecią.</string>
++    <string name="message_decoding_error">Aplikacja Thumbcast uległa awarii z powodu niezgodności z dekoderem wideo tego urządzenia. Spróbuj dostosować ustawienia przesyłania strumieniowego, jeśli awarie będą się powtarzać.</string>
++    <string name="summary_seekbar_deadzone">Uwaga: Niektóre gry mogą wymuszać większą strefę martwą niż ta, którą ustawiono w aplikacji Thumbcast.</string>
++    <string name="summary_checkbox_usb_bind_all">Użyj sterownika USB aplikacji Thumbcast dla wszystkich obsługiwanych gamepadów, nawet jeśli natywna obsługa kontrolera Xbox jest obecna</string>
++    <string name="summary_language_list">Język używany w aplikacji Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-pt-rBR/strings_branding.xml b/app/src/nonRoot/res/values-pt-rBR/strings_branding.xml
+new file mode 100644
+index 00000000..e4a1f3bd
+--- /dev/null
++++ b/app/src/nonRoot/res/values-pt-rBR/strings_branding.xml
+@@ -0,0 +1,20 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-pt-rBR/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">O Thumbcast está testando a sua conexão de internet para determinar se alguma das portas requeridas estão bloqueadas.\n\nIsso pode levar alguns segundos…</string>
++    <string name="nettest_text_success">Sua rede não parece estar bloqueando o Thumbcast. Se você ainda tiver problemas para se conectar, verifique as configurações de firewall do seu PC.
++\n
++\nSe você estiver tentando transmitir pela Internet, instale o Moonlight Internet Hosting Tool em seu PC e execute o Internet Streaming Tester para verificar a conexão com a Internet do seu PC.</string>
++    <string name="nettest_text_failure">A conexão de rede atual do seu dispositivo parece estar bloqueando o Thumbcast. A transmissão pela Internet pode não funcionar enquanto estiver conectado a esta rede.
++\n
++\nAs seguintes portas de rede estão bloqueadas:
++\n</string>
++    <string name="nettest_text_blocked">A conexão de rede atual do seu dispositivo está bloqueando o Thumbcast. A transmissão pela Internet pode não funcionar enquanto estiver conectado a esta rede.</string>
++    <string name="message_decoding_error">Thumbcast crashou devido a uma incompatibilidade com o decodificador de vídeo deste dispositivo. Tente ajustar as configurações de transmissão se as falhas continuarem.</string>
++    <string name="summary_seekbar_deadzone">Nota: Alguns jogos podem impor uma zona morta maior do que o Thumbcast está configurado para usar.</string>
++    <string name="summary_checkbox_usb_bind_all">Use o driver USB do Thumbcast para todos os gamepads suportados, mesmo se houver suporte nativo ao controle Xbox</string>
++    <string name="summary_language_list">Idioma para ser usado no Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-pt/strings_branding.xml b/app/src/nonRoot/res/values-pt/strings_branding.xml
+new file mode 100644
+index 00000000..16c21b4d
+--- /dev/null
++++ b/app/src/nonRoot/res/values-pt/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-pt/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast está testando sua conexão com a rede para determinar se o NVIDIA GameStream está bloqueado.
++\n
++\nEste processo pode demorar alguns segundos…</string>
++    <string name="nettest_text_success">A sua rede não parece estar a bloquear o Thumbcast. Se ainda tiver problemas a se conectar, verifique as configurações de firewall do seu PC.
++\n
++\nSe estiver a tentar transmitir pela Internet, instale o Moonlight Internet Hosting Tool no seu PC e execute o Internet Streaming Tester para verificar a conexão com a Internet do seu PC.</string>
++    <string name="nettest_text_failure">A conexão de rede atual do seu aparelho parece estar a bloquear o Thumbcast. A transmissão pela Internet pode não funcionar enquanto estiver conectado a esta rede.
++\n
++\nAs seguintes portas de rede estão bloqueadas:
++\n</string>
++    <string name="nettest_text_blocked">A conexão de rede atual do seu aparelho está a bloquear o Thumbcast. A transmissão pela Internet pode não funcionar enquanto estiver conectado a esta rede.</string>
++    <string name="message_decoding_error">Thumbcast crashou devido a uma incompatibilidade com o decodificador de vídeo deste aparelho. Certifique-se de que o GeForce Experience esteja atualizado à versão mais recente no seu PC. Tente ajustar as configurações de transmissão se as falhas continuarem.</string>
++    <string name="summary_seekbar_deadzone">Nota: Alguns jogos podem impor uma zona morta maior do que o Thumbcast está configurado para usar.</string>
++    <string name="summary_checkbox_usb_bind_all">Use o driver USB do Thumbcast para todos os gamepads suportados, mesmo se houver suporte nativo ao controle Xbox</string>
++    <string name="summary_language_list">Idioma para ser usado no Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-ro/strings_branding.xml b/app/src/nonRoot/res/values-ro/strings_branding.xml
+new file mode 100644
+index 00000000..7b57e9c5
+--- /dev/null
++++ b/app/src/nonRoot/res/values-ro/strings_branding.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-ro/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="message_decoding_error">Thumbcast s-a închis în mod neașteptat datorită unei incompatibilități cu decodorul video al acestui dispozitiv. Asigură-te ca folosești ultima versiune de GFE. Dacă problema persistă, ajustează setările de streaming.</string>
++    <string name="summary_checkbox_usb_bind_all">Forțează driverul USB Thumbcast să preia toate controllerele Xbox suportate</string>
++    <string name="summary_language_list">Limba folosită de către Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-ru/strings_branding.xml b/app/src/nonRoot/res/values-ru/strings_branding.xml
+new file mode 100644
+index 00000000..c234b093
+--- /dev/null
++++ b/app/src/nonRoot/res/values-ru/strings_branding.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-ru/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast тестирует ваше сетевое подключение, чтобы определить, заблокированы ли нужные порты.
++\n
++\nЭто может занять некоторое время…</string>
++    <string name="nettest_text_success">Ваша сеть не блокирует Thumbcast. Если у вас всё ещё есть проблемы с соединением, проверьте настройки брандмауэра на компьютере.\n\nЕсли вы пытаетесь транслировать через интернет, установите Moonlight Internet Hosting Tool на ваш компьютер и запустите установленный Internet Streaming Tester, чтобы проверить Интернет-соединение на вашем компьютере.</string>
++    <string name="nettest_text_failure">Похоже, что текущее сетевое подключение вашего устройства блокирует Thumbcast. Трансляция через Интернет может не работать при подключении к этой сети.\n\nСледующие сетевые порты были заблокированы:\n</string>
++    <string name="nettest_text_blocked">Текущее сетевое соединение вашего устройства блокирует Thumbcast. Потоковая передача через Интернет может не работать при подключении к этой сети.</string>
++    <string name="message_decoding_error">Thumbcast произошел сбой из-за несовместимости с видеодекодером этого устройства. Попробуйте изменить настройки потоковой передачи, если сбои продолжаются.</string>
++    <string name="summary_seekbar_deadzone">Некоторые игры могут принудительно увеличить мёртвую зону вместо указанной в Thumbcast.</string>
++    <string name="summary_checkbox_usb_bind_all">Заставляет USB драйвер Thumbcast взять на себя работу со всеми поддерживаемыми Xbox геймпадами</string>
++    <string name="summary_language_list">Язык, который будет использоваться в Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-sv/strings_branding.xml b/app/src/nonRoot/res/values-sv/strings_branding.xml
+new file mode 100644
+index 00000000..65009e98
+--- /dev/null
++++ b/app/src/nonRoot/res/values-sv/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-sv/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast testar din nätverksanslutning för att avgöra om några nödvändiga portar är blockerade.
++\n
++\nDetta kan ta några sekunder…</string>
++    <string name="nettest_text_success">Ditt nätverk verkar inte blockera Thumbcast. Om du fortfarande har problem med anslutningen kan du kontrollera datorns brandväggsinställningar.
++\n
++\nOm du försöker streama via Internet installerar du Moonlight Internet Hosting Tool på din dator och kör den medföljande Internet Streaming Tester för att kontrollera datorns Internetanslutning.</string>
++    <string name="nettest_text_failure">Din enhets aktuella nätverksanslutning verkar blockera Thumbcast. Streaming via Internet kanske inte fungerar när du är ansluten till det här nätverket.
++\n
++\nFöljande nätverksportar blockerades:
++\n</string>
++    <string name="nettest_text_blocked">Enhetens aktuella nätverksanslutning blockerar Thumbcast. Streaming via Internet kanske inte fungerar när du är ansluten till det här nätverket.</string>
++    <string name="message_decoding_error">Thumbcast har brakat på grund av en inkompatibilitet med den här enhetens videodekoder. Försök att jämka streaminginställningarna om braket fortsätter.</string>
++    <string name="summary_seekbar_deadzone">Observera: Vissa spel kan kräva en större dödzon än vad Thumbcast är konfigurerat för att använda.</string>
++    <string name="summary_checkbox_usb_bind_all">Använd Thumbcasts USB-drivrutin för alla gamepads som stöds, även om det finns stöd för Xbox-kontroller i original</string>
++    <string name="summary_language_list">Språk att använda för Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-tr/strings_branding.xml b/app/src/nonRoot/res/values-tr/strings_branding.xml
+new file mode 100644
+index 00000000..17d9f9fe
+--- /dev/null
++++ b/app/src/nonRoot/res/values-tr/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-tr/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast, gerekli bağlantı noktalarının engellenmediğini belirlemek için ağ bağlantınızı test ediyor.
++\n
++\nBu bir kaç saniye sürebilir…</string>
++    <string name="nettest_text_success">Ağınız Thumbcast\'ı engelliyor gibi görünmüyor. Bağlanmakta hala sorun yaşıyorsanız, bilgisayarınızın güvenlik duvarı ayarlarını kontrol edin.
++\n
++\nİnternet üzerinden yayın yapmaya çalışıyorsanız, Moonlight İnternet Barındırma Aracını bilgisayarınıza yükleyin ve bilgisayarınızın internet bağlantısını kontrol etmek için birlikte verilen İnternet Akış Test Cihazını çalıştırın.</string>
++    <string name="nettest_text_failure">Cihazınızın mevcut ağ bağlantısı Thumbcast\'ı engelliyor gibi görünüyor. Bu ağa bağlıyken İnternet üzerinden yayın akışı çalışmayabilir.
++\n
++\nAşağıdaki ağ bağlantı noktaları engellenmiş:
++\n</string>
++    <string name="nettest_text_blocked">Cihazınızın mevcut ağ bağlantısı Thumbcast\'ı engelliyor. Bu ağa bağlıyken internet üzerinden yayın akışı çalışmayabilir.</string>
++    <string name="message_decoding_error">Thumbcast, bu cihazın video kod çözücüsüyle uyumsuzluk nedeniyle çöktü. Kilitlenmeler devam ederse akış ayarlarını değiştirmeyi deneyin.</string>
++    <string name="summary_seekbar_deadzone">Not: Bazı oyunlar Thumbcast\'ın kullanmak üzere yapılandırıldığından daha büyük bir ölü bölge uygulayabilir.</string>
++    <string name="summary_checkbox_usb_bind_all">Yerel Xbox oyun kumandası desteği mevcut olsa bile desteklenen tüm oyun kumandaları için Thumbcast\'ın USB sürücüsünü kullan</string>
++    <string name="summary_language_list">Thumbcast için kullanılacak olan dil</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-uk/strings_branding.xml b/app/src/nonRoot/res/values-uk/strings_branding.xml
+new file mode 100644
+index 00000000..6e303336
+--- /dev/null
++++ b/app/src/nonRoot/res/values-uk/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-uk/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast перевіряє ваше мережеве з’єднання, щоб визначити, чи заблоковані необхідні порти.
++\n
++\nЦе може зайняти кілька секунд…</string>
++    <string name="nettest_text_success">Схоже що ваша мережа не блокує Thumbcast. Якщо у вас й надалі проблеми з підключенням, перевірте налаштування брандмауера.
++\n
++\nЯкщо ви намагаєтеся транслювати через Інтернет, встановіть на своєму пристрої Moonlight Internet Hosting Tool, та запустіть випробування мережі щоб перевірити ваше з\'єднання до Інтернету.</string>
++    <string name="nettest_text_failure">Поточне мережеве з’єднання вашого пристрою блокує Thumbcast. Трансляції через Інтернет можуть не працювати на цієї мережі.
++\n
++\nНаступні мережеві порти були заблоковані:
++\n</string>
++    <string name="nettest_text_blocked">Поточне мережеве з’єднання вашого пристрою блокує Thumbcast. Трансляції через Інтернет можуть не працювати на цієї мережі.</string>
++    <string name="message_decoding_error">Thumbcast аварійно завершив роботу через несумісність із відеодекодером цього пристрою. Спробуйте налаштувати параметри потокового передавання, якщо збої триватимуть.</string>
++    <string name="summary_seekbar_deadzone">Примітка: Деякі ігри можуть встановлювати більшу мертву зону, ніж та, на яку налаштовано Thumbcast.</string>
++    <string name="summary_checkbox_usb_bind_all">Використовувати USB драйвер Thumbcast для усіх підтриманих контролерів, навіть якщо існує рідна підтримка</string>
++    <string name="summary_language_list">Мова, яка буде використовуватися в Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-vi/strings_branding.xml b/app/src/nonRoot/res/values-vi/strings_branding.xml
+new file mode 100644
+index 00000000..a50cce06
+--- /dev/null
++++ b/app/src/nonRoot/res/values-vi/strings_branding.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-vi/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast đang thử nghiệm kết nối mạng của bạn để xác định xem NVIDIA GameStream có bị chặn không.
++\n
++\nViệc này có thể sẽ mất một vài giây…</string>
++    <string name="nettest_text_success">Mạng của bạn có vẻ là không chặn Thumbcast. Nếu bạn vẫn gặp rắc rối trong việc kết nối, hãy kiểm tra cài đặt tường lửa của PC.
++\n
++\nNếu bạn đang cố stream qua Internet, hãy cài đặt Moonlight Internet Hosting Tool trên PC và chạy Internet Streaming Tester được bao gồm trong đó để kiểm tra kết nối Internet của PC.</string>
++    <string name="nettest_text_failure">Kết nối mạng hiện tại của thiết bị có vẻ là đang chặn Thumbcast. Việc stream qua Internet có thể sẽ không được khi đang kết nối đến mạng này.
++\n
++\nCác cổng mạng sau bị chặn:
++\n</string>
++    <string name="nettest_text_blocked">Kết nối mạng hiện tại của thiết bị đang chặn Thumbcast. Việc stream qua Internet có thể sẽ không được khi đang kết nối đến mạng này.</string>
++    <string name="message_decoding_error">Thumbcast đã bị dừng đột ngột vì một sự không tương thích với trình giải mã video của thiết bị này. Hãy chắc chắn là GeForce Experience được cập nhật lên phiên bản mới nhất trên PC. Hãy thử điều chỉnh cài đặt stream nếu việc dừng đột ngột vẫn tiếp tục.</string>
++    <string name="summary_checkbox_usb_bind_all">Sử dụng driver USB của Thumbcast cho tất cả tay cầm điều khiển được hỗ trợ, kể cả nếu có hỗ trợ tay cầm điều khiển Xbox</string>
++    <string name="summary_language_list">Ngôn ngữ để sử dụng cho Thumbcast</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-zh-rCN/strings_branding.xml b/app/src/nonRoot/res/values-zh-rCN/strings_branding.xml
+new file mode 100644
+index 00000000..3b3e2dab
+--- /dev/null
++++ b/app/src/nonRoot/res/values-zh-rCN/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-zh-rCN/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast正在测试你的网络连接，请确保所需端口没有被屏蔽。
++\n
++\n这可能需要几秒钟……</string>
++    <string name="nettest_text_success">您的网络似乎没有屏蔽Thumbcast。如果您仍然无法连接，请检查您的电脑的防火墙设置。
++\n
++\n如果您想通过互联网进行流媒体传输，请在您的电脑上安装Moonlight互联网主机工具，并运行附带的互联网流媒体测试器来检查您的电脑的互联网连接。</string>
++    <string name="nettest_text_failure">您设备的当前网络似乎正在阻止Thumbcast。连接到该网络时，可能无法通过互联网串流。
++\n
++\n以下网络端口被阻止：
++\n</string>
++    <string name="nettest_text_blocked">您设备当前的网络连接拦截了Thumbcast。连接到该网络时可能无法通过互联网串流。</string>
++    <string name="message_decoding_error">由于与该设备的视频解码器不兼容，Thumbcast已崩溃。如果崩溃继续，请尝试调整串流设置。</string>
++    <string name="summary_seekbar_deadzone">注意：有些游戏可以执行一个比Thumbcast摇杆配置的更大的盲区。</string>
++    <string name="summary_checkbox_usb_bind_all"> 强制Thumbcast的USB驱动接管所有受支持的Xbox手柄 </string>
++    <string name="summary_language_list"> 选择Thumbcast显示的语言 </string>
++</resources>
+diff --git a/app/src/nonRoot/res/values-zh-rTW/strings_branding.xml b/app/src/nonRoot/res/values-zh-rTW/strings_branding.xml
+new file mode 100644
+index 00000000..0da5ae3a
+--- /dev/null
++++ b/app/src/nonRoot/res/values-zh-rTW/strings_branding.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: plik wygenerowany przez tools/branding/gen_locale_overrides.py, nie edytować ręcznie.
++     Nadpisuje teksty upstreamu (app/src/main/res/values-zh-rTW/strings.xml), w których „Moonlight”
++     oznaczało tę aplikację, żeby nie sugerować oficjalnej aplikacji Moonlight.
++     Atrybucja i nazwy narzędzi upstreamu zostają. Uzasadnienie: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast 正在測試您的網路連線以確認必要連接埠是否被封鎖。
++\n
++\n可能需要等待一些時間…</string>
++    <string name="nettest_text_success">您的網路似乎沒有封鎖 Thumbcast。如果仍然無法連線，請檢查您電腦的防火牆設定。
++\n
++\n如果您是嘗試透過網際網路串流，請在您的電腦上安裝 Moonlight Internet Hosting Tool，然後執行裡面的 Internet Streaming Tester 來檢查電腦的網際網路連線。</string>
++    <string name="nettest_text_failure">您裝置目前的網路連線似乎封鎖了 Thumbcast。連線到該網路時可能無法透過網際網路串流。
++\n
++\n以下網路通訊埠被封鎖：
++\n</string>
++    <string name="nettest_text_blocked">您裝置目前的網路連線封鎖了 Thumbcast。連線到該網路時可能無法透過網際網路串流。</string>
++    <string name="message_decoding_error">由於與這個裝置的視訊解碼器不相容，Thumbcast 已當機。若當機持續，請嘗試調整串流設定。</string>
++    <string name="summary_seekbar_deadzone">注意：有些遊戲可以強制執行一個比 Thumbcast 設定大的死區。</string>
++    <string name="summary_checkbox_usb_bind_all">強制 Thumbcast 的 USB 驅動程式接管所有受支援的原生 Xbox 控制器</string>
++    <string name="summary_language_list">選擇 Thumbcast 顯示的語言</string>
++</resources>
+diff --git a/app/src/nonRoot/res/values/ic_launcher_background.xml b/app/src/nonRoot/res/values/ic_launcher_background.xml
+new file mode 100644
+index 00000000..e08eec54
+--- /dev/null
++++ b/app/src/nonRoot/res/values/ic_launcher_background.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisuje kolor tła ikony upstreamu (app/src/main/res/values/ic_launcher_background.xml).
++     TYMCZASOWY kolor do czasu właściwego projektu graficznego. Patrz docs/branding.md. -->
++<resources>
++    <color name="ic_launcher_background">#1D6B5F</color>
++</resources>
+diff --git a/app/src/nonRoot/res/values/strings_branding.xml b/app/src/nonRoot/res/values/strings_branding.xml
+new file mode 100644
+index 00000000..769503a0
+--- /dev/null
++++ b/app/src/nonRoot/res/values/strings_branding.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: nadpisania tekstów upstreamu (app/src/main/res/values/strings.xml), w których
++     „Moonlight” oznaczało tę aplikację. Aplikacja nazywa się Thumbcast i nie może udawać
++     oficjalnej aplikacji Moonlight (docs/naming.md, zasada 2). Plik upstreamu zostaje bez zmian,
++     żeby nie generować konfliktów przy scalaniu; flavor nonRoot ma pierwszeństwo przed main.
++     Atrybucja („serwery projektu Moonlight”, „Moonlight Internet Hosting Tool”) zostaje.
++     Pisane ręcznie; inne lokalizacje generuje tools/branding/gen_locale_overrides.py.
++     Audyt i decyzje: docs/branding.md. -->
++<resources>
++    <string name="nettest_text_waiting">Thumbcast is testing your network connection to determine if any required ports are blocked.\n\nThis may take a few seconds…</string>
++    <string name="nettest_text_success">Your network does not appear to be blocking Thumbcast. If you still have trouble connecting, check your PC\'s firewall settings.\n\nIf you are trying to stream over the Internet, install the Moonlight Internet Hosting Tool on your PC and run the included Internet Streaming Tester to check your PC\'s Internet connection.</string>
++    <!-- THUMBCAST: test łączy się z serwerami projektu Moonlight (ServerHelper.CONNECTION_TEST_SERVER), więc mówimy to wprost. -->
++    <string name="nettest_text_inconclusive">The network test could not be performed because none of the Moonlight project\'s connection testing servers were reachable. Check your Internet connection or try again later.</string>
++    <string name="nettest_text_failure">Your device\'s current network connection seems to be blocking Thumbcast. Streaming over the Internet may not work while connected to this network.\n\nThe following network ports were blocked:\n</string>
++    <string name="nettest_text_blocked">Your device\'s current network connection is blocking Thumbcast. Streaming over the Internet may not work while connected to this network.</string>
++    <string name="message_decoding_error">Thumbcast has crashed due to an incompatibility with this device\'s video decoder. Try adjusting the streaming settings if the crashes continue.</string>
++    <string name="summary_seekbar_deadzone">Note: Some games can enforce a larger deadzone than what Thumbcast is configured to use.</string>
++    <string name="summary_checkbox_usb_bind_all">Use Thumbcast\'s USB driver for all supported gamepads, even if native Xbox controller support is present</string>
++    <string name="summary_language_list">Language to use for Thumbcast</string>
++    <string name="local_network_rationale">Thumbcast requires local network permissions to communicate with nearby hosts</string>
++</resources>
