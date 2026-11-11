@@ -158,13 +158,12 @@
             android:entryValues="@array/control_layer_values"
             android:defaultValue="thumbcast" />
 
-        <ListPreference
+        <!-- Otwiera bibliotekę profili (ProfileLibraryActivity); wartość (nazwa pliku) zapisuje biblioteka.
+             Podsumowanie = nazwa aktywnego profilu (StreamSettings, onResume). -->
+        <Preference
             android:key="list_thumbcast_profile"
             android:title="@string/title_thumbcast_profile"
-            android:summary="%s"
-            android:entries="@array/thumbcast_profile_names"
-            android:entryValues="@array/thumbcast_profile_values"
-            android:defaultValue="mmo-pad-plus.thumbcast.json" />
+            android:persistent="false" />
 
         <ListPreference
             android:key="list_thumbcast_control_scale"

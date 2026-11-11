@@ -31,6 +31,9 @@ import com.limelight.LimeLog;
 import com.limelight.PcView;
 import com.limelight.R;
 import com.limelight.binding.video.MediaCodecHelper;
+// THUMBCAST:
+import com.limelight.thumbcast.ProfileLibraryActivity;
+// THUMBCAST END
 import com.limelight.utils.Dialog;
 import com.limelight.utils.UiHelper;
 
@@ -263,6 +266,17 @@ public class StreamSettings extends Activity {
                     .apply();
         }
 
+        // THUMBCAST: podsumowanie = nazwa aktywnego profilu (odświeżane po powrocie z biblioteki).
+        @Override
+        public void onResume() {
+            super.onResume();
+            Preference thumbcastProfile = findPreference("list_thumbcast_profile");
+            if (thumbcastProfile != null) {
+                thumbcastProfile.setSummary(ProfileLibraryActivity.activeProfileName(getActivity()));
+            }
+        }
+        // THUMBCAST END
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View view = super.onCreateView(inflater, container, savedInstanceState);
@@ -374,6 +388,13 @@ public class StreamSettings extends Activity {
                 };
                 layerListener.onPreferenceChange(controlLayer, controlLayer.getValue());
                 controlLayer.setOnPreferenceChangeListener(layerListener);
+            }
+            if (thumbcastProfile != null) {
+                // Wybór profilu w bibliotece (ta sama preferencja, wartość = nazwa pliku).
+                thumbcastProfile.setOnPreferenceClickListener(pref -> {
+                    startActivity(new Intent(getActivity(), ProfileLibraryActivity.class));
+                    return true;
+                });
             }
             // THUMBCAST END
 
