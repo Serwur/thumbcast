@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wymiary Thumbcast (docs/ui-audit.md, P0). Skala tekstu jak typografia Material 3 w ThumbcastTheme.kt. -->
+<resources>
+    <!-- Odstępy (siatka 8 dp; 4 dp tylko między ikoną a tekstem w małych elementach). -->
+    <dimen name="thumbcast_space_xsmall">4dp</dimen>
+    <dimen name="thumbcast_space_small">8dp</dimen>
+    <dimen name="thumbcast_space_medium">16dp</dimen>
+    <dimen name="thumbcast_space_large">24dp</dimen>
+
+    <!-- Minimalny obszar dotyku (także dla ikon 24 dp: pole 48 dp). -->
+    <dimen name="thumbcast_touch_target">48dp</dimen>
+    <dimen name="thumbcast_icon_size">24dp</dimen>
+    <dimen name="thumbcast_icon_size_small">18dp</dimen>
+    <dimen name="thumbcast_list_item_min_height">56dp</dimen>
+    <dimen name="thumbcast_list_item_two_line_min_height">72dp</dimen>
+    <dimen name="thumbcast_stroke">1dp</dimen>
+    <dimen name="thumbcast_divider_height">1dp</dimen>
+
+    <!-- Promienie rogów: małe (pola, plakietki prostokątne), karty, duże (panele, dialogi, przyciski-pigułki). -->
+    <dimen name="thumbcast_corner_small">12dp</dimen>
+    <dimen name="thumbcast_corner_medium">16dp</dimen>
+    <dimen name="thumbcast_corner_large">28dp</dimen>
+
+    <!-- Rozmiary tekstu (M3: headlineSmall, titleLarge, titleMedium, bodyLarge, bodyMedium, labelLarge, bodySmall). -->
+    <dimen name="thumbcast_text_headline">24sp</dimen>
+    <dimen name="thumbcast_text_title_large">22sp</dimen>
+    <dimen name="thumbcast_text_title">16sp</dimen>
+    <dimen name="thumbcast_text_body">16sp</dimen>
+    <dimen name="thumbcast_text_body_small">14sp</dimen>
+    <dimen name="thumbcast_text_label">14sp</dimen>
+    <dimen name="thumbcast_text_caption">12sp</dimen>
+</resources>

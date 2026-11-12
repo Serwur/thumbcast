@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Motyw i style Thumbcast dla widoków platformy w :app (docs/ui-audit.md, D1 i D2: bez AppCompat i Material Components).
+    Kolory: thumbcast_colors.xml, wymiary: thumbcast_dimens.xml. Ekrany w Compose biorą ThumbcastTheme z :control-ui.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        Motyw ekranów poza strumieniem (lista PC, lista gier, ustawienia, dodawanie PC, biblioteka profili).
+        Rodzic AppTheme: zostaje Theme.Material bez paska akcji, a na API 29+ forceDarkAllowed=false z values-v29
+        (AppBaseTheme). Game zostaje przy StreamTheme.
+    -->
+    <style name="Theme.Thumbcast" parent="AppTheme">
+        <item name="android:colorPrimary">@color/thumbcast_accent</item>
+        <item name="android:colorPrimaryDark">@color/thumbcast_bg</item>
+        <item name="android:colorAccent">@color/thumbcast_accent</item>
+        <item name="android:colorBackground">@color/thumbcast_bg</item>
+        <item name="android:colorError">@color/thumbcast_error</item>
+        <item name="android:colorEdgeEffect">@color/thumbcast_accent</item>
+        <item name="android:windowBackground">@color/thumbcast_bg</item>
+        <!-- Od Androida 15 (edge-to-edge) system ignoruje kolory pasków; tło okna wypełnia wtedy obszar pod nimi. -->
+        <item name="android:statusBarColor">@color/thumbcast_bg</item>
+        <item name="android:navigationBarColor">@color/thumbcast_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+        <item name="android:textColorPrimary">@color/thumbcast_text_primary_states</item>
+        <item name="android:textColorSecondary">@color/thumbcast_text_secondary_states</item>
+        <item name="android:textColorLink">@color/thumbcast_accent</item>
+        <item name="android:alertDialogTheme">@style/Theme.Thumbcast.Dialog</item>
+    </style>
+
+    <!-- Dialogi (AlertDialog.Builder w aktywności z Theme.Thumbcast). Tło: powierzchnia podniesiona, rogi 28 dp (API 28+). -->
+    <style name="Theme.Thumbcast.Dialog" parent="android:Theme.Material.Dialog.Alert">
+        <item name="android:colorPrimary">@color/thumbcast_accent</item>
+        <item name="android:colorAccent">@color/thumbcast_accent</item>
+        <item name="android:colorBackground">@color/thumbcast_surface_raised</item>
+        <item name="android:colorError">@color/thumbcast_error</item>
+        <item name="android:textColorPrimary">@color/thumbcast_text_primary_states</item>
+        <item name="android:textColorSecondary">@color/thumbcast_text_secondary_states</item>
+        <item name="android:textColorLink">@color/thumbcast_accent</item>
+        <item name="android:dialogCornerRadius" tools:targetApi="28">@dimen/thumbcast_corner_large</item>
+    </style>
+
+    <!-- ===== Tekst (style="@style/ThumbcastText.*" na TextView) ===== -->
+
+    <style name="ThumbcastText">
+        <item name="android:textColor">@color/thumbcast_text_primary_states</item>
+        <item name="android:textSize">@dimen/thumbcast_text_body</item>
+    </style>
+
+    <!-- Duży tytuł ekranu lub kroku (24 sp). -->
+    <style name="ThumbcastText.Headline">
+        <item name="android:textSize">@dimen/thumbcast_text_headline</item>
+    </style>
+
+    <!-- Tytuł paska ekranu lub dialogu (22 sp). -->
+    <style name="ThumbcastText.Title">
+        <item name="android:textSize">@dimen/thumbcast_text_title_large</item>
+    </style>
+
+    <!-- Nagłówek sekcji listy lub ustawień (14 sp, akcent, półgruby). -->
+    <style name="ThumbcastText.SectionHeader">
+        <item name="android:textColor">@color/thumbcast_accent</item>
+        <item name="android:textSize">@dimen/thumbcast_text_label</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:paddingTop">@dimen/thumbcast_space_medium</item>
+        <item name="android:paddingBottom">@dimen/thumbcast_space_small</item>
+        <item name="android:accessibilityHeading" tools:targetApi="28">true</item>
+    </style>
+
+    <!-- Wiersz listy: tytuł (16 sp) i podpis (14 sp, drugorzędny). -->
+    <style name="ThumbcastText.ListTitle">
+        <item name="android:textSize">@dimen/thumbcast_text_title</item>
+    </style>
+
+    <style name="ThumbcastText.ListSubtitle">
+        <item name="android:textColor">@color/thumbcast_text_secondary_states</item>
+        <item name="android:textSize">@dimen/thumbcast_text_body_small</item>
+    </style>
+
+    <!-- Tekst ciągły (16 sp) i drugorzędny akapit lub notka (14 sp, np. U17). -->
+    <style name="ThumbcastText.Body" />
+
+    <style name="ThumbcastText.BodySecondary">
+        <item name="android:textColor">@color/thumbcast_text_secondary_states</item>
+        <item name="android:textSize">@dimen/thumbcast_text_body_small</item>
+    </style>
+
+    <!-- Drobny podpis (12 sp, drugorzędny). Nie dla treści, które trzeba przeczytać. -->
+    <style name="ThumbcastText.Caption">
+        <item name="android:textColor">@color/thumbcast_text_secondary_states</item>
+        <item name="android:textSize">@dimen/thumbcast_text_caption</item>
+    </style>
+
+    <!-- Plakietka stanu: zawsze tekst (kolor tylko jako drugi sygnał). Wariant ustala tło i kolor. -->
+    <style name="ThumbcastText.Badge">
+        <item name="android:textSize">@dimen/thumbcast_text_caption</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:paddingStart">@dimen/thumbcast_space_small</item>
+        <item name="android:paddingEnd">@dimen/thumbcast_space_small</item>
+        <item name="android:paddingTop">@dimen/thumbcast_space_xsmall</item>
+        <item name="android:paddingBottom">@dimen/thumbcast_space_xsmall</item>
+        <item name="android:background">@drawable/thumbcast_bg_pill_neutral</item>
+        <item name="android:textColor">@color/thumbcast_text_secondary</item>
+    </style>
+
+    <style name="ThumbcastText.Badge.Neutral" />
+
+    <style name="ThumbcastText.Badge.Success">
+        <item name="android:background">@drawable/thumbcast_bg_pill_success</item>
+        <item name="android:textColor">@color/thumbcast_success</item>
+    </style>
+
+    <style name="ThumbcastText.Badge.Warning">
+        <item name="android:background">@drawable/thumbcast_bg_pill_warning</item>
+        <item name="android:textColor">@color/thumbcast_warning</item>
+    </style>
+
+    <style name="ThumbcastText.Badge.Error">
+        <item name="android:background">@drawable/thumbcast_bg_pill_error</item>
+        <item name="android:textColor">@color/thumbcast_error</item>
+    </style>
+
+    <style name="ThumbcastText.Badge.Accent">
+        <item name="android:background">@drawable/thumbcast_bg_pill_accent</item>
+        <item name="android:textColor">@color/thumbcast_accent</item>
+    </style>
+
+    <!-- ===== Przyciski (style="@style/ThumbcastButton.*" na Button) ===== -->
+
+    <!-- Wspólna baza: wysokość 48 dp, bez wersalików i bez cienia. -->
+    <style name="ThumbcastButton" parent="android:Widget.Material.Button">
+        <item name="android:minHeight">@dimen/thumbcast_touch_target</item>
+        <item name="android:minWidth">@dimen/thumbcast_touch_target</item>
+        <item name="android:paddingStart">@dimen/thumbcast_space_large</item>
+        <item name="android:paddingEnd">@dimen/thumbcast_space_large</item>
+        <item name="android:textSize">@dimen/thumbcast_text_label</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <!-- Główna akcja ekranu (jedna na ekran): wypełniona akcentem. -->
+    <style name="ThumbcastButton.Primary">
+        <item name="android:background">@drawable/thumbcast_bg_button_primary</item>
+        <item name="android:textColor">@color/thumbcast_text_on_accent_states</item>
+    </style>
+
+    <!-- Akcja drugorzędna obok głównej. -->
+    <style name="ThumbcastButton.Outlined">
+        <item name="android:background">@drawable/thumbcast_bg_button_outlined</item>
+        <item name="android:textColor">@color/thumbcast_text_accent_states</item>
+    </style>
+
+    <!-- Akcja poboczna („Pomiń”, „Więcej”, linki w kartach). -->
+    <style name="ThumbcastButton.Text">
+        <item name="android:background">@drawable/thumbcast_bg_button_text</item>
+        <item name="android:textColor">@color/thumbcast_text_accent_states</item>
+        <item name="android:paddingStart">@dimen/thumbcast_space_small</item>
+        <item name="android:paddingEnd">@dimen/thumbcast_space_small</item>
+    </style>
+
+    <!-- Akcja nieodwracalna (np. „Zamknij grę na PC”, „Usuń”). -->
+    <style name="ThumbcastButton.Danger">
+        <item name="android:background">@drawable/thumbcast_bg_button_danger</item>
+        <item name="android:textColor">@color/thumbcast_text_primary_states</item>
+    </style>
+
+    <!-- Przycisk-ikona (ImageButton): ikona 24 dp w polu 48 dp; pamiętaj o contentDescription. -->
+    <style name="ThumbcastIconButton" parent="android:Widget.Material.ImageButton">
+        <item name="android:layout_width">@dimen/thumbcast_touch_target</item>
+        <item name="android:layout_height">@dimen/thumbcast_touch_target</item>
+        <item name="android:background">?android:attr/selectableItemBackgroundBorderless</item>
+        <item name="android:scaleType">center</item>
+        <item name="android:tint">@color/thumbcast_text_primary_states</item>
+    </style>
+
+    <!-- ===== Układ ===== -->
+
+    <!-- Kontener wiersza listy (LinearLayout poziomy): min. 56 dp, marginesy 16 dp, podświetlenie dotyku i fokusu. -->
+    <style name="ThumbcastListItem">
+        <item name="android:minHeight">@dimen/thumbcast_list_item_min_height</item>
+        <item name="android:paddingStart">@dimen/thumbcast_space_medium</item>
+        <item name="android:paddingEnd">@dimen/thumbcast_space_medium</item>
+        <item name="android:paddingTop">@dimen/thumbcast_space_small</item>
+        <item name="android:paddingBottom">@dimen/thumbcast_space_small</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <!-- Karta (kontener): tło thumbcast_bg_card i wewnętrzny odstęp 16 dp. Klikalna: zmień tło na thumbcast_bg_card_selectable. -->
+    <style name="ThumbcastCard">
+        <item name="android:background">@drawable/thumbcast_bg_card</item>
+        <item name="android:padding">@dimen/thumbcast_space_medium</item>
+    </style>
+
+    <!-- Linia podziału na ekranach (View): 1 dp w kolorze obrysu. Nad wideo użyj koloru thumbcast_divider. -->
+    <style name="ThumbcastDivider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/thumbcast_divider_height</item>
+        <item name="android:background">@color/thumbcast_outline</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plakietka neutralna (np. „Niedostępny”): powierzchnia podniesiona z obrysem (ThumbcastText.Badge.Neutral). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/thumbcast_surface_raised" />
+    <stroke android:width="@dimen/thumbcast_stroke" android:color="@color/thumbcast_outline" />
+    <corners android:radius="@dimen/thumbcast_corner_large" />
+</shape>

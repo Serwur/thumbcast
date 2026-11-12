@@ -42,6 +42,8 @@
         android:name="android.hardware.type.pc"
         android:required="false"/>
 
+    <!-- THUMBCAST: android:theme = Theme.Thumbcast (było AppTheme, który jest jego rodzicem) dla wszystkich ekranów
+         poza strumieniem (docs/ui-audit.md, D1 i U7). Game ma własny android:theme="@style/StreamTheme" i go zachowuje. -->
     <application
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
@@ -55,7 +57,8 @@
         android:gwpAsanMode="always"
         android:localeConfig="@xml/locales_config"
         android:enableOnBackInvokedCallback="false"
-        android:theme="@style/AppTheme">
+        android:theme="@style/Theme.Thumbcast">
+        <!-- THUMBCAST END -->
 
         <provider
             android:name=".PosterContentProvider"
@@ -124,15 +127,17 @@
             <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
             <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
         </activity>
+        <!-- THUMBCAST: etykieta z zasobu (było "Streaming Settings", docs/ui-audit.md U12). -->
         <activity
             android:name=".preferences.StreamSettings"
             android:resizeableActivity="true"
             android:enableOnBackInvokedCallback="true"
             android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection"
-            android:label="Streaming Settings">
+            android:label="@string/thumbcast_label_settings">
             <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
             <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
         </activity>
+        <!-- THUMBCAST END -->
         <!-- THUMBCAST: biblioteka profili; przyjmuje udostępnione i otwierane pliki .thumbcast.json
              (import zawsze z walidacją i ekranem potwierdzenia, docs/profiles.md). -->
         <activity
@@ -175,16 +180,18 @@
             android:exported="false"
             android:grantUriPermissions="true" />
         <!-- THUMBCAST END -->
+        <!-- THUMBCAST: etykieta z zasobu (było "Add Computer Manually", docs/ui-audit.md U12). -->
         <activity
             android:name=".preferences.AddComputerManually"
             android:resizeableActivity="true"
             android:windowSoftInputMode="stateVisible"
             android:enableOnBackInvokedCallback="true"
             android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection"
-            android:label="Add Computer Manually">
+            android:label="@string/thumbcast_label_add_pc">
             <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
             <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
         </activity>
+        <!-- THUMBCAST END -->
         <activity
             android:name=".Game"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection"

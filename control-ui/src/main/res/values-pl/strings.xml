@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_onboarding_title">Konfiguracja</string>
+    <string name="ui_setup_guide_title">Jak podłączyć PC</string>
+    <string name="ui_stub_body">Ten ekran jest w przygotowaniu.</string>
+    <string name="ui_stub_section">Sekcja: %1$s</string>
+    <string name="ui_close">Zamknij</string>
+</resources>

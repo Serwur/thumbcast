@@ -38,6 +38,8 @@ dependencies {
     // Rysowanie kontrolek jak w grze (ControlLayout, OverlaySnapshotBuilder, OverlayRenderer);
     // :control-android eksportuje przez `api` także :control-model i :control-engine.
     implementation(project(":control-android"))
+    // Wspólny motyw Compose (ThumbcastTheme, paleta D1 z docs/ui-audit.md).
+    implementation(project(":control-ui"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

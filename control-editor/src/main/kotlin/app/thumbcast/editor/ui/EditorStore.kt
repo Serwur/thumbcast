@@ -1,12 +1,11 @@
 package app.thumbcast.editor.ui
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import app.thumbcast.editor.state.EditorState
+import app.thumbcast.ui.ThumbcastTheme
 
 /**
  * Jedyny zmienny element UI: referencja do niezmiennego [EditorState] w stanie Compose. Odczyt [state]
@@ -21,8 +20,8 @@ class EditorStore(initial: EditorState) {
     }
 }
 
-/** Ciemny motyw Material 3 (edytor działa nad ciemnym płótnem niezależnie od motywu systemu). */
+/** Motyw Thumbcast z :control-ui (ciemny, paleta D1); edytor działa nad ciemnym płótnem niezależnie od motywu systemu. */
 @Composable
 fun EditorTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = darkColorScheme(), content = content)
+    ThumbcastTheme(content = content)
 }

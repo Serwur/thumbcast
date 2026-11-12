@@ -53,6 +53,13 @@ AndroidX (core, annotation)  Apache License 2.0
 Kotest (tylko testy)     Apache License 2.0
 JUnit (tylko testy)      Eclipse Public License 2.0
 Robolectric (tylko testy)  MIT License
+Jetpack Compose, Material 3, activity-compose  Apache License 2.0
+
+Ikony Material Symbols Rounded (Google)  Apache License 2.0
+  https://github.com/google/material-design-icons
+  Pliki app/src/main/res/drawable/thumbcast_ic_*.xml: ścieżki z SVG
+  Material Symbols Rounded (24 px, waga 400, bez wypełnienia, chyba że
+  komentarz w pliku mówi inaczej), przepisane na VectorDrawable.
 
 ------------------------------------------------------------------------
 Znaki towarowe

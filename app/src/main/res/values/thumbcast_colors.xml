@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Paleta Thumbcast (docs/ui-audit.md, D1). Tylko ciemna, bez dynamic color.
+    Ta sama paleta w Compose: control-ui/.../ThumbcastTheme.kt (przy zmianie poprawić oba miejsca).
+    Kolor nigdy nie jest jedynym sygnałem: zawsze idzie z ikoną albo tekstem.
+-->
+<resources>
+    <!-- Ekrany -->
+    <color name="thumbcast_bg">#0F1115</color>
+    <color name="thumbcast_surface">#181B22</color>
+    <color name="thumbcast_surface_raised">#222632</color>
+    <!-- Obrys dekoracyjny (karty, ramki, podziały na ekranach). -->
+    <color name="thumbcast_outline">#2E3340</color>
+    <!-- Obrys, który musi być widoczny (pola tekstowe, niezaznaczone pola wyboru): kontrast ok. 4:1 z tłem.
+         Nie ma go w tabeli D1, dodany dla WCAG 1.4.11 (Compose: colorScheme.outline). -->
+    <color name="thumbcast_outline_strong">#737A8C</color>
+    <color name="thumbcast_text">#E8EAF0</color>
+    <color name="thumbcast_text_secondary">#A3A9B8</color>
+    <color name="thumbcast_accent">#5B8CFF</color>
+    <color name="thumbcast_on_accent">#FFFFFF</color>
+    <color name="thumbcast_success">#3DDC97</color>
+    <color name="thumbcast_warning">#FFB84D</color>
+    <color name="thumbcast_error">#FF6B6B</color>
+    <!-- Wypełnienie przycisku błędu (np. „Zamknij grę na PC”); tekst na nim: thumbcast_text. -->
+    <color name="thumbcast_error_container">#93000A</color>
+
+    <!-- Tła plakietek (20 % koloru stanu); tekst plakietki w pełnym kolorze stanu. -->
+    <color name="thumbcast_success_dim">#333DDC97</color>
+    <color name="thumbcast_warning_dim">#33FFB84D</color>
+    <color name="thumbcast_error_dim">#33FF6B6B</color>
+    <color name="thumbcast_accent_dim">#335B8CFF</color>
+
+    <!-- Nad wideo (menu w grze, nakładki) -->
+    <color name="thumbcast_scrim">#99000000</color>
+    <color name="thumbcast_menu_surface">#F2181B22</color>
+    <color name="thumbcast_divider">#33FFFFFF</color>
+</resources>

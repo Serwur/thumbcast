@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Wspólne słowa interfejsu Thumbcast (docs/ui-audit.md, D5, pakiet P0). Polski jest językiem głównym
+    (values-pl/thumbcast_strings_common.xml), angielski jest domyślny. Ekrany w :control-ui mają własne teksty.
+-->
+<resources>
+    <!-- Przyciski -->
+    <string name="thumbcast_common_cancel">Cancel</string>
+    <string name="thumbcast_common_save">Save</string>
+    <string name="thumbcast_common_back">Back</string>
+    <string name="thumbcast_common_next">Next</string>
+    <string name="thumbcast_common_skip">Skip</string>
+    <string name="thumbcast_common_done">Done</string>
+    <string name="thumbcast_common_more">More</string>
+    <string name="thumbcast_common_help">Help</string>
+    <string name="thumbcast_common_close">Close</string>
+    <string name="thumbcast_common_ok">OK</string>
+    <string name="thumbcast_common_yes">Yes</string>
+    <string name="thumbcast_common_no">No</string>
+    <string name="thumbcast_common_add">Add</string>
+    <string name="thumbcast_common_edit">Edit</string>
+    <string name="thumbcast_common_delete">Delete</string>
+    <string name="thumbcast_common_remove">Remove</string>
+    <string name="thumbcast_common_rename">Rename</string>
+    <string name="thumbcast_common_share">Share</string>
+    <string name="thumbcast_common_import">Import</string>
+    <string name="thumbcast_common_export">Export</string>
+    <string name="thumbcast_common_open">Open</string>
+    <string name="thumbcast_common_retry">Try again</string>
+    <string name="thumbcast_common_settings">Settings</string>
+    <string name="thumbcast_common_continue">Continue</string>
+
+    <!-- Opisy ikon (contentDescription) -->
+    <string name="thumbcast_common_more_options">More options</string>
+    <string name="thumbcast_common_navigate_up">Go back</string>
+
+    <!-- Stany -->
+    <string name="thumbcast_common_on">On</string>
+    <string name="thumbcast_common_off">Off</string>
+    <string name="thumbcast_common_loading">Loading…</string>
+
+    <!-- Etykiety aktywności w manifeście (U12) -->
+    <string name="thumbcast_label_settings">Settings</string>
+    <string name="thumbcast_label_add_pc">Add PC</string>
+</resources>

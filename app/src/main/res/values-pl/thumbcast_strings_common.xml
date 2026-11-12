@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wspólne słowa interfejsu Thumbcast, polski (język główny). Klucze jak w values/thumbcast_strings_common.xml. -->
+<resources>
+    <!-- Przyciski -->
+    <string name="thumbcast_common_cancel">Anuluj</string>
+    <string name="thumbcast_common_save">Zapisz</string>
+    <string name="thumbcast_common_back">Wstecz</string>
+    <string name="thumbcast_common_next">Dalej</string>
+    <string name="thumbcast_common_skip">Pomiń</string>
+    <string name="thumbcast_common_done">Gotowe</string>
+    <string name="thumbcast_common_more">Więcej</string>
+    <string name="thumbcast_common_help">Pomoc</string>
+    <string name="thumbcast_common_close">Zamknij</string>
+    <string name="thumbcast_common_ok">OK</string>
+    <string name="thumbcast_common_yes">Tak</string>
+    <string name="thumbcast_common_no">Nie</string>
+    <string name="thumbcast_common_add">Dodaj</string>
+    <string name="thumbcast_common_edit">Edytuj</string>
+    <string name="thumbcast_common_delete">Usuń</string>
+    <string name="thumbcast_common_remove">Usuń z listy</string>
+    <string name="thumbcast_common_rename">Zmień nazwę</string>
+    <string name="thumbcast_common_share">Udostępnij</string>
+    <string name="thumbcast_common_import">Importuj</string>
+    <string name="thumbcast_common_export">Eksportuj</string>
+    <string name="thumbcast_common_open">Otwórz</string>
+    <string name="thumbcast_common_retry">Spróbuj ponownie</string>
+    <string name="thumbcast_common_settings">Ustawienia</string>
+    <string name="thumbcast_common_continue">Kontynuuj</string>
+
+    <!-- Opisy ikon (contentDescription) -->
+    <string name="thumbcast_common_more_options">Więcej opcji</string>
+    <string name="thumbcast_common_navigate_up">Wróć</string>
+
+    <!-- Stany -->
+    <string name="thumbcast_common_on">Wł.</string>
+    <string name="thumbcast_common_off">Wył.</string>
+    <string name="thumbcast_common_loading">Wczytywanie…</string>
+
+    <!-- Etykiety aktywności w manifeście (U12) -->
+    <string name="thumbcast_label_settings">Ustawienia</string>
+    <string name="thumbcast_label_add_pc">Dodaj komputer</string>
+</resources>

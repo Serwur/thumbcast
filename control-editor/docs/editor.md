@@ -9,6 +9,7 @@ Stan: 11.11.2026, MVP z planu (sekcja 7 „Edytor układu”, etap E2) bez trybu
 - Wynik: `RESULT_OK` z tym samym extra = JSON po edycji, przechodzący `ProfileValidator.validate` i pełny `ProfileCodec.decode(encode(...))`. Zamknięcie bez zapisu: `RESULT_CANCELED`.
 - Wygodnie: `LayoutEditorActivity.intent(context, json)` i `EXTRA_PROFILE_JSON` jako stała.
 - Back przy niezapisanych zmianach pyta, czy porzucić. Zapis zamyka edytor.
+- Motyw: `ThumbcastTheme` z `:control-ui` (paleta D1 z `docs/ui-audit.md`, od 12.11.2026; wcześniej domyślny `darkColorScheme()`).
 
 ## Funkcje
 

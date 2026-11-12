@@ -145,4 +145,6 @@ dependencies {
     implementation project(':control-android')
     // THUMBCAST: edytor układu kontrolek (LayoutEditorActivity, Compose).
     implementation project(':control-editor')
+    // THUMBCAST: wspólny motyw Compose, UiContract, kreator i poradnik (docs/ui-audit.md D8, control-ui/docs/ui.md).
+    implementation project(':control-ui')
 }

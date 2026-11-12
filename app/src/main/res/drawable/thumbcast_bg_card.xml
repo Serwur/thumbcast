@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tło karty Thumbcast: powierzchnia D1, rogi 16 dp. Wersja klikalna: thumbcast_bg_card_selectable. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/thumbcast_surface" />
+    <corners android:radius="@dimen/thumbcast_corner_medium" />
+</shape>

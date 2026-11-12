@@ -46,3 +46,5 @@ include(":app")
 
 // Etap E2 (plan sekcja 5.1): edytor układu w Compose (LayoutEditorActivity).
 include(":control-editor")
+// Przebudowa UI (docs/ui-audit.md, D2 i D8): ThumbcastTheme, UiContract, kreator i poradnik w Compose.
+include(":control-ui")

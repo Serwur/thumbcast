@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Klikalna karta: thumbcast_bg_card z falą dotyku; fokus z pada lub klawiatury też podświetla (RippleDrawable). -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?android:attr/colorControlHighlight">
+    <item android:drawable="@drawable/thumbcast_bg_card" />
+</ripple>

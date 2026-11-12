@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wypełnienie przycisku głównego: akcent, a wyłączony 12 % tekstu (jak Material). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:alpha="0.12" android:color="@color/thumbcast_text" android:state_enabled="false" />
+    <item android:color="@color/thumbcast_accent" />
+</selector>

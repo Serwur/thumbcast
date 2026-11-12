@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Teksty :control-ui (prefiks ui_, bo zasoby bibliotek łączą się z :app). Polski: values-pl/strings.xml. -->
+<resources>
+    <string name="ui_onboarding_title">Setup</string>
+    <string name="ui_setup_guide_title">How to connect your PC</string>
+    <string name="ui_stub_body">This screen is not ready yet.</string>
+    <string name="ui_stub_section">Section: %1$s</string>
+    <string name="ui_close">Close</string>
+</resources>

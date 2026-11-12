@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Manifest biblioteki :control-ui. Pakiet pochodzi z `namespace` w build.gradle.kts. Kontrakt: docs/ui.md. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+            Kreator pierwszego uruchomienia i poradnik „Jak podłączyć PC” (app.thumbcast.ui.UiContract).
+            Uruchamia je tylko aplikacja, więc exported=false. Orientacja jak na ekranach :app poza grą (bez blokady,
+            DECISIONS.md pkt h jest otwarty); configChanges jak w :app, bo Compose sam przelicza układ po obrocie.
+        -->
+        <activity
+            android:name="app.thumbcast.ui.OnboardingActivity"
+            android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="false"
+            android:resizeableActivity="true"
+            android:theme="@style/Theme.ThumbcastUi" />
+        <activity
+            android:name="app.thumbcast.ui.SetupGuideActivity"
+            android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="false"
+            android:label="@string/ui_setup_guide_title"
+            android:resizeableActivity="true"
+            android:theme="@style/Theme.ThumbcastUi" />
+    </application>
+
+</manifest>

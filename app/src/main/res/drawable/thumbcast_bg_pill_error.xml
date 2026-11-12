@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plakietka „błąd”: tło 20 % koloru, tekst w pełnym kolorze (ThumbcastText.Badge.Error). Zawsze z tekstem. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/thumbcast_error_dim" />
+    <corners android:radius="@dimen/thumbcast_corner_large" />
+</shape>

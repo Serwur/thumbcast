@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Karta podniesiona (na powierzchni albo w dialogu): powierzchnia podniesiona D1 i obrys 1 dp. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/thumbcast_surface_raised" />
+    <stroke android:width="@dimen/thumbcast_stroke" android:color="@color/thumbcast_outline" />
+    <corners android:radius="@dimen/thumbcast_corner_medium" />
+</shape>
