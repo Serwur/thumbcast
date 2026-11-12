@@ -1,40 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- THUMBCAST: wiersz biblioteki profili (radio = profil aktywny). -->
+<!--
+    THUMBCAST: wiersz biblioteki profili (ProfileLibraryActivity, docs/ui-audit.md U14).
+    Ikona rodzaju profilu, nazwa z plakietką „Domyślny”, podpis, ⋮ (pozostałe akcje), pod spodem akcje w wierszu:
+    „Ustaw jako domyślny” (ukryta przy profilu domyślnym) i „Edytuj układ”.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="center_vertical"
-    android:minHeight="?android:attr/listPreferredItemHeight"
-    android:orientation="horizontal"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp">
-
-    <RadioButton
-        android:id="@+id/thumbcast_profile_active"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:clickable="false"
-        android:focusable="false"
-        android:importantForAccessibility="no" />
+    android:layout_marginStart="@dimen/thumbcast_space_medium"
+    android:layout_marginTop="@dimen/thumbcast_space_xsmall"
+    android:layout_marginEnd="@dimen/thumbcast_space_medium"
+    android:layout_marginBottom="@dimen/thumbcast_space_xsmall"
+    android:background="@drawable/thumbcast_bg_card"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/thumbcast_space_xsmall">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:id="@+id/thumbcast_profile_main"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp">
+        android:background="?android:attr/selectableItemBackground"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:minHeight="@dimen/thumbcast_list_item_two_line_min_height"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/thumbcast_space_medium"
+        android:paddingEnd="@dimen/thumbcast_space_xsmall"
+        android:paddingTop="@dimen/thumbcast_space_small">
 
-        <TextView
-            android:id="@+id/thumbcast_profile_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+        <ImageView
+            android:id="@+id/thumbcast_profile_icon"
+            android:layout_width="@dimen/thumbcast_icon_size"
+            android:layout_height="@dimen/thumbcast_icon_size"
+            android:importantForAccessibility="no"
+            android:src="@drawable/thumbcast_ic_sports_esports" />
 
-        <TextView
-            android:id="@+id/thumbcast_profile_details"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall" />
+            android:layout_marginStart="@dimen/thumbcast_space_medium"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/thumbcast_profile_name"
+                    style="@style/ThumbcastText.ListTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="2" />
+
+                <TextView
+                    android:id="@+id/thumbcast_profile_badge"
+                    style="@style/ThumbcastText.Badge.Accent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/thumbcast_space_small"
+                    android:text="@string/thumbcast_lib_badge_default" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/thumbcast_profile_details"
+                style="@style/ThumbcastText.ListSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/thumbcast_space_xsmall"
+                android:maxLines="3" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/thumbcast_profile_more"
+            style="@style/ThumbcastIconButton"
+            android:contentDescription="@string/thumbcast_common_more_options"
+            android:src="@drawable/thumbcast_ic_more_vert" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/thumbcast_profile_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="48dp"
+        android:paddingEnd="@dimen/thumbcast_space_small">
+
+        <Button
+            android:id="@+id/thumbcast_profile_set_default"
+            style="@style/ThumbcastButton.Text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/thumbcast_ic_star"
+            android:drawablePadding="@dimen/thumbcast_space_xsmall"
+            android:drawableTint="@color/thumbcast_accent"
+            android:text="@string/thumbcast_lib_action_set_default" />
+
+        <Button
+            android:id="@+id/thumbcast_profile_edit"
+            style="@style/ThumbcastButton.Text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/thumbcast_ic_edit"
+            android:drawablePadding="@dimen/thumbcast_space_xsmall"
+            android:drawableTint="@color/thumbcast_accent"
+            android:text="@string/thumbcast_lib_action_edit" />
     </LinearLayout>
 </LinearLayout>

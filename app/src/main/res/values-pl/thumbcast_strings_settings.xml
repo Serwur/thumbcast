@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ekran ustawień Thumbcast (pakiet P3, xml/thumbcast_preferences.xml, StreamSettings), polski. Słownik: docs/ui-audit.md, D7. -->
+<resources>
+    <!-- Kategorie -->
+    <string name="thumbcast_set_cat_controls">Sterowanie</string>
+    <string name="thumbcast_set_cat_picture">Obraz</string>
+    <string name="thumbcast_set_cat_sound">Dźwięk</string>
+    <string name="thumbcast_set_cat_app">Aplikacja</string>
+    <string name="thumbcast_set_cat_help">Pomoc</string>
+    <string name="thumbcast_set_cat_more">Więcej</string>
+    <string name="thumbcast_set_advanced_title">Zaawansowane</string>
+    <string name="thumbcast_set_advanced_summary">Rodzaj sterowania, kodek, pad podłączony do telefonu, mysz</string>
+    <string name="thumbcast_set_cat_adv_picture">Obraz i dekodowanie</string>
+    <string name="thumbcast_set_cat_adv_gamepad">Pad podłączony do telefonu</string>
+    <string name="thumbcast_set_cat_adv_mouse">Mysz i ekran dotykowy</string>
+
+    <!-- Sterowanie -->
+    <string name="thumbcast_set_profile_title">Profil sterowania</string>
+    <string name="thumbcast_set_hide_on_gamepad_title">Chowaj przyciski, gdy gram padem</string>
+    <string name="thumbcast_set_hide_on_gamepad_summary">Przyciski na ekranie znikają, gdy podłączysz pad. Gesty i przycisk menu zostają.</string>
+    <string name="thumbcast_set_button_size_title">Rozmiar przycisków</string>
+    <string name="thumbcast_set_vibration_title">Wibracje telefonu</string>
+    <string name="thumbcast_set_vibration_summary">Telefon wibruje, gdy gra wysyła wibracje pada, a żaden pad nie jest podłączony</string>
+
+    <!-- Obraz -->
+    <string name="thumbcast_set_resolution_title">Rozdzielczość</string>
+    <string name="thumbcast_set_resolution_summary">Wyższa daje ostrzejszy obraz, ale bardziej obciąża sieć i telefon</string>
+    <string name="thumbcast_set_fps_title">Płynność (FPS)</string>
+    <string name="thumbcast_set_fps_summary">Więcej klatek na sekundę to płynniejszy ruch</string>
+    <string name="thumbcast_set_quality_title">Jakość obrazu</string>
+    <string name="thumbcast_set_quality_summary">Więcej to ostrzejszy obraz, ale potrzeba szybszego Wi-Fi. Gdy obraz się tnie, zmniejsz (przepływność w Mb/s).</string>
+    <string name="thumbcast_set_stretch_title">Rozciągnij obraz na cały ekran</string>
+    <string name="thumbcast_set_stretch_summary">Bez czarnych pasów, ale obraz może być lekko zniekształcony</string>
+    <string name="thumbcast_set_sops_title">Dopasuj grę na PC do telefonu</string>
+    <string name="thumbcast_set_sops_summary">Sunshine dostaje rozdzielczość i FPS z telefonu. Bez tego PC nie zmieni rozdzielczości ekranu (optymalizacja ustawień gry, SOPS).</string>
+    <string name="thumbcast_set_stats_title">Statystyki</string>
+    <string name="thumbcast_set_stats_summary">Pokazuj FPS i opóźnienie w rogu ekranu w trakcie gry</string>
+    <string name="thumbcast_set_stats_detailed_title">Szczegółowe statystyki</string>
+    <string name="thumbcast_set_stats_detailed_summary">Dodatkowo rozdzielczość, dekoder, sieć i czasy klatek. Działa przy włączonych Statystykach. Oba przełączniki są też w menu w grze.</string>
+
+    <!-- Dźwięk -->
+    <string name="thumbcast_set_audio_channels_title">Kanały dźwięku</string>
+    <string name="thumbcast_set_host_audio_title">Graj dźwięk także na PC</string>
+    <string name="thumbcast_set_host_audio_summary">Głośniki komputera grają razem z telefonem</string>
+    <string name="thumbcast_set_audiofx_title">Korektor dźwięku</string>
+    <string name="thumbcast_set_audiofx_summary">Aplikacje korektora mogą zmieniać dźwięk z gry. Może zwiększyć opóźnienie dźwięku.</string>
+
+    <!-- Aplikacja -->
+    <string name="thumbcast_set_language_title">Język</string>
+    <string name="thumbcast_set_language_summary">Język menu i komunikatów</string>
+    <string name="thumbcast_set_small_icons_title">Małe kafelki gier</string>
+    <string name="thumbcast_set_small_icons_summary">Na ekranie mieści się więcej gier</string>
+    <string name="thumbcast_set_pip_title">Obraz w obrazie</string>
+    <string name="thumbcast_set_pip_summary">Gra działa w małym okienku, gdy przejdziesz do innej aplikacji</string>
+
+    <!-- Pomoc -->
+    <string name="thumbcast_set_guide_title">Jak podłączyć PC</string>
+    <string name="thumbcast_set_guide_summary">Sunshine, pad, parowanie i gra poza domem</string>
+    <string name="thumbcast_set_troubleshoot_title">Coś nie działa?</string>
+    <string name="thumbcast_set_troubleshoot_summary">Najczęstsze problemy i co z nimi zrobić</string>
+    <string name="thumbcast_set_onboarding_title">Uruchom konfigurację od nowa</string>
+    <string name="thumbcast_set_onboarding_summary">Wybierz jeszcze raz, czym grasz najczęściej</string>
+    <string name="thumbcast_set_onboarding_saved">Zapisano. Profil sterowania: %1$s</string>
+    <string name="thumbcast_set_screen_unavailable">Ten ekran nie jest dostępny w tej wersji aplikacji.</string>
+
+    <!-- Zaawansowane: sterowanie -->
+    <string name="thumbcast_set_control_type_title">Rodzaj sterowania</string>
+    <string name="thumbcast_set_debug_title">Diagnostyka dotyku</string>
+    <string name="thumbcast_set_osc_show_title">Pokaż klasyczne przyciski ekranowe</string>
+    <string name="thumbcast_set_osc_opacity_title">Przezroczystość klasycznych przycisków</string>
+    <string name="thumbcast_set_osc_reset_title">Przywróć układ klasycznych przycisków</string>
+
+    <!-- Zaawansowane: obraz -->
+    <string name="thumbcast_set_frame_pacing_title">Wyświetlanie klatek</string>
+    <string name="thumbcast_set_codec_title">Kodek wideo</string>
+    <string name="thumbcast_set_unlock_fps_title">Pokaż wszystkie wartości FPS</string>
+    <string name="thumbcast_set_disable_warnings_title">Bez ostrzeżeń o połączeniu</string>
+    <string name="thumbcast_set_post_stream_title">Podsumowanie opóźnienia po grze</string>
+
+    <!-- Zaawansowane: pad -->
+    <string name="thumbcast_set_deadzone_title">Martwa strefa gałek</string>
+    <string name="thumbcast_set_vibrate_fallback_title">Wibracje telefonu zamiast pada</string>
+</resources>

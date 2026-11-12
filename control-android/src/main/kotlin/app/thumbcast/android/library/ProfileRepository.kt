@@ -242,7 +242,8 @@ class ProfileRepository(
             val p = decode(read())
             ProfileEntry(fileName, p.id, p.name, p.mode, p.controls.size, builtIn, null,
                 mouseGesturesDefault = MouseGesturesTransform.isEnabled(p),
-                mouseGesturesStyle = MouseGesturesTransform.style(p))
+                mouseGesturesStyle = MouseGesturesTransform.style(p),
+                kind = ProfileKind.of(p))
         } catch (e: Exception) {
             // ProfileLibraryException (zły profil) albo IOException (odczyt).
             val msg = (e as? ProfileLibraryException)?.details?.firstOrNull() ?: e.message ?: e.toString()
@@ -429,6 +430,8 @@ data class ProfileEntry(
     val error: String?,
     val mouseGesturesDefault: Boolean = false,
     val mouseGesturesStyle: MouseGesturesTransform.Style = MouseGesturesTransform.Style.DIRECT,
+    /** Rodzaj profilu do ikony na liście ([ProfileKind]); null przy uszkodzonym pliku. */
+    val kind: ProfileKind? = null,
 ) {
     val isValid: Boolean get() = error == null
 }

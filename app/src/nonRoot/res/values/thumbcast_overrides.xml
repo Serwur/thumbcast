@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    THUMBCAST: nadpisania upstreamowych tekstów z „GFE”, „GeForce Experience” i „SHIELD” (docs/ui-audit.md, U6 i D4;
+    pakiet P3, 12.11.2026). Te same nazwy zasobów co w main/res/values/strings.xml; flavor nonRoot ma pierwszeństwo
+    przed main, więc upstreamowe pliki zostają bez zmian. Polski: values-pl/thumbcast_overrides.xml.
+    Teksty z „Moonlight” w znaczeniu „ta aplikacja” są w strings_branding.xml (docs/branding.md); jeden klucz nie może
+    być w obu plikach. Pozostałe języki upstreamu nie są tu nadpisane (decyzja właściciela później).
+-->
+<resources>
+    <string name="searching_pc">Searching for computers on your local network…\n\nMake sure Sunshine is running on your PC and that the phone and the PC are on the same Wi-Fi.</string>
+    <string name="error_404">The PC returned an HTTP 404 error. Make sure Sunshine is up to date and running. Remote desktop software can also cause this error. Try restarting the PC or reinstalling Sunshine.</string>
+    <string name="summary_checkbox_enable_sops">Sunshine receives the phone\'s resolution and FPS. Without it the PC will not change its screen resolution.</string>
+</resources>

@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    THUMBCAST: ekran ustawień (docs/ui-audit.md, U4, U5, D3, D7; opis w patches/ui-p3.patch.md).
+    StreamSettings ładuje ten plik zamiast upstreamowego preferences.xml (ten zostaje bez zmian).
+
+    Zasady:
+    - Klucze, typy, wartości domyślne, entries i zależności są identyczne jak w preferences.xml, bo PcView woła
+      PreferenceManager.setDefaultValues(R.xml.preferences), a PreferenceConfiguration czyta te same klucze.
+      Nowa preferencja z wartością domyślną musi trafić do obu plików.
+    - Kod StreamSettings usuwa niektóre pozycje z kategorii o konkretnych kluczach. Te pozycje zostały w kategoriach
+      o tych samych kluczach: category_gamepad_settings (czujniki ruchu, sterownik USB, wibracje),
+      category_input_settings (checkbox_absolute_mouse_mode), category_ui_settings (checkbox_enable_pip),
+      category_advanced_settings (checkbox_enable_hdr), category_onscreen_controls (stare przyciski ekranowe).
+    - checkbox_vibrate_osc jest w „Sterowanie” (działa też w trybie Thumbcast); usuwa go blok THUMBCAST w StreamSettings.
+    - Stare przyciski ekranowe (category_onscreen_controls, za list_control_layer i checkbox_thumbcast_debug) są widoczne
+      tylko przy rodzaju sterowania „legacy”; ukrywa je blok THUMBCAST w StreamSettings.
+    - Pozycje bez ikony mają iconSpaceReserved, żeby tytuły były w jednej linii z pozycjami z ikonami.
+-->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:seekbar="http://schemas.moonlight-stream.com/apk/res/seekbar">
+
+    <!-- ===== Sterowanie ===== -->
+    <PreferenceCategory
+        android:key="category_thumbcast"
+        android:title="@string/thumbcast_set_cat_controls">
+
+        <!-- Otwiera bibliotekę profili (ProfileLibraryActivity); wartość (nazwa pliku) zapisuje biblioteka.
+             Podsumowanie = nazwa profilu domyślnego (StreamSettings, onResume). -->
+        <Preference
+            android:key="list_thumbcast_profile"
+            android:icon="@drawable/thumbcast_ic_sports_esports"
+            android:title="@string/thumbcast_set_profile_title"
+            android:persistent="false" />
+
+        <CheckBoxPreference
+            android:key="checkbox_thumbcast_hide_on_gamepad"
+            android:icon="@drawable/thumbcast_ic_gamepad"
+            android:title="@string/thumbcast_set_hide_on_gamepad_title"
+            android:summary="@string/thumbcast_set_hide_on_gamepad_summary"
+            android:defaultValue="true" />
+
+        <ListPreference
+            android:key="list_thumbcast_control_scale"
+            android:icon="@drawable/thumbcast_ic_format_size"
+            android:title="@string/thumbcast_set_button_size_title"
+            android:summary="%s"
+            android:entries="@array/thumbcast_control_scale_names"
+            android:entryValues="@array/thumbcast_control_scale_values"
+            android:defaultValue="100" />
+
+        <!-- Upstream: kategoria przycisków ekranowych. Telefon wibruje przy rumble także w trybie Thumbcast
+             (ControllerHandler, onscreenController wymuszone), więc pozycja jest tutaj. Zależność od
+             checkbox_show_onscreen_controls zdejmuje StreamSettings w trybie Thumbcast. -->
+        <CheckBoxPreference
+            android:key="checkbox_vibrate_osc"
+            android:iconSpaceReserved="true"
+            android:dependency="checkbox_show_onscreen_controls"
+            android:title="@string/thumbcast_set_vibration_title"
+            android:summary="@string/thumbcast_set_vibration_summary"
+            android:defaultValue="true" />
+    </PreferenceCategory>
+
+    <!-- ===== Obraz ===== -->
+    <PreferenceCategory
+        android:key="category_basic_settings"
+        android:title="@string/thumbcast_set_cat_picture">
+
+        <ListPreference
+            android:key="list_resolution"
+            android:iconSpaceReserved="true"
+            android:title="@string/thumbcast_set_resolution_title"
+            android:summary="@string/thumbcast_set_resolution_summary"
+            android:entries="@array/resolution_names"
+            android:entryValues="@array/resolution_values"
+            android:defaultValue="1280x720" />
+        <ListPreference
+            android:key="list_fps"
+            android:iconSpaceReserved="true"
+            android:title="@string/thumbcast_set_fps_title"
+            android:summary="@string/thumbcast_set_fps_summary"
+            android:entries="@array/fps_names"
+            android:entryValues="@array/fps_values"
+            android:defaultValue="60" />
+        <com.limelight.preferences.SeekBarPreference
+            android:key="seekbar_bitrate_kbps"
+            android:iconSpaceReserved="true"
+            android:dialogMessage="@string/thumbcast_set_quality_summary"
+            seekbar:min="500"
+            android:max="150000"
+            seekbar:step="500"
+            seekbar:keyStep="1000"
+            seekbar:divisor="1000"
+            android:summary="@string/thumbcast_set_quality_summary"
+            android:text="@string/suffix_seekbar_bitrate_mbps"
+            android:title="@string/thumbcast_set_quality_title" />
+        <CheckBoxPreference
+            android:key="checkbox_stretch_video"
+            android:iconSpaceReserved="true"
+            android:title="@string/thumbcast_set_stretch_title"
+            android:summary="@string/thumbcast_set_stretch_summary"
+            android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="checkbox_enable_sops"
+            android:iconSpaceReserved="true"
+            android:title="@string/thumbcast_set_sops_title"
+            android:summary="@string/thumbcast_set_sops_summary"
+            android:defaultValue="true" />
+        <!-- Statystyki: linia podstawowa (upstreamowy klucz) i szczegóły (tylko z podstawową). Oba przełącza też
+             menu w grze (ThumbcastSettings.getStatsToggles). -->
+        <CheckBoxPreference
+            android:key="checkbox_enable_perf_overlay"
+            android:icon="@drawable/thumbcast_ic_speed"
+            android:title="@string/thumbcast_set_stats_title"
+            android:summary="@string/thumbcast_set_stats_summary"
+            android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="checkbox_thumbcast_perf_advanced"
+            android:iconSpaceReserved="true"
+            android:dependency="checkbox_enable_perf_overlay"
+            android:title="@string/thumbcast_set_stats_detailed_title"
+            android:summary="@string/thumbcast_set_stats_detailed_summary"
+            android:defaultValue="false" />
+    </PreferenceCategory>
+
+    <!-- ===== Dźwięk ===== -->
+    <PreferenceCategory
+        android:key="category_thumbcast_sound"
+        android:title="@string/thumbcast_set_cat_sound">
+
+        <ListPreference
+            android:key="list_audio_config"
+            android:iconSpaceReserved="true"
+            android:title="@string/thumbcast_set_audio_channels_title"
+            android:summary="%s"
+            android:entries="@array/audio_config_names"
+            android:entryValues="@array/audio_config_values"
+            android:defaultValue="2" />
+        <CheckBoxPreference
+            android:key="checkbox_host_audio"
+            android:iconSpaceReserved="true"
+            android:title="@string/thumbcast_set_host_audio_title"
+            android:summary="@string/thumbcast_set_host_audio_summary"
+            android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="checkbox_enable_audiofx"
+            android:iconSpaceReserved="true"
+            android:title="@string/thumbcast_set_audiofx_title"
+            android:summary="@string/thumbcast_set_audiofx_summary"
+            android:defaultValue="false" />
+    </PreferenceCategory>
+
+    <!-- ===== Aplikacja ===== -->
+    <PreferenceCategory
+        android:key="category_ui_settings"
+        android:title="@string/thumbcast_set_cat_app">
+
+        <com.limelight.preferences.LanguagePreference
+            android:key="list_languages"
+            android:iconSpaceReserved="true"
+            android:title="@string/thumbcast_set_language_title"
+            android:entries="@array/language_names"
+            android:entryValues="@array/language_values"
+            android:summary="@string/thumbcast_set_language_summary"
+            android:defaultValue="default" />
+        <com.limelight.preferences.SmallIconCheckboxPreference
+            android:key="checkbox_small_icon_mode"
+            android:iconSpaceReserved="true"
+            android:title="@string/thumbcast_set_small_icons_title"
+            android:summary="@string/thumbcast_set_small_icons_summary" />
+        <CheckBoxPreference
+            android:key="checkbox_enable_pip"
+            android:iconSpaceReserved="true"
+            android:title="@string/thumbcast_set_pip_title"
+            android:summary="@string/thumbcast_set_pip_summary"
+            android:defaultValue="false" />
+    </PreferenceCategory>
+
+    <!-- ===== Pomoc ===== (kliknięcia: StreamSettings, blok THUMBCAST) -->
+    <PreferenceCategory
+        android:key="category_thumbcast_help"
+        android:title="@string/thumbcast_set_cat_help">
+
+        <Preference
+            android:key="thumbcast_help_setup_guide"
+            android:icon="@drawable/thumbcast_ic_help"
+            android:title="@string/thumbcast_set_guide_title"
+            android:summary="@string/thumbcast_set_guide_summary"
+            android:persistent="false" />
+        <Preference
+            android:key="thumbcast_help_troubleshoot"
+            android:icon="@drawable/thumbcast_ic_warning"
+            android:title="@string/thumbcast_set_troubleshoot_title"
+            android:summary="@string/thumbcast_set_troubleshoot_summary"
+            android:persistent="false" />
+        <Preference
+            android:key="thumbcast_help_onboarding"
+            android:icon="@drawable/thumbcast_ic_play_arrow"
+            android:title="@string/thumbcast_set_onboarding_title"
+            android:summary="@string/thumbcast_set_onboarding_summary"
+            android:persistent="false" />
+    </PreferenceCategory>
+
+    <!-- ===== Zaawansowane (zagnieżdżony ekran, D3) ===== -->
+    <PreferenceCategory
+        android:key="category_thumbcast_more"
+        android:title="@string/thumbcast_set_cat_more">
+
+        <PreferenceScreen
+            android:key="screen_thumbcast_advanced"
+            android:icon="@drawable/thumbcast_ic_tune"
+            android:title="@string/thumbcast_set_advanced_title"
+            android:summary="@string/thumbcast_set_advanced_summary"
+            android:persistent="false">
+
+            <!-- Rodzaj sterowania i stare przyciski ekranowe. Klucz kategorii jak w upstreamie (kod StreamSettings
+                 szuka w niej checkbox_vibrate_osc). Pozycje za checkbox_thumbcast_debug pokazuje tylko tryb legacy. -->
+            <PreferenceCategory
+                android:key="category_onscreen_controls"
+                android:title="@string/thumbcast_set_cat_controls">
+
+                <ListPreference
+                    android:key="list_control_layer"
+                    android:title="@string/thumbcast_set_control_type_title"
+                    android:summary="%s"
+                    android:entries="@array/control_layer_names"
+                    android:entryValues="@array/control_layer_values"
+                    android:defaultValue="thumbcast" />
+                <CheckBoxPreference
+                    android:key="checkbox_thumbcast_debug"
+                    android:title="@string/thumbcast_set_debug_title"
+                    android:summary="@string/summary_thumbcast_debug"
+                    android:defaultValue="false" />
+
+                <!-- Tylko rodzaj sterowania „legacy”. -->
+                <CheckBoxPreference
+                    android:defaultValue="false"
+                    android:key="checkbox_show_onscreen_controls"
+                    android:summary="@string/summary_checkbox_show_onscreen_controls"
+                    android:title="@string/thumbcast_set_osc_show_title" />
+                <CheckBoxPreference
+                    android:defaultValue="false"
+                    android:dependency="checkbox_show_onscreen_controls"
+                    android:key="checkbox_only_show_L3R3"
+                    android:summary="@string/summary_only_l3r3"
+                    android:title="@string/title_only_l3r3" />
+                <CheckBoxPreference
+                    android:defaultValue="true"
+                    android:dependency="checkbox_show_onscreen_controls"
+                    android:key="checkbox_show_guide_button"
+                    android:summary="@string/summary_show_guide_button"
+                    android:title="@string/title_show_guide_button" />
+                <com.limelight.preferences.SeekBarPreference
+                    android:key="seekbar_osc_opacity"
+                    android:dependency="checkbox_show_onscreen_controls"
+                    android:dialogMessage="@string/summary_osc_opacity"
+                    seekbar:min="0"
+                    seekbar:step="1"
+                    android:max="100"
+                    android:defaultValue="90"
+                    android:summary="@string/summary_osc_opacity"
+                    android:text="@string/suffix_osc_opacity"
+                    android:title="@string/thumbcast_set_osc_opacity_title" />
+                <com.limelight.preferences.ConfirmDeleteOscPreference
+                    android:title="@string/thumbcast_set_osc_reset_title"
+                    android:summary="@string/summary_reset_osc"
+                    android:dialogTitle="@string/dialog_title_reset_osc"
+                    android:dialogMessage="@string/dialog_text_reset_osc"
+                    android:positiveButtonText="@string/yes"
+                    android:negativeButtonText="@string/no" />
+            </PreferenceCategory>
+
+            <PreferenceCategory
+                android:key="category_advanced_settings"
+                android:title="@string/thumbcast_set_cat_adv_picture">
+
+                <ListPreference
+                    android:key="frame_pacing"
+                    android:title="@string/thumbcast_set_frame_pacing_title"
+                    android:entries="@array/video_frame_pacing_names"
+                    android:entryValues="@array/video_frame_pacing_values"
+                    android:summary="@string/summary_frame_pacing"
+                    android:defaultValue="latency" />
+                <ListPreference
+                    android:key="video_format"
+                    android:title="@string/thumbcast_set_codec_title"
+                    android:entries="@array/video_format_names"
+                    android:entryValues="@array/video_format_values"
+                    android:summary="@string/summary_video_format"
+                    android:defaultValue="auto" />
+                <CheckBoxPreference
+                    android:key="checkbox_enable_hdr"
+                    android:title="@string/title_enable_hdr"
+                    android:summary="@string/summary_enable_hdr"
+                    android:defaultValue="false" />
+                <CheckBoxPreference
+                    android:key="checkbox_full_range"
+                    android:title="@string/title_full_range"
+                    android:summary="@string/summary_full_range"
+                    android:defaultValue="false" />
+                <CheckBoxPreference
+                    android:key="checkbox_unlock_fps"
+                    android:title="@string/thumbcast_set_unlock_fps_title"
+                    android:summary="@string/summary_unlock_fps"
+                    android:defaultValue="false" />
+                <CheckBoxPreference
+                    android:key="checkbox_reduce_refresh_rate"
+                    android:title="@string/title_checkbox_reduce_refresh_rate"
+                    android:summary="@string/summary_checkbox_reduce_refresh_rate"
+                    android:defaultValue="false" />
+                <CheckBoxPreference
+                    android:key="checkbox_disable_warnings"
+                    android:title="@string/thumbcast_set_disable_warnings_title"
+                    android:summary="@string/summary_checkbox_disable_warnings"
+                    android:defaultValue="false" />
+                <CheckBoxPreference
+                    android:key="checkbox_enable_post_stream_toast"
+                    android:title="@string/thumbcast_set_post_stream_title"
+                    android:summary="@string/summary_enable_post_stream_toast"
+                    android:defaultValue="false" />
+            </PreferenceCategory>
+
+            <PreferenceCategory
+                android:key="category_gamepad_settings"
+                android:title="@string/thumbcast_set_cat_adv_gamepad">
+
+                <com.limelight.preferences.SeekBarPreference
+                    android:key="seekbar_deadzone"
+                    android:defaultValue="7"
+                    android:max="20"
+                    android:summary="@string/summary_seekbar_deadzone"
+                    android:text="@string/suffix_seekbar_deadzone"
+                    android:title="@string/thumbcast_set_deadzone_title" />
+                <CheckBoxPreference
+                    android:key="checkbox_multi_controller"
+                    android:title="@string/title_checkbox_multi_controller"
+                    android:summary="@string/summary_checkbox_multi_controller"
+                    android:defaultValue="true" />
+                <CheckBoxPreference
+                    android:key="checkbox_usb_driver"
+                    android:title="@string/title_checkbox_xb1_driver"
+                    android:summary="@string/summary_checkbox_xb1_driver"
+                    android:defaultValue="true" />
+                <CheckBoxPreference
+                    android:key="checkbox_usb_bind_all"
+                    android:dependency="checkbox_usb_driver"
+                    android:title="@string/title_checkbox_usb_bind_all"
+                    android:summary="@string/summary_checkbox_usb_bind_all"
+                    android:defaultValue="false" />
+                <CheckBoxPreference
+                    android:key="checkbox_mouse_emulation"
+                    android:title="@string/title_checkbox_mouse_emulation"
+                    android:summary="@string/summary_checkbox_mouse_emulation"
+                    android:defaultValue="true" />
+                <ListPreference
+                    android:key="analog_scrolling"
+                    android:dependency="checkbox_mouse_emulation"
+                    android:title="@string/title_analog_scrolling"
+                    android:summary="@string/summary_analog_scrolling"
+                    android:entries="@array/analog_scrolling_names"
+                    android:entryValues="@array/analog_scrolling_values"
+                    android:defaultValue="right" />
+                <CheckBoxPreference
+                    android:key="checkbox_vibrate_fallback"
+                    android:title="@string/thumbcast_set_vibrate_fallback_title"
+                    android:summary="@string/summary_checkbox_vibrate_fallback"
+                    android:defaultValue="false" />
+                <com.limelight.preferences.SeekBarPreference
+                    android:key="seekbar_vibrate_fallback_strength"
+                    android:dependency="checkbox_vibrate_fallback"
+                    android:defaultValue="100"
+                    android:max="200"
+                    android:summary="@string/summary_seekbar_vibrate_fallback_strength"
+                    android:text="@string/suffix_seekbar_vibrate_fallback_strength"
+                    android:title="@string/title_seekbar_vibrate_fallback_strength" />
+                <CheckBoxPreference
+                    android:key="checkbox_flip_face_buttons"
+                    android:title="@string/title_checkbox_flip_face_buttons"
+                    android:summary="@string/summary_checkbox_flip_face_buttons"
+                    android:defaultValue="false" />
+                <CheckBoxPreference
+                    android:key="checkbox_gamepad_touchpad_as_mouse"
+                    android:title="@string/title_checkbox_gamepad_touchpad_as_mouse"
+                    android:summary="@string/summary_checkbox_gamepad_touchpad_as_mouse"
+                    android:defaultValue="false" />
+                <CheckBoxPreference
+                    android:key="checkbox_gamepad_motion_sensors"
+                    android:title="@string/title_checkbox_gamepad_motion_sensors"
+                    android:summary="@string/summary_checkbox_gamepad_motion_sensors"
+                    android:defaultValue="true" />
+                <CheckBoxPreference
+                    android:key="checkbox_gamepad_motion_fallback"
+                    android:title="@string/title_checkbox_gamepad_motion_fallback"
+                    android:summary="@string/summary_checkbox_gamepad_motion_fallback"
+                    android:defaultValue="false" />
+            </PreferenceCategory>
+
+            <PreferenceCategory
+                android:key="category_input_settings"
+                android:title="@string/thumbcast_set_cat_adv_mouse">
+
+                <CheckBoxPreference
+                    android:key="checkbox_touchscreen_trackpad"
+                    android:title="@string/title_checkbox_touchscreen_trackpad"
+                    android:summary="@string/summary_checkbox_touchscreen_trackpad"
+                    android:defaultValue="true" />
+                <CheckBoxPreference
+                    android:key="checkbox_mouse_nav_buttons"
+                    android:title="@string/title_checkbox_mouse_nav_buttons"
+                    android:summary="@string/summary_checkbox_mouse_nav_buttons"
+                    android:defaultValue="false" />
+                <CheckBoxPreference
+                    android:key="checkbox_absolute_mouse_mode"
+                    android:title="@string/title_checkbox_absolute_mouse_mode"
+                    android:summary="@string/summary_checkbox_absolute_mouse_mode"
+                    android:defaultValue="false" />
+            </PreferenceCategory>
+        </PreferenceScreen>
+    </PreferenceCategory>
+</PreferenceScreen>

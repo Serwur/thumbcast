@@ -1,50 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- THUMBCAST: biblioteka profili (ProfileLibraryActivity). -->
+<!-- THUMBCAST: biblioteka profili (ProfileLibraryActivity, docs/profiles.md). Pasek: wstecz, tytuł, „Dodaj profil”. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/thumbcast_library_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp"
-    android:paddingTop="8dp">
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:text="@string/thumbcast_library_title"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="8dp"
-        android:text="@string/thumbcast_library_default_hint"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="@dimen/thumbcast_list_item_min_height"
         android:orientation="horizontal"
-        style="?android:attr/buttonBarStyle">
+        android:paddingStart="@dimen/thumbcast_space_xsmall"
+        android:paddingEnd="@dimen/thumbcast_space_small">
 
-        <Button
-            style="?android:attr/buttonBarButtonStyle"
-            android:id="@+id/thumbcast_library_import_file"
+        <ImageButton
+            android:id="@+id/thumbcast_library_back"
+            style="@style/ThumbcastIconButton"
+            android:contentDescription="@string/thumbcast_common_navigate_up"
+            android:src="@drawable/thumbcast_ic_arrow_back" />
+
+        <TextView
+            style="@style/ThumbcastText.Title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/thumbcast_space_small"
             android:layout_weight="1"
-            android:text="@string/thumbcast_library_import_file" />
+            android:accessibilityHeading="true"
+            tools:targetApi="28"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/thumbcast_library_title" />
 
         <Button
-            style="?android:attr/buttonBarButtonStyle"
-            android:id="@+id/thumbcast_library_import_clipboard"
-            android:layout_width="0dp"
+            android:id="@+id/thumbcast_library_add"
+            style="@style/ThumbcastButton.Text"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/thumbcast_library_import_clipboard" />
+            android:drawableStart="@drawable/thumbcast_ic_add"
+            android:drawablePadding="@dimen/thumbcast_space_xsmall"
+            android:drawableTint="@color/thumbcast_accent"
+            android:text="@string/thumbcast_lib_add" />
     </LinearLayout>
 
     <ListView
@@ -52,5 +50,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:clipToPadding="false" />
+        android:clipToPadding="false"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:listSelector="@android:color/transparent"
+        android:paddingBottom="@dimen/thumbcast_space_medium" />
 </LinearLayout>

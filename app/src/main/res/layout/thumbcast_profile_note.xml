@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: akapit w liście biblioteki profili (wskazówka o profilu domyślnym, pusta sekcja „Moje”). -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/ThumbcastText.BodySecondary"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="@dimen/thumbcast_space_medium"
+    android:paddingTop="@dimen/thumbcast_space_xsmall"
+    android:paddingEnd="@dimen/thumbcast_space_medium"
+    android:paddingBottom="@dimen/thumbcast_space_small" />

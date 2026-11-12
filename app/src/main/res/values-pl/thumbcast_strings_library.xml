@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Biblioteka profili (pakiet P3, ProfileLibraryActivity, docs/profiles.md), polski. Słownik: docs/ui-audit.md, D7.
+     Teksty, które się nie zmieniły (np. akcje Duplikuj, Usuń, komunikaty importu), są nadal w thumbcast_strings.xml. -->
+<resources>
+    <string name="thumbcast_lib_hint">Profil domyślny działa w każdej grze, chyba że gra ma własny profil w ustawieniach gry na liście gier.</string>
+    <string name="thumbcast_lib_section_builtin">Wbudowane</string>
+    <string name="thumbcast_lib_section_user">Moje</string>
+    <string name="thumbcast_lib_empty_user">Nie masz jeszcze własnych profili. Dotknij „Edytuj układ” przy profilu wbudowanym albo „Dodaj profil”.</string>
+    <string name="thumbcast_lib_badge_default">Domyślny</string>
+
+    <!-- Akcje w wierszu i pod ⋮ -->
+    <string name="thumbcast_lib_action_set_default">Ustaw jako domyślny</string>
+    <string name="thumbcast_lib_action_edit">Edytuj układ</string>
+    <string name="thumbcast_lib_more_description">Więcej opcji: %1$s</string>
+    <string name="thumbcast_lib_action_mouse_gestures">Gesty myszy</string>
+    <string name="thumbcast_lib_set_default_description">Ustaw „%1$s” jako domyślny</string>
+    <string name="thumbcast_lib_edit_description">Edytuj układ „%1$s”</string>
+
+    <!-- Dodaj profil -->
+    <string name="thumbcast_lib_add">Dodaj profil</string>
+    <string name="thumbcast_lib_add_file">Importuj z pliku</string>
+    <string name="thumbcast_lib_add_clipboard">Wklej ze schowka</string>
+    <string name="thumbcast_lib_add_duplicate">Kopia istniejącego profilu</string>
+    <string name="thumbcast_lib_duplicate_pick_title">Który profil skopiować?</string>
+
+    <!-- Podpis wiersza -->
+    <plurals name="thumbcast_lib_buttons">
+        <item quantity="one">%d przycisk</item>
+        <item quantity="few">%d przyciski</item>
+        <item quantity="many">%d przycisków</item>
+        <item quantity="other">%d przycisku</item>
+    </plurals>
+    <string name="thumbcast_lib_row_default_description">%1$s, profil domyślny</string>
+</resources>

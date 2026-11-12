@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Profile library (package P3, ProfileLibraryActivity, docs/profiles.md), English. Polish: values-pl.
+     Unchanged texts (e.g. Duplicate, Delete, import messages) are still in thumbcast_strings.xml. -->
+<resources>
+    <string name="thumbcast_lib_hint">The default profile is used in every game, unless the game has its own profile in the game settings on the game list.</string>
+    <string name="thumbcast_lib_section_builtin">Built-in</string>
+    <string name="thumbcast_lib_section_user">Mine</string>
+    <string name="thumbcast_lib_empty_user">You have no profiles of your own yet. Tap “Edit layout” on a built-in profile or “Add profile”.</string>
+    <string name="thumbcast_lib_badge_default">Default</string>
+
+    <!-- Row actions and ⋮ -->
+    <string name="thumbcast_lib_action_set_default">Set as default</string>
+    <string name="thumbcast_lib_action_edit">Edit layout</string>
+    <string name="thumbcast_lib_more_description">More options: %1$s</string>
+    <string name="thumbcast_lib_action_mouse_gestures">Mouse gestures</string>
+    <string name="thumbcast_lib_set_default_description">Set “%1$s” as default</string>
+    <string name="thumbcast_lib_edit_description">Edit layout of “%1$s”</string>
+
+    <!-- Add profile -->
+    <string name="thumbcast_lib_add">Add profile</string>
+    <string name="thumbcast_lib_add_file">Import from file</string>
+    <string name="thumbcast_lib_add_clipboard">Paste from clipboard</string>
+    <string name="thumbcast_lib_add_duplicate">Copy of an existing profile</string>
+    <string name="thumbcast_lib_duplicate_pick_title">Which profile do you want to copy?</string>
+
+    <!-- Row subtitle -->
+    <plurals name="thumbcast_lib_buttons">
+        <item quantity="one">%d button</item>
+        <item quantity="other">%d buttons</item>
+    </plurals>
+    <string name="thumbcast_lib_row_default_description">%1$s, default profile</string>
+</resources>

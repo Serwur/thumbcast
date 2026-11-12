@@ -9,7 +9,9 @@
      Audyt i decyzje: docs/branding.md. -->
 <resources>
     <string name="nettest_text_waiting">Thumbcast testuje połączenie sieciowe w celu ustalenia, czy wymagane porty są zablokowane.\n\nMoże to potrwać kilka sekund…</string>
-    <string name="nettest_text_success">Wygląda na to, że sieć nie blokuje aplikacji Thumbcast. Jeśli nadal masz problemy z połączeniem, sprawdź ustawienia zapory sieciowej na swoim komputerze.\n\nJeśli próbujesz przesyłać strumieniowo przez Internet, zainstaluj narzędzie Moonlight Internet Hosting Tool na swoim komputerze i uruchom dołączony tester przesyłania strumieniowego przez Internet, aby sprawdzić połączenie internetowe komputera.</string>
+    <!-- THUMBCAST (P3, 12.11.2026, docs/ui-audit.md U6): zamiast narzędzia dla GeForce Experience i przekierowania
+         portów (docs/branding.md, c3) rada o Tailscale, jak w DECISIONS.md. -->
+    <string name="nettest_text_success">Wygląda na to, że sieć nie blokuje aplikacji Thumbcast. Jeśli nadal masz problemy z połączeniem, sprawdź ustawienia zapory sieciowej na swoim komputerze.\n\nŻeby grać poza domem, zainstaluj Tailscale na PC i na telefonie (Ustawienia → Pomoc → Jak podłączyć PC).</string>
     <string name="nettest_text_inconclusive">Nie można było wykonać testu sieci, ponieważ żaden z serwerów projektu Moonlight testujących połączenie nie był osiągalny. Sprawdź połączenie internetowe lub spróbuj ponownie później.</string>
     <string name="nettest_text_failure">Bieżące połączenie sieciowe urządzenia wydaje się blokować aplikację Thumbcast. Przesyłanie strumieniowe przez Internet może nie działać podczas połączenia z tą siecią.\n\nNastępujące porty sieciowe zostały zablokowane:\n</string>
     <string name="nettest_text_blocked">Bieżące połączenie sieciowe urządzenia blokuje aplikację Thumbcast. Przesyłanie strumieniowe przez Internet może nie działać podczas połączenia z tą siecią.</string>

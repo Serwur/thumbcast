@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    THUMBCAST: polskie nadpisania upstreamowych tekstów z „GFE”, „GeForce Experience” i „SHIELD” (docs/ui-audit.md,
+    U6 i D4; pakiet P3, 12.11.2026). Klucze jak w values/thumbcast_overrides.xml tego flavoru. Teksty z „Moonlight”
+    są w strings_branding.xml (jeden klucz nie może być w obu plikach).
+    local_network_rationale: upstream nie ma polskiego tłumaczenia, więc bez tego wpisu polski użytkownik widział tekst
+    angielski z values/strings_branding.xml.
+-->
+<resources>
+    <string name="searching_pc">Szukam komputerów w sieci lokalnej…\n\nUpewnij się, że na PC działa Sunshine, a telefon i PC są w tym samym Wi-Fi.</string>
+    <string name="error_404">PC zwrócił błąd HTTP 404. Upewnij się, że Sunshine jest aktualny i uruchomiony. Ten błąd może też powodować oprogramowanie pulpitu zdalnego. Uruchom ponownie PC albo zainstaluj ponownie Sunshine.</string>
+    <string name="summary_checkbox_enable_sops">Sunshine dostaje rozdzielczość i FPS z telefonu. Bez tego PC nie zmieni rozdzielczości ekranu.</string>
+    <string name="local_network_rationale">Thumbcast potrzebuje dostępu do sieci lokalnej, żeby znaleźć komputery w pobliżu i się z nimi połączyć</string>
+</resources>

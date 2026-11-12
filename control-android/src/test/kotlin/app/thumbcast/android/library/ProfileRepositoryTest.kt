@@ -83,6 +83,27 @@ class ProfileRepositoryTest {
     }
 
     @Test
+    fun realPresets_kindForIcon() {
+        val real = ProfileRepository(File(tmp.root, "u"), DirectoryPresetSource(presetsDir()))
+        val kinds = real.listPresets().associate { it.fileName to it.kind }
+        assertEquals(ProfileKind.GAMEPAD, kinds["gamepad-playstation.thumbcast.json"])
+        assertEquals(ProfileKind.GAMEPAD, kinds["gamepad-xbox.thumbcast.json"])
+        assertEquals(ProfileKind.GAMEPAD_PLUS, kinds["mmo-pad-plus.thumbcast.json"])
+        assertEquals(ProfileKind.KEYBOARD, kinds["mmo-keyboard.thumbcast.json"])
+        assertEquals(ProfileKind.DESKTOP, kinds["desktop-touchpad.thumbcast.json"])
+        assertEquals(ProfileKind.TOUCH, kinds["big-picture.thumbcast.json"])
+    }
+
+    @Test
+    fun kind_copiedToDuplicate_nullForBrokenFile() {
+        val copy = repo.duplicate(KEYBOARD, " (kopia)")
+        assertEquals(ProfileKind.KEYBOARD, repo.entry(copy)!!.kind)
+        userDir.mkdirs()
+        File(userDir, "broken.thumbcast.json").writeText("{ nie json", Charsets.UTF_8)
+        assertNull(repo.entry("broken.thumbcast.json")!!.kind)
+    }
+
+    @Test
     fun listUser_includesBrokenFileWithError() {
         userDir.mkdirs()
         File(userDir, "broken.thumbcast.json").writeText("{ nie json", Charsets.UTF_8)
