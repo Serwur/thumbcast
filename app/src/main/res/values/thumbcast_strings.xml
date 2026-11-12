@@ -69,7 +69,7 @@
     <string name="summary_thumbcast_hide_on_gamepad">Buttons and sticks disappear while a physical gamepad is connected; gestures and the menu button stay</string>
     <!-- Menu w grze (☰, gest od górnej krawędzi, systemowy Back). -->
     <string name="thumbcast_menu_title">Stream menu</string>
-    <string name="thumbcast_menu_disconnect">Disconnect</string>
+    <string name="thumbcast_menu_disconnect">Disconnect (game keeps running)</string>
     <string name="thumbcast_menu_hide_controls">Hide controls</string>
     <string name="thumbcast_menu_show_controls">Show controls</string>
     <string name="thumbcast_menu_keyboard">Keyboard</string>
@@ -143,4 +143,34 @@
     <string name="thumbcast_mouse_gestures_off_touchpad">Mouse gestures off: touching an empty area sends nothing. Swiping down from the top edge still opens the menu.</string>
     <string name="thumbcast_mouse_gestures_on_camera">Mouse gestures on: tap = left click at that spot, long press = right click, pinch = mouse wheel. Dragging still turns the camera.</string>
     <string name="thumbcast_mouse_gestures_off_camera">Mouse gestures off: tapping and pinching send nothing. Dragging still turns the camera.</string>
+    <!-- Nakładka statystyk i wyjście z sesji (12.11.2026). -->
+    <string name="thumbcast_menu_end_session">End session…</string>
+    <string name="thumbcast_menu_end_session_title">End session? The game on the PC will be closed and unsaved progress will be lost. The PC restores its screen resolution if Sunshine changed it.</string>
+    <string name="thumbcast_menu_end_session_cancel">Cancel</string>
+    <string name="thumbcast_menu_end_session_confirm">End session and close the game</string>
+    <string name="thumbcast_end_session_progress">Ending the session on the PC…</string>
+    <string name="thumbcast_end_session_done">Session ended on the PC: %1$s</string>
+    <string name="thumbcast_end_session_failed">Could not end the session on the PC: %1$s. Quit it from the app list (long-press the app → Quit Session).</string>
+    <string name="thumbcast_end_session_not_owner">This session was started by another device, so it cannot be ended from here. End it on that device or on the PC.</string>
+    <string name="thumbcast_end_session_error">Could not end the session on the PC (%1$s). Quit it from the app list (long-press the app → Quit Session).</string>
+    <string name="thumbcast_menu_stats_on">Stats: on</string>
+    <string name="thumbcast_menu_stats_off">Stats: off</string>
+    <string name="thumbcast_menu_stats_advanced_on">Detailed stats: on</string>
+    <string name="thumbcast_menu_stats_advanced_off">Detailed stats: off</string>
+    <string name="thumbcast_stats_basic">%1$d FPS · delay ~%2$d ms</string>
+    <string name="thumbcast_stats_basic_no_delay">%1$d FPS · delay –</string>
+    <string name="thumbcast_stats_waiting">– FPS · delay –</string>
+    <string name="thumbcast_stats_video">%1$dx%2$d %3$s · stream %4$.1f FPS</string>
+    <string name="thumbcast_stats_decoder">Decoder: %1$s</string>
+    <string name="thumbcast_stats_frames">Received %1$.1f · shown %2$.1f FPS</string>
+    <string name="thumbcast_stats_drops">Frames lost in the network: %1$.2f%%</string>
+    <string name="thumbcast_stats_network">Network RTT: %1$d ms (variance %2$d ms)</string>
+    <string name="thumbcast_stats_network_unknown">Network RTT: –</string>
+    <string name="thumbcast_stats_host">Host min/max/avg: %1$.1f/%2$.1f/%3$.1f ms</string>
+    <string name="thumbcast_stats_host_unknown">Host: no data</string>
+    <string name="thumbcast_stats_decode">Decoding %1$.2f ms · phone total %2$.1f ms</string>
+    <string name="thumbcast_stats_decode_unknown">Decoding: –</string>
+    <string name="thumbcast_stats_breakdown">Delay ≈ network %1$d + host %2$.1f + phone %3$.1f ms</string>
+    <string name="title_thumbcast_perf_advanced">Detailed performance stats</string>
+    <string name="summary_thumbcast_perf_advanced">Thumbcast mode: together with the performance stats, also show resolution, codec, decoder, frames, network, host and decoding times. Both switches are also in the in-game menu.</string>
 </resources>

@@ -179,6 +179,14 @@
             android:summary="@string/summary_thumbcast_hide_on_gamepad"
             android:defaultValue="true" />
 
+        <!-- Nakładka statystyk Thumbcast (12.11.2026): „Pokaż statystyki wydajności” (checkbox_enable_perf_overlay)
+             = linia podstawowa, to pole = szczegóły. Oba przełącza też menu w grze. -->
+        <CheckBoxPreference
+            android:key="checkbox_thumbcast_perf_advanced"
+            android:title="@string/title_thumbcast_perf_advanced"
+            android:summary="@string/summary_thumbcast_perf_advanced"
+            android:defaultValue="false" />
+
         <CheckBoxPreference
             android:key="checkbox_thumbcast_debug"
             android:title="@string/title_thumbcast_debug"

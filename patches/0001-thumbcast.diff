@@ -254,7 +254,7 @@ index 1337627e..7cf6d631 100644
                  ImageView appImageView = info.targetView.findViewById(R.id.grid_image);
                  Bitmap appBits = ((BitmapDrawable)appImageView.getDrawable()).getBitmap();
 diff --git a/app/src/main/java/com/limelight/Game.java b/app/src/main/java/com/limelight/Game.java
-index 8d369b3e..9657a57f 100644
+index 8d369b3e..06ac5c0e 100644
 --- a/app/src/main/java/com/limelight/Game.java
 +++ b/app/src/main/java/com/limelight/Game.java
 @@ -36,6 +36,10 @@ import com.limelight.utils.ServerHelper;
@@ -288,7 +288,7 @@ index 8d369b3e..9657a57f 100644
          tombstonePrefs = Game.this.getSharedPreferences("DecoderTombstone", 0);
  
          // Enter landscape unless we're on a square screen
-@@ -504,7 +514,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -504,7 +514,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
              }
          }
  
@@ -296,12 +296,14 @@ index 8d369b3e..9657a57f 100644
 +        // THUMBCAST:
 +        thumbcast = ThumbcastSession.createOrNull(this, ThumbcastSession.activityHost(this, this), prefConfig,
 +                conn, controllerHandler, keyboardTranslator, streamView);
++        // Nakładka statystyk Thumbcast (włączana w menu w grze) zamiast upstreamowego tekstu performanceOverlay.
++        if (thumbcast != null) thumbcast.attachPerfStats(decoderRenderer, performanceOverlayView);
 +        // THUMBCAST END
 +        if (prefConfig.onscreenController && thumbcast == null) {
              // create virtual onscreen controller
              virtualController = new VirtualController(controllerHandler,
                      (FrameLayout)streamView.getParent(),
-@@ -594,6 +608,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -594,6 +610,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                  if (virtualController != null) {
                      virtualController.hide();
                  }
@@ -311,7 +313,7 @@ index 8d369b3e..9657a57f 100644
  
                  performanceOverlayView.setVisibility(View.GONE);
                  notificationOverlayView.setVisibility(View.GONE);
-@@ -612,6 +629,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -612,6 +631,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                  if (virtualController != null) {
                      virtualController.show();
                  }
@@ -321,7 +323,7 @@ index 8d369b3e..9657a57f 100644
  
                  if (prefConfig.enablePerfOverlay) {
                      performanceOverlayView.setVisibility(View.VISIBLE);
-@@ -1036,6 +1056,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1036,6 +1058,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
      protected void onDestroy() {
          super.onDestroy();
  
@@ -332,7 +334,7 @@ index 8d369b3e..9657a57f 100644
          if (controllerHandler != null) {
              controllerHandler.destroy();
          }
-@@ -1326,6 +1350,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1326,6 +1352,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
  
      @Override
      public boolean handleKeyDown(KeyEvent event) {
@@ -345,7 +347,7 @@ index 8d369b3e..9657a57f 100644
          // Pass-through virtual navigation keys
          if ((event.getFlags() & KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0) {
              return false;
-@@ -1408,6 +1438,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1408,6 +1440,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
  
      @Override
      public boolean handleKeyUp(KeyEvent event) {
@@ -358,7 +360,7 @@ index 8d369b3e..9657a57f 100644
          // Pass-through virtual navigation keys
          if ((event.getFlags() & KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0) {
              return false;
-@@ -1471,6 +1507,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1471,6 +1509,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
      }
  
      private boolean handleKeyMultiple(KeyEvent event) {
@@ -368,7 +370,7 @@ index 8d369b3e..9657a57f 100644
          // We can receive keys from a software keyboard that don't correspond to any existing
          // KEYCODE value. Android will give those to us as an ACTION_MULTIPLE KeyEvent.
          //
-@@ -1504,6 +1543,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1504,6 +1545,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
          inputManager.toggleSoftInput(0, 0);
      }
  
@@ -382,7 +384,7 @@ index 8d369b3e..9657a57f 100644
      private byte getLiTouchTypeFromEvent(MotionEvent event) {
          switch (event.getActionMasked()) {
              case MotionEvent.ACTION_DOWN:
-@@ -1783,6 +1829,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1783,6 +1831,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
      // Returns true if the event was consumed
      // NB: View is only present if called from a view callback
      private boolean handleMotionEvent(View view, MotionEvent event) {
@@ -392,7 +394,7 @@ index 8d369b3e..9657a57f 100644
          // Pass through mouse/touch/joystick input if we're not grabbing
          if (!grabbedInput) {
              return false;
-@@ -1993,6 +2042,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1993,6 +2044,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
              // This case is for fingers
              else
              {
@@ -402,7 +404,7 @@ index 8d369b3e..9657a57f 100644
                  if (virtualController != null &&
                          (virtualController.getControllerMode() == VirtualController.ControllerMode.MoveButtons ||
                           virtualController.getControllerMode() == VirtualController.ControllerMode.ResizeButtons)) {
-@@ -2227,6 +2279,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -2227,6 +2281,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
  
      private void stopConnection() {
          if (connecting || connected) {
@@ -412,6 +414,22 @@ index 8d369b3e..9657a57f 100644
              connecting = connected = false;
              updatePipAutoEnter();
  
+@@ -2240,9 +2297,15 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+             // thread to keep things smooth for the UI. Inside moonlight-common,
+             // we prevent another thread from starting a connection before and
+             // during the process of stopping this one.
++            // THUMBCAST: „Zakończ sesję” z menu w grze: po zatrzymaniu strumienia zamknij aplikację na hoście (/cancel).
++            final Runnable thumbcastAfterStop = thumbcast != null ? thumbcast.takeAfterStopTask() : null;
++            // THUMBCAST END
+             new Thread() {
+                 public void run() {
+                     conn.stop();
++                    // THUMBCAST:
++                    if (thumbcastAfterStop != null) thumbcastAfterStop.run();
++                    // THUMBCAST END
+                 }
+             }.start();
+         }
 diff --git a/app/src/main/java/com/limelight/PcView.java b/app/src/main/java/com/limelight/PcView.java
 index 4ec6094f..ed48f5b3 100644
 --- a/app/src/main/java/com/limelight/PcView.java
@@ -510,6 +528,91 @@ index 0fffe5d0..9a165bfd 100644
          sendControllerInputPacket(context);
      }
  
+diff --git a/app/src/main/java/com/limelight/binding/video/MediaCodecDecoderRenderer.java b/app/src/main/java/com/limelight/binding/video/MediaCodecDecoderRenderer.java
+index 5d4e44ec..83620439 100644
+--- a/app/src/main/java/com/limelight/binding/video/MediaCodecDecoderRenderer.java
++++ b/app/src/main/java/com/limelight/binding/video/MediaCodecDecoderRenderer.java
+@@ -33,6 +33,10 @@ import android.os.Handler;
+ import android.os.HandlerThread;
+ import android.os.Process;
+ import android.os.SystemClock;
++// THUMBCAST:
++import app.thumbcast.android.stats.StreamStats;
++import app.thumbcast.android.stats.StreamStatsListener;
++// THUMBCAST END
+ import android.util.Range;
+ import android.view.Choreographer;
+ import android.view.SurfaceHolder;
+@@ -75,6 +79,9 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
+     private String glRenderer;
+     private boolean foreground = true;
+     private PerfOverlayListener perfListener;
++    // THUMBCAST: nakładka statystyk Thumbcast (dane liczbowe, włączana w trakcie strumienia); null = nic nie liczymy.
++    private volatile StreamStatsListener thumbcastStatsListener;
++    // THUMBCAST END
+ 
+     private static final int CR_MAX_TRIES = 10;
+     private static final int CR_RECOVERY_TYPE_NONE = 0;
+@@ -273,6 +280,46 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
+         this.renderTarget = renderTarget;
+     }
+ 
++    // THUMBCAST: statystyki dla nakładki Thumbcast z tych samych liczników co upstreamowa nakładka wydajności.
++    /** Wołać z dowolnego wątku; próbki przychodzą z wątku odbioru wideo mniej więcej co sekundę. null = wyłącz. */
++    public void setThumbcastStatsListener(StreamStatsListener listener) {
++        this.thumbcastStatsListener = listener;
++    }
++
++    private StreamStats buildThumbcastStats() {
++        VideoStats lastTwo = new VideoStats();
++        lastTwo.add(lastWindowVideoStats);
++        lastTwo.add(activeWindowVideoStats);
++        VideoStatsFps fps = lastTwo.getFps();
++        String codec;
++        MediaCodecInfo decoderInfo;
++        if ((videoFormat & MoonBridge.VIDEO_FORMAT_MASK_H264) != 0) {
++            codec = "H.264";
++            decoderInfo = avcDecoder;
++        } else if ((videoFormat & MoonBridge.VIDEO_FORMAT_MASK_H265) != 0) {
++            codec = "HEVC";
++            decoderInfo = hevcDecoder;
++        } else if ((videoFormat & MoonBridge.VIDEO_FORMAT_MASK_AV1) != 0) {
++            codec = "AV1";
++            decoderInfo = av1Decoder;
++        } else {
++            codec = "?";
++            decoderInfo = null;
++        }
++        if ((videoFormat & MoonBridge.VIDEO_FORMAT_MASK_10BIT) != 0) {
++            codec += " HDR";
++        }
++        return StreamStats.fromCounters(initialWidth, initialHeight, codec,
++                decoderInfo != null ? decoderInfo.getName() : "(unknown)",
++                fps.totalFps, fps.receivedFps, fps.renderedFps,
++                lastTwo.totalFrames, lastTwo.totalFramesReceived, lastTwo.framesLost,
++                lastTwo.decoderTimeMs, lastTwo.totalTimeMs,
++                lastTwo.minHostProcessingLatency, lastTwo.maxHostProcessingLatency,
++                lastTwo.totalHostProcessingLatency, lastTwo.framesWithHostProcessingLatency,
++                MoonBridge.getEstimatedRttInfo());
++    }
++    // THUMBCAST END
++
+     public MediaCodecDecoderRenderer(Activity activity, PreferenceConfiguration prefs,
+                                      CrashListener crashListener, int consecutiveCrashCount,
+                                      boolean meteredData, boolean requestedHdr,
+@@ -1372,6 +1419,12 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
+ 
+         // Flip stats windows roughly every second
+         if (SystemClock.uptimeMillis() >= activeWindowVideoStats.measurementStartTimestamp + 1000) {
++            // THUMBCAST: próbka dla nakładki Thumbcast (ThumbcastSession); upstreamowy tekst niżej działa bez zmian.
++            StreamStatsListener thumbcastStats = thumbcastStatsListener;
++            if (thumbcastStats != null) {
++                thumbcastStats.onStreamStats(buildThumbcastStats());
++            }
++            // THUMBCAST END
+             if (prefs.enablePerfOverlay) {
+                 VideoStats lastTwo = new VideoStats();
+                 lastTwo.add(lastWindowVideoStats);
 diff --git a/app/src/main/java/com/limelight/computers/ComputerDatabaseManager.java b/app/src/main/java/com/limelight/computers/ComputerDatabaseManager.java
 index 692c433f..ac596585 100644
 --- a/app/src/main/java/com/limelight/computers/ComputerDatabaseManager.java
@@ -2603,6 +2706,90 @@ index 00000000..805587e3
 +        return (int) (value * activity.getResources().getDisplayMetrics().density);
 +    }
 +}
+diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastHostQuit.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastHostQuit.java
+new file mode 100644
+index 00000000..1bc88be7
+--- /dev/null
++++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastHostQuit.java
+@@ -0,0 +1,78 @@
++package com.limelight.thumbcast;
++
++// NOWY PLIK (moduł :app). „Zakończ sesję” z menu w grze (12.11.2026): zamknięcie aplikacji na hoście tym samym
++// żądaniem co upstreamowe „Zakończenie sesji” z listy PC i aplikacji (ServerHelper.doQuit → NvHTTP.quitApp,
++// czyli /cancel). Sunshine po /cancel kończy sesje strumienia, zamyka aplikację i przywraca konfigurację ekranu
++// (rozdzielczość sprzed startu, src/nvhttp.cpp `cancel`). Dane hosta z intencji Game (te same, z których Game
++// buduje NvConnection). Wołane po zatrzymaniu strumienia (Game.stopConnection, wątek po conn.stop()).
++
++import android.content.Context;
++import android.content.Intent;
++import android.os.Handler;
++import android.os.Looper;
++import android.widget.Toast;
++
++import com.limelight.Game;
++import com.limelight.LimeLog;
++import com.limelight.R;
++import com.limelight.binding.PlatformBinding;
++import com.limelight.nvstream.http.ComputerDetails;
++import com.limelight.nvstream.http.HostHttpResponseException;
++import com.limelight.nvstream.http.NvHTTP;
++
++import java.io.ByteArrayInputStream;
++import java.security.cert.CertificateException;
++import java.security.cert.CertificateFactory;
++import java.security.cert.X509Certificate;
++
++final class ThumbcastHostQuit implements Runnable {
++
++    private final Context appContext;
++    private final String host;
++    private final int port;
++    private final int httpsPort;
++    private final String uniqueId;
++    private final byte[] serverCert;
++    private final String appName;
++
++    /** Dane z intencji Game kopiowane od razu (aktywność może się już kończyć, gdy żądanie pójdzie). */
++    ThumbcastHostQuit(Context context, Intent intent) {
++        this.appContext = context.getApplicationContext();
++        this.host = intent.getStringExtra(Game.EXTRA_HOST);
++        this.port = intent.getIntExtra(Game.EXTRA_PORT, NvHTTP.DEFAULT_HTTP_PORT);
++        this.httpsPort = intent.getIntExtra(Game.EXTRA_HTTPS_PORT, 0);
++        this.uniqueId = intent.getStringExtra(Game.EXTRA_UNIQUEID);
++        this.serverCert = intent.getByteArrayExtra(Game.EXTRA_SERVER_CERT);
++        String name = intent.getStringExtra(Game.EXTRA_APP_NAME);
++        this.appName = name != null ? name : "";
++    }
++
++    /** Sieć: wołać poza wątkiem UI. Wynik jako Toast (kontekst aplikacji, bo Game już się zamyka). */
++    @Override
++    public void run() {
++        String message;
++        try {
++            X509Certificate cert = null;
++            if (serverCert != null) {
++                cert = (X509Certificate) CertificateFactory.getInstance("X.509")
++                        .generateCertificate(new ByteArrayInputStream(serverCert));
++            }
++            NvHTTP http = new NvHTTP(new ComputerDetails.AddressTuple(host, port), httpsPort, uniqueId, cert,
++                    PlatformBinding.getCryptoProvider(appContext));
++            message = http.quitApp()
++                    ? appContext.getString(R.string.thumbcast_end_session_done, appName)
++                    : appContext.getString(R.string.thumbcast_end_session_failed, appName);
++        } catch (HostHttpResponseException e) {
++            // 599: aplikację uruchomił inny klient (NvHTTP.quitApp), tak jak w ServerHelper.doQuit.
++            message = e.getErrorCode() == 599
++                    ? appContext.getString(R.string.thumbcast_end_session_not_owner)
++                    : appContext.getString(R.string.thumbcast_end_session_error, String.valueOf(e.getMessage()));
++        } catch (CertificateException | java.io.IOException | org.xmlpull.v1.XmlPullParserException
++                 | RuntimeException e) {
++            message = appContext.getString(R.string.thumbcast_end_session_error, String.valueOf(e.getMessage()));
++        }
++        LimeLog.info("Thumbcast: end session: " + message);
++        final String toast = message;
++        new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(appContext, toast, Toast.LENGTH_LONG).show());
++    }
++}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastKeyTranslator.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastKeyTranslator.java
 new file mode 100644
 index 00000000..056ba4cc
@@ -2641,17 +2828,21 @@ index 00000000..056ba4cc
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuModel.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuModel.java
 new file mode 100644
-index 00000000..0d00b6e2
+index 00000000..f310817b
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuModel.java
-@@ -0,0 +1,191 @@
+@@ -0,0 +1,228 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Pozycje menu w grze (etykiety i akcje) bez widoku: ThumbcastMenuView je tylko rysuje,
 +// ThumbcastSession dostarcza stan i wykonuje akcje. Kolejność pozycji jak w dawnym AlertDialog.
-+// Od 12.11.2026 dwie strony: główna (build) i lista profili do zmiany w trakcie gry (buildProfiles).
++// Od 12.11.2026 trzy strony: główna (build), lista profili do zmiany w trakcie gry (buildProfiles) i potwierdzenie
++// „Zakończ sesję” (buildEndSession). Wyjście z gry ma dwie pozycje: „Rozłącz (gra działa dalej)” i „Zakończ sesję…”
++// (aplikacja na PC zamknięta, Sunshine przywraca rozdzielczość). Przełączniki nakładki statystyk: StatsToggles.
 +
 +import com.limelight.R;
++
++import app.thumbcast.android.stats.StatsToggles;
 +
 +import java.util.ArrayList;
 +import java.util.Collections;
@@ -2666,7 +2857,20 @@ index 00000000..0d00b6e2
 +
 +    /** Stan i akcje sesji, które menu pokazuje i wywołuje. */
 +    interface Target {
++        /** Rozłączenie: strumień zatrzymany, aplikacja na PC działa dalej (wznowienie z listy). */
 +        void disconnect();
++
++        /** Strona potwierdzenia „Zakończ sesję” (menu zostaje otwarte). */
++        void openEndSession();
++
++        /** Zakończenie sesji: strumień zatrzymany, potem aplikacja na PC zamknięta (wołane po zamknięciu menu). */
++        void endSession();
++
++        /** Przełączniki nakładki statystyk (zapisane globalnie). */
++        StatsToggles getStatsToggles();
++
++        /** Zmiana na żywo i zapis (menu zostaje otwarte). */
++        void setStatsToggles(StatsToggles toggles);
 +
 +        boolean areControlsHidden();
 +
@@ -2768,7 +2972,8 @@ index 00000000..0d00b6e2
 +    /** Pozycje menu dla bieżącego stanu. Po każdej akcji, która nie zamyka menu, sesja buduje listę od nowa. */
 +    static List<Item> build(Strings s, final Target t) {
 +        List<Item> items = new ArrayList<>();
-+        items.add(Item.button(Style.DESTRUCTIVE, s.get(R.string.thumbcast_menu_disconnect), true, t::disconnect));
++        items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_disconnect), true, t::disconnect));
++        items.add(Item.button(Style.DESTRUCTIVE, s.get(R.string.thumbcast_menu_end_session), false, t::openEndSession));
 +        items.add(Item.button(Style.NORMAL, s.get(t.areControlsHidden()
 +                ? R.string.thumbcast_menu_show_controls : R.string.thumbcast_menu_hide_controls),
 +                true, t::toggleControls));
@@ -2791,6 +2996,14 @@ index 00000000..0d00b6e2
 +        items.add(Item.button(Style.NORMAL, s.get(hide
 +                ? R.string.thumbcast_menu_hide_on_gamepad_on : R.string.thumbcast_menu_hide_on_gamepad_off),
 +                false, () -> t.setHideOnGamepad(!hide)));
++
++        final StatsToggles stats = t.getStatsToggles();
++        items.add(Item.button(Style.NORMAL, s.get(stats.getEnabled()
++                ? R.string.thumbcast_menu_stats_on : R.string.thumbcast_menu_stats_off),
++                false, () -> t.setStatsToggles(stats.toggleEnabled())));
++        items.add(Item.button(Style.NORMAL, s.get(stats.getAdvancedShown()
++                ? R.string.thumbcast_menu_stats_advanced_on : R.string.thumbcast_menu_stats_advanced_off),
++                false, () -> t.setStatsToggles(stats.toggleAdvanced())));
 +        items.add(Item.button(Style.PRIMARY, s.get(R.string.thumbcast_menu_resume), true, () -> { }));
 +        return Collections.unmodifiableList(items);
 +    }
@@ -2810,6 +3023,17 @@ index 00000000..0d00b6e2
 +            items.add(Item.button(p.active ? Style.PRIMARY : Style.NORMAL, label,
 +                    true, () -> t.switchProfile(p.fileName)));
 +        }
++        return Collections.unmodifiableList(items);
++    }
++
++    /**
++     * Potwierdzenie „Zakończ sesję” (tytuł strony mówi, co się stanie). „Anuluj” jest PRIMARY, więc zaznaczenie
++     * z pada startuje na nim: przypadkowe A nie zamyka gry. Wybór „Zakończ sesję” zamyka menu i kończy sesję.
++     */
++    static List<Item> buildEndSession(Strings s, final Target t) {
++        List<Item> items = new ArrayList<>();
++        items.add(Item.button(Style.PRIMARY, s.get(R.string.thumbcast_menu_end_session_cancel), false, t::showMainPage));
++        items.add(Item.button(Style.DESTRUCTIVE, s.get(R.string.thumbcast_menu_end_session_confirm), true, t::endSession));
 +        return Collections.unmodifiableList(items);
 +    }
 +
@@ -3307,10 +3531,10 @@ index 00000000..56f3dc0b
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
 new file mode 100644
-index 00000000..b606d5b6
+index 00000000..96d5f0a7
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
-@@ -0,0 +1,714 @@
+@@ -0,0 +1,923 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Cała logika Thumbcast w aktywności Game: Game trzyma jedno pole
@@ -3339,6 +3563,15 @@ index 00000000..b606d5b6
 +// Gesty myszy (12.11.2026): przełącznik w menu dla aktywnego profilu (zapis w ThumbcastSettings, klucz = plik
 +// profilu), profil efektywny = MouseGesturesTransform(profil z pliku), potem ScaleTransform. Zmiana na żywo.
 +// Profil domyślny (list_thumbcast_profile) usunięty poza biblioteką: profil dostarczany z aplikacją i komunikat.
++//
++// Nakładka statystyk (12.11.2026): przełączniki „Statystyki” i „Szczegółowe statystyki” w menu w grze (StatsToggles,
++// zapis globalny w ThumbcastSettings; „Statystyki” = upstreamowy checkbox_enable_perf_overlay). Dane liczbowe
++// z MediaCodecDecoderRenderer (setThumbcastStatsListener), tekst StatsFormatter, widok ThumbcastStatsView w prawym
++// górnym rogu, z dala od kontrolek. Upstreamowy TextView performanceOverlay w trybie Thumbcast jest ukryty.
++//
++// Wyjście (12.11.2026): „Rozłącz (gra działa dalej)” = jak dotąd (finish, aplikacja na PC zostaje) i „Zakończ sesję…”
++// (strona potwierdzenia): finish, a po zatrzymaniu strumienia /cancel (ThumbcastHostQuit, jak „Zakończenie sesji”
++// z listy PC), więc Sunshine zamyka aplikację i przywraca rozdzielczość ekranu.
 +
 +import android.app.Activity;
 +import android.content.Context;
@@ -3354,10 +3587,13 @@ index 00000000..b606d5b6
 +import android.widget.FrameLayout;
 +import android.widget.Toast;
 +
++import java.util.Locale;
++
 +import com.limelight.LimeLog;
 +import com.limelight.R;
 +import com.limelight.binding.input.ControllerHandler;
 +import com.limelight.binding.input.KeyboardTranslator;
++import com.limelight.binding.video.MediaCodecDecoderRenderer;
 +import com.limelight.nvstream.NvConnection;
 +import com.limelight.preferences.PreferenceConfiguration;
 +import com.limelight.ui.GameGestures;
@@ -3377,7 +3613,15 @@ index 00000000..b606d5b6
 +import app.thumbcast.android.menu.MenuCommand;
 +import app.thumbcast.android.menu.MenuInputRouter;
 +import app.thumbcast.android.menu.MenuKeyResult;
++import app.thumbcast.android.menu.MenuPage;
++import app.thumbcast.android.overlay.PxRect;
 +import app.thumbcast.android.overlay.ThumbcastOverlay;
++import app.thumbcast.android.stats.StatsFormatter;
++import app.thumbcast.android.stats.StatsLabels;
++import app.thumbcast.android.stats.StatsMode;
++import app.thumbcast.android.stats.StatsToggles;
++import app.thumbcast.android.stats.StreamStats;
++import app.thumbcast.android.stats.StreamStatsListener;
 +import app.thumbcast.model.AppActions;
 +import app.thumbcast.model.MouseGesturesTransform;
 +import app.thumbcast.model.Profile;
@@ -3429,11 +3673,24 @@ index 00000000..b606d5b6
 +    private final FrameLayout overlayParent;
 +    /** Tworzony przy pierwszym otwarciu; pokazany = dodany do {@link #overlayParent}. */
 +    private ThumbcastMenuView menuView;
-+    /** Strona menu: false = główna, true = lista profili. */
-+    private boolean profilesPage;
++    /** Strona menu (główna, profile, potwierdzenie „Zakończ sesję”). */
++    private MenuPage menuPage = MenuPage.MAIN;
 +    /** Lista profili wczytana przy otwarciu strony profili. */
 +    private List<ThumbcastMenuModel.ProfileChoice> profileChoices = Collections.emptyList();
 +    private boolean destroyed;
++
++    /** Przełączniki nakładki statystyk (menu w grze, zapis w ThumbcastSettings). */
++    private StatsToggles statsToggles;
++    /** Źródło danych (attachPerfStats); null = nakładka statystyk niedostępna. */
++    private MediaCodecDecoderRenderer statsSource;
++    /** Tworzony przy pierwszym włączeniu; pod overlayem kontrolek. */
++    private ThumbcastStatsView statsView;
++    private StatsFormatter statsFormatter;
++    /** Ostatnia próbka (przełączenie trybu pokazuje ją od razu, bez czekania sekundy). */
++    private StreamStats lastStats;
++    private boolean inPip;
++    /** „Zakończ sesję”: po zatrzymaniu strumienia zamknąć aplikację na hoście (takeAfterStopTask / onDestroy). */
++    private ThumbcastHostQuit pendingHostQuit;
 +
 +    private final InputManager.InputDeviceListener deviceListener = new InputManager.InputDeviceListener() {
 +        @Override
@@ -3622,6 +3879,35 @@ index 00000000..b606d5b6
 +        } else {
 +            overlay.setVisibility(View.VISIBLE);
 +        }
++        this.inPip = inPip;
++        applyStats();
++    }
++
++    /**
++     * Po utworzeniu dekodera (Game.onCreate): nakładka statystyk Thumbcast zamiast upstreamowego tekstu. Upstreamowy
++     * TextView jest chowany, a {@code prefConfig.enablePerfOverlay} zerowane tylko w obiekcie tego strumienia (renderer
++     * nie składa wtedy upstreamowego tekstu, Game nie pokazuje widoku po PiP); zapisana preferencja bez zmian.
++     */
++    public void attachPerfStats(MediaCodecDecoderRenderer renderer, View upstreamPerfView) {
++        if (renderer == null) {
++            return;
++        }
++        statsSource = renderer;
++        prefConfig.enablePerfOverlay = false;
++        if (upstreamPerfView != null) {
++            upstreamPerfView.setVisibility(View.GONE);
++        }
++        applyStats();
++    }
++
++    /**
++     * Game.stopConnection: zadanie do wykonania w wątku zatrzymania po {@code conn.stop()} (null = brak). Po
++     * „Zakończ sesję” to zamknięcie aplikacji na hoście; zadanie jest oddawane raz.
++     */
++    public Runnable takeAfterStopTask() {
++        Runnable task = pendingHostQuit;
++        pendingHostQuit = null;
++        return task;
 +    }
 +
 +    /** stopConnection: zerowy stan na hosta przed zamknięciem połączenia. */
@@ -3632,6 +3918,14 @@ index 00000000..b606d5b6
 +    /** onDestroy: bez zaległych retransmisji, listenerów i menu. */
 +    public void onDestroy() {
 +        destroyed = true;
++        if (statsSource != null) {
++            statsSource.setThumbcastStatsListener(null);
++        }
++        // „Zakończ sesję” bez zatrzymania strumienia (np. połączenie jeszcze się nie zestawiło): zamknij teraz.
++        Runnable quit = takeAfterStopTask();
++        if (quit != null) {
++            new Thread(quit, "thumbcast-end-session").start();
++        }
 +        padReporter.cancelPending();
 +        mainHandler.removeCallbacksAndMessages(null);
 +        if (inputManager != null) {
@@ -3681,6 +3975,8 @@ index 00000000..b606d5b6
 +    private void applyControlsHidden() {
 +        boolean hidden = manualHidden != null ? manualHidden : (hideOnGamepad && gamepadConnected);
 +        overlay.setControlsHidden(hidden);
++        // Ukryte lub pokazane kontrolki zmieniają miejsce wolne dla nakładki statystyk.
++        showStats();
 +        // Pad podłączony/odłączony przy otwartym menu: etykieta Ukryj/Pokaż przyciski.
 +        refreshMenu();
 +    }
@@ -3770,6 +4066,119 @@ index 00000000..b606d5b6
 +    }
 +
 +    // =====================================================================================
++    // Wyjście: „Rozłącz” (Host.disconnect) i „Zakończ sesję” (rozłączenie + /cancel na hoście)
++    // =====================================================================================
++
++    /**
++     * „Zakończ sesję” (po potwierdzeniu): zerowy stan na hoście, zatrzymanie strumienia tak jak przy „Rozłącz”
++     * (finish → onStop → stopConnection), a w wątku zatrzymania po {@code conn.stop()} żądanie /cancel
++     * ({@link #takeAfterStopTask}). Sunshine zamyka wtedy aplikację i przywraca konfigurację ekranu.
++     */
++    private void endSession() {
++        if (destroyed || pendingHostQuit != null) {
++            return;
++        }
++        releaseHostInput();
++        pendingHostQuit = new ThumbcastHostQuit(activity, activity.getIntent());
++        Toast.makeText(activity, R.string.thumbcast_end_session_progress, Toast.LENGTH_SHORT).show();
++        host.disconnect();
++    }
++
++    // =====================================================================================
++    // Nakładka statystyk (FPS, opóźnienie; szczegóły z upstreamowej nakładki wydajności)
++    // =====================================================================================
++
++    private StatsToggles currentStatsToggles() {
++        if (statsToggles == null) {
++            statsToggles = settings.getStatsToggles();
++        }
++        return statsToggles;
++    }
++
++    private void setStatsToggles(StatsToggles toggles) {
++        statsToggles = toggles;
++        settings.setStatsToggles(toggles);
++        applyStats();
++    }
++
++    /** Próbki przychodzą z wątku odbioru wideo; widok zmieniamy na wątku UI. */
++    private final StreamStatsListener statsListener = stats -> mainHandler.post(() -> onStreamStats(stats));
++
++    /** Widok i słuchacz zgodnie z trybem: wyłączona nakładka (albo PiP) = renderer nic nie liczy. */
++    private void applyStats() {
++        if (statsSource == null) {
++            return;
++        }
++        StatsMode mode = currentStatsToggles().getMode();
++        boolean show = mode != StatsMode.OFF && !inPip && !destroyed;
++        if (!show) {
++            statsSource.setThumbcastStatsListener(null);
++            if (statsView != null) {
++                statsView.setVisibility(View.GONE);
++            }
++            return;
++        }
++        if (statsView == null) {
++            statsView = new ThumbcastStatsView(activity);
++            statsFormatter = new StatsFormatter(statsLabels(), Locale.getDefault());
++            // Pod overlayem kontrolek (i pod menu): kontrolki są rysowane nad napisem, dotyk idzie do nich.
++            overlayParent.addView(statsView, overlayParent.indexOfChild(overlay), ThumbcastStatsView.layoutParams());
++            // Zmiana rozmiaru ekranu (obrót, okno): nowe położenie po layoucie.
++            overlayParent.addOnLayoutChangeListener((v, l, t, r, b, oldL, oldT, oldR, oldB) -> {
++                if (r - l != oldR - oldL || b - t != oldB - oldT) {
++                    v.post(this::showStats);
++                }
++            });
++        }
++        statsView.setVisibility(View.VISIBLE);
++        statsSource.setThumbcastStatsListener(statsListener);
++        showStats();
++    }
++
++    private void onStreamStats(StreamStats stats) {
++        if (destroyed) {
++            return;
++        }
++        lastStats = stats;
++        showStats();
++    }
++
++    /** Tekst dla bieżącego trybu (bez próbki: „– FPS”) i położenie z dala od kontrolek i komunikatów upstreamu. */
++    private void showStats() {
++        if (statsView == null || statsView.getVisibility() != View.VISIBLE || statsFormatter == null) {
++            return;
++        }
++        StatsMode mode = currentStatsToggles().getMode();
++        String text = lastStats != null ? statsFormatter.format(mode, lastStats)
++                : activity.getString(R.string.thumbcast_stats_waiting);
++        // Overlay leży na całym rodzicu (MATCH_PARENT, bez marginesów), więc jego px = px rodzica.
++        List<PxRect> obstacles = new ArrayList<>(overlay.controlBounds());
++        View notification = activity.findViewById(R.id.notificationOverlay);
++        if (notification != null && notification.getVisibility() == View.VISIBLE) {
++            obstacles.add(new PxRect(notification.getLeft(), notification.getTop(),
++                    notification.getRight(), notification.getBottom()));
++        }
++        statsView.show(text, obstacles);
++    }
++
++    private StatsLabels statsLabels() {
++        return new StatsLabels(
++                activity.getString(R.string.thumbcast_stats_basic),
++                activity.getString(R.string.thumbcast_stats_basic_no_delay),
++                activity.getString(R.string.thumbcast_stats_video),
++                activity.getString(R.string.thumbcast_stats_decoder),
++                activity.getString(R.string.thumbcast_stats_frames),
++                activity.getString(R.string.thumbcast_stats_drops),
++                activity.getString(R.string.thumbcast_stats_network),
++                activity.getString(R.string.thumbcast_stats_network_unknown),
++                activity.getString(R.string.thumbcast_stats_host),
++                activity.getString(R.string.thumbcast_stats_host_unknown),
++                activity.getString(R.string.thumbcast_stats_decode),
++                activity.getString(R.string.thumbcast_stats_decode_unknown),
++                activity.getString(R.string.thumbcast_stats_breakdown));
++    }
++
++    // =====================================================================================
 +    // Menu w grze (widok nad overlayem w oknie aktywności, bez osobnego okna)
 +    // =====================================================================================
 +
@@ -3820,25 +4229,26 @@ index 00000000..b606d5b6
 +        if (isMenuShown()) {
 +            overlayParent.removeView(menuView);
 +        }
-+        profilesPage = false;
++        menuPage = MenuPage.MAIN;
 +        menuInput.resetAxes();
 +        setPhysicalInputBlocked(false);
 +    }
 +
-+    /** B, Back, Escape przy otwartym menu: ze strony profili na stronę główną, ze strony głównej do gry. */
++    /** B, Back, Escape przy otwartym menu: z podstrony na stronę główną, ze strony głównej do gry. */
 +    private void onMenuBack() {
-+        if (profilesPage) {
-+            showPage(false);
++        MenuPage back = menuPage.back();
++        if (back != null) {
++            showPage(back);
 +        } else {
 +            hideMenu();
 +        }
 +    }
 +
-+    private void showPage(boolean profiles) {
-+        if (profiles) {
++    private void showPage(MenuPage page) {
++        if (page == MenuPage.PROFILES) {
 +            profileChoices = loadProfileChoices();
 +        }
-+        profilesPage = profiles;
++        menuPage = page;
 +        refreshMenu();
 +        if (isMenuShown()) {
 +            menuView.scrollToTop();
@@ -3913,11 +4323,14 @@ index 00000000..b606d5b6
 +        if (!isMenuShown()) {
 +            return;
 +        }
-+        if (profilesPage) {
++        if (menuPage == MenuPage.PROFILES) {
 +            // Wybór w grze zmienia profil domyślny, chyba że sesja ma profil przypisany do aplikacji.
 +            menuView.setTitle(menuString(sessionOnlyProfile ? R.string.thumbcast_menu_profiles_title_session
 +                    : R.string.thumbcast_menu_profiles_title));
 +            menuView.bind(ThumbcastMenuModel.buildProfiles(this::menuString, profileChoices, menuTarget));
++        } else if (menuPage == MenuPage.END_SESSION) {
++            menuView.setTitle(menuString(R.string.thumbcast_menu_end_session_title));
++            menuView.bind(ThumbcastMenuModel.buildEndSession(this::menuString, menuTarget));
 +        } else {
 +            menuView.setTitle(menuString(R.string.thumbcast_menu_title));
 +            menuView.bind(ThumbcastMenuModel.build(this::menuString, menuTarget));
@@ -4001,12 +4414,32 @@ index 00000000..b606d5b6
 +
 +        @Override
 +        public void openProfiles() {
-+            showPage(true);
++            showPage(MenuPage.PROFILES);
 +        }
 +
 +        @Override
 +        public void showMainPage() {
-+            showPage(false);
++            showPage(MenuPage.MAIN);
++        }
++
++        @Override
++        public void openEndSession() {
++            showPage(MenuPage.END_SESSION);
++        }
++
++        @Override
++        public void endSession() {
++            ThumbcastSession.this.endSession();
++        }
++
++        @Override
++        public StatsToggles getStatsToggles() {
++            return currentStatsToggles();
++        }
++
++        @Override
++        public void setStatsToggles(StatsToggles toggles) {
++            ThumbcastSession.this.setStatsToggles(toggles);
 +        }
 +
 +        @Override
@@ -4027,10 +4460,10 @@ index 00000000..b606d5b6
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java
 new file mode 100644
-index 00000000..cb770151
+index 00000000..dfa62801
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java
-@@ -0,0 +1,115 @@
+@@ -0,0 +1,137 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Ustawienia Thumbcast zmieniane także z menu w grze, więc mają własny
@@ -4040,6 +4473,8 @@ index 00000000..cb770151
 +import android.content.Context;
 +import android.content.SharedPreferences;
 +import android.preference.PreferenceManager;
++
++import app.thumbcast.android.stats.StatsToggles;
 +
 +public final class ThumbcastSettings {
 +
@@ -4111,6 +4546,26 @@ index 00000000..cb770151
 +        prefs.edit().putBoolean(KEY_HIDE_ON_GAMEPAD, hide).apply();
 +    }
 +
++    // ---------- Nakładka statystyk (12.11.2026): menu w grze, StatsToggles ----------
++
++    /**
++     * „Statystyki” = upstreamowy klucz „Pokaż statystyki wydajności” (PreferenceConfiguration.enablePerfOverlay),
++     * więc pole wyboru w ustawieniach i przełącznik w menu w grze to ten sam stan (wł. = linia podstawowa).
++     */
++    public static final String KEY_PERF_OVERLAY = "checkbox_enable_perf_overlay";
++    /** „Szczegółowe statystyki” (tylko tryb Thumbcast), domyślnie wył. */
++    public static final String KEY_PERF_OVERLAY_ADVANCED = "checkbox_thumbcast_perf_advanced";
++
++    public StatsToggles getStatsToggles() {
++        return new StatsToggles(prefs.getBoolean(KEY_PERF_OVERLAY, false),
++                prefs.getBoolean(KEY_PERF_OVERLAY_ADVANCED, false));
++    }
++
++    public void setStatsToggles(StatsToggles toggles) {
++        prefs.edit().putBoolean(KEY_PERF_OVERLAY, toggles.getEnabled())
++                .putBoolean(KEY_PERF_OVERLAY_ADVANCED, toggles.getAdvanced()).apply();
++    }
++
 +    // ---------- Gesty myszy (12.11.2026): przełącznik na profil, MouseGesturesTransform ----------
 +
 +    /**
@@ -4144,6 +4599,151 @@ index 00000000..cb770151
 +    /** Przeniesienie wyboru na kopię profilu (Duplikuj, edycja presetu). */
 +    public void copyMouseGestures(String fromFile, String toFile) {
 +        setMouseGestures(toFile, getMouseGestures(fromFile));
++    }
++}
+diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastStatsView.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastStatsView.java
+new file mode 100644
+index 00000000..d7c6d5be
+--- /dev/null
++++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastStatsView.java
+@@ -0,0 +1,139 @@
++package com.limelight.thumbcast;
++
++// NOWY PLIK (moduł :app). Nakładka statystyk strumienia w trybie Thumbcast (12.11.2026): mały tekst na półprzezroczystym
++// czarnym tle w prawym górnym rogu obszaru bezpiecznego (bez wycięcia ekranu i pasków), przesuwana tak, żeby nie
++// zasłaniała kontrolek (StatsPlacement z :control-android). Tekst i tryb (podstawowy / szczegółowy) ustawia
++// ThumbcastSession. Widok nie bierze dotyku ani fokusu i leży pod overlayem kontrolek w kolejności rysowania.
++
++import android.annotation.SuppressLint;
++import android.content.Context;
++import android.graphics.Typeface;
++import android.graphics.drawable.GradientDrawable;
++import android.os.Build;
++import android.util.TypedValue;
++import android.view.Gravity;
++import android.view.MotionEvent;
++import android.view.View;
++import android.view.WindowInsets;
++import android.widget.FrameLayout;
++import android.widget.TextView;
++
++import java.util.List;
++
++import app.thumbcast.android.overlay.PxRect;
++import app.thumbcast.android.stats.StatsPlacement;
++
++@SuppressLint({"ViewConstructor", "AppCompatCustomView"})
++final class ThumbcastStatsView extends TextView {
++
++    private static final int BACKGROUND_COLOR = 0x99000000;
++    private static final int TEXT_COLOR = 0xFFFFFFFF;
++    private static final float TEXT_SP = 11f;
++    private static final int PADDING_H_DP = 6;
++    private static final int PADDING_V_DP = 3;
++    private static final int CORNER_DP = 4;
++    /** Odstęp od krawędzi obszaru bezpiecznego i od kontrolek. */
++    private static final int MARGIN_DP = 6;
++
++    private final float density;
++
++    ThumbcastStatsView(Context context) {
++        super(context);
++        density = getResources().getDisplayMetrics().density;
++        setTextColor(TEXT_COLOR);
++        setTextSize(TypedValue.COMPLEX_UNIT_SP, TEXT_SP);
++        setTypeface(Typeface.DEFAULT);
++        // Cyfry o stałej szerokości: zmieniające się liczby nie przesuwają ramki co sekundę.
++        setFontFeatureSettings("tnum");
++        setIncludeFontPadding(false);
++        setGravity(Gravity.START);
++        setPadding(dp(PADDING_H_DP), dp(PADDING_V_DP), dp(PADDING_H_DP), dp(PADDING_V_DP));
++        GradientDrawable bg = new GradientDrawable();
++        bg.setColor(BACKGROUND_COLOR);
++        bg.setCornerRadius(dp(CORNER_DP));
++        setBackground(bg);
++        setClickable(false);
++        setLongClickable(false);
++        setFocusable(View.NOT_FOCUSABLE);
++        setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
++    }
++
++    /** Parametry do dodania w rodzicu StreamView: rozmiar wg treści, pozycja przez translację. */
++    static FrameLayout.LayoutParams layoutParams() {
++        return new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
++                FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
++    }
++
++    /** Nakładka nigdy nie bierze dotyku: zdarzenie idzie dalej do overlaya i strumienia. */
++    @SuppressLint("ClickableViewAccessibility")
++    @Override
++    public boolean dispatchTouchEvent(MotionEvent event) {
++        return false;
++    }
++
++    @Override
++    public boolean dispatchGenericMotionEvent(MotionEvent event) {
++        return false;
++    }
++
++    /**
++     * Nowy tekst i położenie. {@code obstacles} = prostokąty kontrolek (i innych napisów) w px rodzica.
++     * Rozmiar liczony od razu (measure), więc położenie pasuje do nowego tekstu w tej samej klatce.
++     */
++    void show(CharSequence text, List<PxRect> obstacles) {
++        if (!text.toString().contentEquals(getText())) {
++            setText(text);
++        }
++        View parent = (View) getParent();
++        if (parent == null || parent.getWidth() <= 0 || parent.getHeight() <= 0) {
++            return;
++        }
++        int pw = parent.getWidth();
++        int ph = parent.getHeight();
++        measure(MeasureSpec.makeMeasureSpec(pw, MeasureSpec.AT_MOST),
++                MeasureSpec.makeMeasureSpec(ph, MeasureSpec.AT_MOST));
++        StatsPlacement.Position p = StatsPlacement.place(pw, ph, safeArea(parent, pw, ph),
++                getMeasuredWidth(), getMeasuredHeight(), dp(MARGIN_DP), obstacles);
++        setTranslationX(Math.round(p.getX()));
++        setTranslationY(Math.round(p.getY()));
++    }
++
++    /**
++     * Obszar bezpieczny w układzie rodzica: rodzic (FrameLayout treści aktywności) wypełnia okno, więc wcięcia okna
++     * (wycięcie ekranu, widoczne paski systemowe) odejmujemy od jego krawędzi.
++     */
++    @SuppressWarnings("deprecation")
++    private static PxRect safeArea(View parent, int pw, int ph) {
++        WindowInsets insets = parent.getRootWindowInsets();
++        int l = 0;
++        int t = 0;
++        int r = 0;
++        int b = 0;
++        if (insets != null) {
++            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
++                android.graphics.Insets i = insets.getInsets(
++                        WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
++                l = i.left;
++                t = i.top;
++                r = i.right;
++                b = i.bottom;
++            } else {
++                l = insets.getSystemWindowInsetLeft();
++                t = insets.getSystemWindowInsetTop();
++                r = insets.getSystemWindowInsetRight();
++                b = insets.getSystemWindowInsetBottom();
++                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && insets.getDisplayCutout() != null) {
++                    l = Math.max(l, insets.getDisplayCutout().getSafeInsetLeft());
++                    t = Math.max(t, insets.getDisplayCutout().getSafeInsetTop());
++                    r = Math.max(r, insets.getDisplayCutout().getSafeInsetRight());
++                    b = Math.max(b, insets.getDisplayCutout().getSafeInsetBottom());
++                }
++            }
++        }
++        return new PxRect(l, t, pw - r, ph - b);
++    }
++
++    private int dp(int value) {
++        return Math.round(value * density);
 +    }
 +}
 diff --git a/app/src/main/res/layout/activity_thumbcast_profile_library.xml b/app/src/main/res/layout/activity_thumbcast_profile_library.xml
@@ -4272,10 +4872,10 @@ index 00000000..d0fa4d92
 +</LinearLayout>
 diff --git a/app/src/main/res/values-pl/thumbcast_strings.xml b/app/src/main/res/values-pl/thumbcast_strings.xml
 new file mode 100644
-index 00000000..2e8d768f
+index 00000000..cdd1e1f7
 --- /dev/null
 +++ b/app/src/main/res/values-pl/thumbcast_strings.xml
-@@ -0,0 +1,144 @@
+@@ -0,0 +1,174 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -4349,7 +4949,7 @@ index 00000000..2e8d768f
 +    <string name="summary_thumbcast_hide_on_gamepad">Przyciski i gałki znikają, gdy podłączony jest fizyczny pad; gesty i przycisk menu zostają</string>
 +    <!-- Menu w grze (☰, gest od górnej krawędzi, systemowy Back). -->
 +    <string name="thumbcast_menu_title">Menu strumienia</string>
-+    <string name="thumbcast_menu_disconnect">Rozłącz</string>
++    <string name="thumbcast_menu_disconnect">Rozłącz (gra działa dalej)</string>
 +    <string name="thumbcast_menu_hide_controls">Ukryj przyciski</string>
 +    <string name="thumbcast_menu_show_controls">Pokaż przyciski</string>
 +    <string name="thumbcast_menu_keyboard">Klawiatura</string>
@@ -4419,6 +5019,36 @@ index 00000000..2e8d768f
 +    <string name="thumbcast_mouse_gestures_off_touchpad">Gesty myszy wył.: dotyk w pustym miejscu nic nie wysyła. Przeciągnięcie w dół od górnej krawędzi nadal otwiera menu.</string>
 +    <string name="thumbcast_mouse_gestures_on_camera">Gesty myszy wł.: dotknij = lewy klik w tym miejscu, przytrzymaj = prawy klik, szczypanie = kółko myszy. Przeciąganie nadal obraca kamerę.</string>
 +    <string name="thumbcast_mouse_gestures_off_camera">Gesty myszy wył.: dotknięcia i szczypanie nic nie wysyłają. Przeciąganie nadal obraca kamerę.</string>
++    <!-- Nakładka statystyk i wyjście z sesji (12.11.2026). -->
++    <string name="thumbcast_menu_end_session">Zakończ sesję…</string>
++    <string name="thumbcast_menu_end_session_title">Zakończyć sesję? Gra na PC zostanie zamknięta, niezapisane postępy przepadną. PC przywróci swoją rozdzielczość ekranu, jeśli Sunshine ją zmienił.</string>
++    <string name="thumbcast_menu_end_session_cancel">Anuluj</string>
++    <string name="thumbcast_menu_end_session_confirm">Zakończ sesję i zamknij grę</string>
++    <string name="thumbcast_end_session_progress">Kończenie sesji na PC…</string>
++    <string name="thumbcast_end_session_done">Zakończono sesję na PC: %1$s</string>
++    <string name="thumbcast_end_session_failed">Nie udało się zakończyć sesji na PC: %1$s. Zakończ ją z listy aplikacji (przytrzymaj aplikację → Zakończenie sesji).</string>
++    <string name="thumbcast_end_session_not_owner">Tę sesję uruchomiło inne urządzenie, więc nie można jej zakończyć stąd. Zakończ ją na tamtym urządzeniu albo na PC.</string>
++    <string name="thumbcast_end_session_error">Nie udało się zakończyć sesji na PC (%1$s). Zakończ ją z listy aplikacji (przytrzymaj aplikację → Zakończenie sesji).</string>
++    <string name="thumbcast_menu_stats_on">Statystyki: wł.</string>
++    <string name="thumbcast_menu_stats_off">Statystyki: wył.</string>
++    <string name="thumbcast_menu_stats_advanced_on">Szczegółowe statystyki: wł.</string>
++    <string name="thumbcast_menu_stats_advanced_off">Szczegółowe statystyki: wył.</string>
++    <string name="thumbcast_stats_basic">%1$d FPS · opóźnienie ~%2$d ms</string>
++    <string name="thumbcast_stats_basic_no_delay">%1$d FPS · opóźnienie –</string>
++    <string name="thumbcast_stats_waiting">– FPS · opóźnienie –</string>
++    <string name="thumbcast_stats_video">%1$dx%2$d %3$s · strumień %4$.1f FPS</string>
++    <string name="thumbcast_stats_decoder">Dekoder: %1$s</string>
++    <string name="thumbcast_stats_frames">Odebrane %1$.1f · wyświetlone %2$.1f FPS</string>
++    <string name="thumbcast_stats_drops">Klatki utracone w sieci: %1$.2f%%</string>
++    <string name="thumbcast_stats_network">Sieć (RTT): %1$d ms (wariancja %2$d ms)</string>
++    <string name="thumbcast_stats_network_unknown">Sieć (RTT): –</string>
++    <string name="thumbcast_stats_host">Host min/maks/śr.: %1$.1f/%2$.1f/%3$.1f ms</string>
++    <string name="thumbcast_stats_host_unknown">Host: brak danych</string>
++    <string name="thumbcast_stats_decode">Dekodowanie %1$.2f ms · telefon razem %2$.1f ms</string>
++    <string name="thumbcast_stats_decode_unknown">Dekodowanie: –</string>
++    <string name="thumbcast_stats_breakdown">Opóźnienie ≈ sieć %1$d + host %2$.1f + telefon %3$.1f ms</string>
++    <string name="title_thumbcast_perf_advanced">Szczegółowe statystyki wydajności</string>
++    <string name="summary_thumbcast_perf_advanced">Tryb Thumbcast: razem ze statystykami wydajności pokazuj też rozdzielczość, kodek, dekoder, klatki, sieć, czasy hosta i dekodowania. Oba przełączniki są też w menu w grze.</string>
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_arrays.xml b/app/src/main/res/values/thumbcast_arrays.xml
 new file mode 100644
@@ -4457,10 +5087,10 @@ index 00000000..1e5e7040
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_strings.xml b/app/src/main/res/values/thumbcast_strings.xml
 new file mode 100644
-index 00000000..f93c4684
+index 00000000..2fff2bf4
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_strings.xml
-@@ -0,0 +1,146 @@
+@@ -0,0 +1,176 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -4532,7 +5162,7 @@ index 00000000..f93c4684
 +    <string name="summary_thumbcast_hide_on_gamepad">Buttons and sticks disappear while a physical gamepad is connected; gestures and the menu button stay</string>
 +    <!-- Menu w grze (☰, gest od górnej krawędzi, systemowy Back). -->
 +    <string name="thumbcast_menu_title">Stream menu</string>
-+    <string name="thumbcast_menu_disconnect">Disconnect</string>
++    <string name="thumbcast_menu_disconnect">Disconnect (game keeps running)</string>
 +    <string name="thumbcast_menu_hide_controls">Hide controls</string>
 +    <string name="thumbcast_menu_show_controls">Show controls</string>
 +    <string name="thumbcast_menu_keyboard">Keyboard</string>
@@ -4606,12 +5236,42 @@ index 00000000..f93c4684
 +    <string name="thumbcast_mouse_gestures_off_touchpad">Mouse gestures off: touching an empty area sends nothing. Swiping down from the top edge still opens the menu.</string>
 +    <string name="thumbcast_mouse_gestures_on_camera">Mouse gestures on: tap = left click at that spot, long press = right click, pinch = mouse wheel. Dragging still turns the camera.</string>
 +    <string name="thumbcast_mouse_gestures_off_camera">Mouse gestures off: tapping and pinching send nothing. Dragging still turns the camera.</string>
++    <!-- Nakładka statystyk i wyjście z sesji (12.11.2026). -->
++    <string name="thumbcast_menu_end_session">End session…</string>
++    <string name="thumbcast_menu_end_session_title">End session? The game on the PC will be closed and unsaved progress will be lost. The PC restores its screen resolution if Sunshine changed it.</string>
++    <string name="thumbcast_menu_end_session_cancel">Cancel</string>
++    <string name="thumbcast_menu_end_session_confirm">End session and close the game</string>
++    <string name="thumbcast_end_session_progress">Ending the session on the PC…</string>
++    <string name="thumbcast_end_session_done">Session ended on the PC: %1$s</string>
++    <string name="thumbcast_end_session_failed">Could not end the session on the PC: %1$s. Quit it from the app list (long-press the app → Quit Session).</string>
++    <string name="thumbcast_end_session_not_owner">This session was started by another device, so it cannot be ended from here. End it on that device or on the PC.</string>
++    <string name="thumbcast_end_session_error">Could not end the session on the PC (%1$s). Quit it from the app list (long-press the app → Quit Session).</string>
++    <string name="thumbcast_menu_stats_on">Stats: on</string>
++    <string name="thumbcast_menu_stats_off">Stats: off</string>
++    <string name="thumbcast_menu_stats_advanced_on">Detailed stats: on</string>
++    <string name="thumbcast_menu_stats_advanced_off">Detailed stats: off</string>
++    <string name="thumbcast_stats_basic">%1$d FPS · delay ~%2$d ms</string>
++    <string name="thumbcast_stats_basic_no_delay">%1$d FPS · delay –</string>
++    <string name="thumbcast_stats_waiting">– FPS · delay –</string>
++    <string name="thumbcast_stats_video">%1$dx%2$d %3$s · stream %4$.1f FPS</string>
++    <string name="thumbcast_stats_decoder">Decoder: %1$s</string>
++    <string name="thumbcast_stats_frames">Received %1$.1f · shown %2$.1f FPS</string>
++    <string name="thumbcast_stats_drops">Frames lost in the network: %1$.2f%%</string>
++    <string name="thumbcast_stats_network">Network RTT: %1$d ms (variance %2$d ms)</string>
++    <string name="thumbcast_stats_network_unknown">Network RTT: –</string>
++    <string name="thumbcast_stats_host">Host min/max/avg: %1$.1f/%2$.1f/%3$.1f ms</string>
++    <string name="thumbcast_stats_host_unknown">Host: no data</string>
++    <string name="thumbcast_stats_decode">Decoding %1$.2f ms · phone total %2$.1f ms</string>
++    <string name="thumbcast_stats_decode_unknown">Decoding: –</string>
++    <string name="thumbcast_stats_breakdown">Delay ≈ network %1$d + host %2$.1f + phone %3$.1f ms</string>
++    <string name="title_thumbcast_perf_advanced">Detailed performance stats</string>
++    <string name="summary_thumbcast_perf_advanced">Thumbcast mode: together with the performance stats, also show resolution, codec, decoder, frames, network, host and decoding times. Both switches are also in the in-game menu.</string>
 +</resources>
 diff --git a/app/src/main/res/xml/preferences.xml b/app/src/main/res/xml/preferences.xml
-index 5b09082b..702825ee 100644
+index 5b09082b..48c28874 100644
 --- a/app/src/main/res/xml/preferences.xml
 +++ b/app/src/main/res/xml/preferences.xml
-@@ -145,6 +145,47 @@
+@@ -145,6 +145,55 @@
              android:summary="@string/summary_checkbox_absolute_mouse_mode"
              android:defaultValue="false" />
      </PreferenceCategory>
@@ -4648,6 +5308,14 @@ index 5b09082b..702825ee 100644
 +            android:title="@string/title_thumbcast_hide_on_gamepad"
 +            android:summary="@string/summary_thumbcast_hide_on_gamepad"
 +            android:defaultValue="true" />
++
++        <!-- Nakładka statystyk Thumbcast (12.11.2026): „Pokaż statystyki wydajności” (checkbox_enable_perf_overlay)
++             = linia podstawowa, to pole = szczegóły. Oba przełącza też menu w grze. -->
++        <CheckBoxPreference
++            android:key="checkbox_thumbcast_perf_advanced"
++            android:title="@string/title_thumbcast_perf_advanced"
++            android:summary="@string/summary_thumbcast_perf_advanced"
++            android:defaultValue="false" />
 +
 +        <CheckBoxPreference
 +            android:key="checkbox_thumbcast_debug"

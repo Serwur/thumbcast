@@ -107,6 +107,37 @@ Wszystko na wątku UI.
 `ThumbcastSession` w `:app`; widok menu (`ThumbcastMenuView`) dostaje tylko polecenia. Bez timerów: krzyżak
 i gałka dają jeden krok na wychylenie.
 
+Strony menu: `menu/MenuPage` (MAIN, PROFILES, END_SESSION; `back()` = z podstrony na główną, z głównej
+zamknięcie). END_SESSION to potwierdzenie „Zakończ sesję” (od 12.11.2026, `MenuPageTest`).
+
+## Nakładka statystyk (`stats/`, 12.11.2026)
+
+Dane liczbowe z upstreamowych liczników (`MediaCodecDecoderRenderer`, `VideoStats`, `MoonBridge.getEstimatedRttInfo`),
+bez własnych pomiarów. Blok THUMBCAST w rendererze co ok. 1 s (przy zmianie okna statystyk) woła
+`StreamStatsListener.onStreamStats(StreamStats)`, tylko gdy słuchacz jest ustawiony (nakładka włączona).
+- `StreamStats.fromCounters`: suma dwóch okien (ok. 2 s, jak upstream), średnie na odebraną klatkę, RTT z górnych
+  32 bitów (`-1` = brak), czas hosta w 0,1 ms (0 klatek z czasem = brak danych).
+- `latencyEstimateMs` = **RTT sieci + średni czas hosta + średni czas telefonu**, zaokrąglone:
+  RTT (ENet, połączenie sterujące): wejście idzie do PC, obraz wraca do telefonu, po jednej drodze w każdą stronę;
+  czas hosta: przechwycenie → zakodowana klatka, podawany przez Sunshine (brak = 0);
+  czas telefonu: pierwszy pakiet klatki odebrany → klatka zdekodowana (upstreamowy „end-to-end client latency”,
+  zawiera dekodowanie). Nie wlicza renderowania gry, czekania na przechwycenie, kolejki wyświetlania, odświeżania
+  ekranu i próbkowania dotyku, więc prawdziwe opóźnienie jest większe. Etykieta: „opóźnienie ~X ms”.
+  `null` (wyświetlane „–”), gdy RTT albo czas telefonu nieznany.
+- `StatsFormatter` + `StatsLabels` (wzorce z zasobów EN/PL): `basic` = „60 FPS · opóźnienie ~24 ms”
+  (FPS = klatki wyświetlone), `advanced` = ta linia i: rozdzielczość, kodek, FPS strumienia; dekoder; odebrane
+  i wyświetlone FPS; utrata klatek w sieci; RTT i wariancja; czas hosta min/maks/śr.; dekodowanie i czas telefonu;
+  rozbicie opóźnienia na składniki.
+- `StatsToggles`/`StatsMode`: „Statystyki” (klucz upstreamu `checkbox_enable_perf_overlay`, ten sam co pole w
+  ustawieniach) i „Szczegółowe statystyki” (`checkbox_thumbcast_perf_advanced`, domyślnie wył.). Szczegóły
+  włączone przy wyłączonych statystykach włączają też statystyki; wyłączenie statystyk pamięta szczegóły.
+- `StatsPlacement`: prawy górny róg obszaru bezpiecznego (wycięcie, paski). Kandydaci: x przy prawej krawędzi
+  albo tuż na lewo od kontrolki, y przy górze albo tuż pod kontrolką; wygrywa wolny kandydat najbliżej rogu
+  (przesunięcie w dół liczy się podwójnie). Nic wolnego: róg mimo kolizji. Kontrolki z
+  `ThumbcastOverlay.controlBounds()` (profil efektywny: skala, ukrycie przy padzie).
+- Widok i podpięcie są w `:app` (`ThumbcastStatsView`, `ThumbcastSession`): widok pod overlayem kontrolek, bez dotyku
+  i fokusu, 11 sp, tło `#99000000`. Testy: `StreamStatsTest`, `StatsTogglesTest`, `StatsPlacementTest`.
+
 ## Fasady (dlaczego nie wołamy upstreamu wprost)
 
 Kod upstreamu nie jest w tym repozytorium, więc moduł kompiluje się względem cienkich interfejsów:
@@ -136,7 +167,8 @@ powtarza ten sam stan po 25/50/75 ms, tak jak upstreamowy `VirtualController.sen
   (reguła „fizyczny pad”, callback tylko przy zmianie), `OverlaySnapshotTest` (migawka z prawdziwym silnikiem:
   wciśnięcie w strefie aktywacji, slide-to-press, LATCH, promień i gałka z silnika, haptyka z przejść),
   `MenuInputRouterTest` (menu w grze: które klawisze menu zjada, które idą do systemu albo do hosta, puszczenia
-  po zamknięciu menu, krzyżak i gałka z histerezą, duplikaty hat + D-pad, zaznaczenie wiersza). Testy nie dotykają klas Androida w czasie wykonania (stałe
+  po zamknięciu menu, krzyżak i gałka z histerezą, duplikaty hat + D-pad, zaznaczenie wiersza), `MenuPageTest`,
+  `StreamStatsTest`, `StatsTogglesTest`, `StatsPlacementTest` (nakładka statystyk). Testy nie dotykają klas Androida w czasie wykonania (stałe
   `KeyEvent.KEYCODE_*` są wklejane przez kompilator), więc Robolectric nie jest potrzebny. Jeśli kompilator
   jednak nie wklei stałych (np. zmiana w android.jar), `unitTests.isReturnDefaultValues` nie wystarczy:
   wtedy dodać Robolectric (`libs.robolectric`) do `SinksTest`.

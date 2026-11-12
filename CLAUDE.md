@@ -7,6 +7,7 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 - `control-engine` (JVM): `InputEngine`, rozpoznawanie gestów, `ActionPolicy`. Wszystkie wyjścia idą przez politykę. Szczegóły: `control-engine/docs/engine.md`.
 - `control-android`: `ThumbcastOverlay` i adaptery. Retransmisja stanu pada (25/50/75 ms) jest tylko w `HostPadReporterImpl`, silnik jej nie robi.
   Biblioteka profili (`library/ProfileRepository`, import/eksport) i `EditorContract`; opis `docs/profiles.md`.
+  Nakładka statystyk w grze (`stats/`: liczby z liczników upstreamu, opóźnienie = RTT + host + telefon) i strony menu w grze (`menu/MenuPage`, „Zakończ sesję” = `/cancel`); opis `control-android/docs/android.md`.
   Profil domyślny dostarczany z aplikacją: `ThumbcastProfiles.DEFAULT_PRESET` = `gamepad-playstation.thumbcast.json` (od 12.11.2026; jedno źródło, `PreferenceConfiguration` go używa). Przełącznik „Gesty myszy” na profil: `MouseGesturesTransform` (`control-model`), zapis na telefonie `thumbcast_mouse_gestures:<plik>`, nie w pliku profilu.
   Adresy PC (`net/HostAddresses`, czysta logika z testami JVM): jeden wpis PC = slot LAN + adresy alternatywne (Tailscale, ZeroTier); odpowiedź przez VPN nie nadpisuje LAN, kolejność LAN → alternatywne. Most w `:app`: `thumbcast/ThumbcastAddressBook`, dialog `HostAddressesDialog`; opis `patches/host-addresses.patch.md`.
   Menu w grze: `menu/MenuInputRouter` (klawiatura/pad przy otwartym menu nie idą do hosta, nawigacja padem); zmiana profilu w trakcie gry w `ThumbcastSession` (`:app`).

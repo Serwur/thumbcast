@@ -1,6 +1,6 @@
 # Aplikacje na hoście i ustawienia aplikacji w Thumbcast
 
-Stan: 12.11.2026. Nazwy opcji i zachowanie Sunshine sprawdzone w kodzie źródłowym: gałąź `master` (commit `da93e9de`, 12.11.2026) i wydanie stabilne `v2026.914.233613` (te same klucze `dd_*` i te same wartości domyślne). Oznaczenie **[?]** to rzecz niepotwierdzona, do sprawdzenia testem. Ogólna konfiguracja hosta (instalacja, pad, sieć): [host-setup.md](host-setup.md).
+Stan: 12.11.2026 (sekcja 3c: rozłączenie a zakończenie sesji, dopisana 12.11.2026). Nazwy opcji i zachowanie Sunshine sprawdzone w kodzie źródłowym: gałąź `master` (commit `da93e9de`, 12.11.2026) i wydanie stabilne `v2026.914.233613` (te same klucze `dd_*` i te same wartości domyślne). Oznaczenie **[?]** to rzecz niepotwierdzona, do sprawdzenia testem. Ogólna konfiguracja hosta (instalacja, pad, sieć): [host-setup.md](host-setup.md).
 
 ## 1. Jak to działa razem
 
@@ -25,7 +25,7 @@ Web UI Sunshine (`https://localhost:47990`) → **Applications** → **Add New**
 | WoW (retail) przez Battle.net | np. `World of Warcraft` | `"C:\Program Files (x86)\Battle.net\Battle.net.exe" --exec="launch WoW"` | (puste) | dowolny |
 
 Uwagi:
-- **Detached Commands** (a nie Command), bo Steam i Battle.net uruchamiają grę w innym procesie i same zostają w tle. Sunshine traktuje wtedy aplikację jako uruchomioną, dopóki nie wybierzesz w Thumbcast **Zakończenie sesji** (przytrzymanie aplikacji albo PC). Rozłączenie (☰ → Rozłącz) zostawia grę uruchomioną; ponowne wejście to wznowienie.
+- **Detached Commands** (a nie Command), bo Steam i Battle.net uruchamiają grę w innym procesie i same zostają w tle. Sunshine traktuje wtedy aplikację jako uruchomioną, dopóki nie wybierzesz w Thumbcast **Zakończ sesję…** (menu w grze ☰) albo **Zakończenie sesji** (przytrzymanie aplikacji albo PC). **Rozłącz (gra działa dalej)** zostawia grę uruchomioną; ponowne wejście to wznowienie. Różnice i powrót rozdzielczości: sekcja 3c.
 - Kody produktów Battle.net (`WoW`, `WoWF`) podał właściciel; `WoWF` dla WoW: Forever **[?]**. Sprawdź: skrót gry utworzony przez Battle.net (Właściwości → Cel) albo uruchom polecenie ręcznie w `cmd`. Ścieżka do `Battle.net.exe` może być inna. Battle.net musi być zalogowany; przy pierwszym uruchomieniu może pokazać okno launchera przed grą.
 - Inne launchery: Epic (w Command URI `com.epicgames.launcher://apps/<id>?action=launch&silent=true` albo ścieżka do `.exe` gry w Command z Working Directory), gra bez launchera: ścieżka do `.exe` w **Command**. Zasada jest ta sama: launcher w Detached Commands, zwykły program w Command.
 - **Nie zmieniaj nazwy ani obrazka aplikacji bez potrzeby.** Sunshine liczy id aplikacji jako CRC32 z nazwy i skrótu SHA-256 obrazka (`src/process.cpp`, `calculate_app_id`; przy kolizji dokłada indeks). Zmiana obrazka zmienia id: Thumbcast znajdzie ustawienia po nazwie. Zmiana nazwy zmienia i id, i nazwę: ustawienia trzeba przypisać ponownie.
@@ -49,7 +49,7 @@ Web UI → **Configuration** → **Audio/Video** → **Advanced display device o
 Warunki (z kodu `src/display_device.cpp`, `parse_resolution_option`):
 - **„Optymalizacja ustawień gry” w Thumbcast musi być włączona** (Ustawienia → `checkbox_enable_sops`, domyślnie włączone). Bez niej Sunshine loguje ostrzeżenie i nie zmienia rozdzielczości (odświeżanie zmienia).
 - Tylko Windows. Tryb musi być obsługiwany przez monitor i kartę (np. 1280×720 przy 60 Hz). Jeśli nie jest, konfiguracja się nie uda **[?]** (zachowanie libdisplaydevice przy nieobsługiwanym trybie niesprawdzone; podgląd w logach Sunshine).
-- Kiedy Sunshine zmienia ekran: w `/launch` i w `/resume`, jeśli nie ma innej aktywnej sesji (`src/nvhttp.cpp`). Kiedy przywraca: po zakończeniu aplikacji (Zakończenie sesji w Thumbcast albo wyjście z programu z Command) i przy błędzie startu, z opóźnieniem `dd_config_revert_delay`; przy `dd_config_revert_on_disconnect = enabled` także po rozłączeniu ostatniego klienta.
+- Kiedy Sunshine zmienia ekran: w `/launch` i w `/resume`, jeśli nie ma innej aktywnej sesji (`src/nvhttp.cpp`). Kiedy przywraca: po zakończeniu sesji (`/cancel`: Zakończ sesję w menu w grze albo Zakończenie sesji na liście), przy błędzie startu i po rozłączeniu ostatniego klienta, gdy aplikacja już nie działa, z opóźnieniem `dd_config_revert_delay`; przy `dd_config_revert_on_disconnect = enabled` także po rozłączeniu ostatniego klienta przy działającej grze. Szczegóły: sekcja 3c.
 - W grze ustaw tryb **okno pełnoekranowe (bez ramki)**, żeby gra brała rozdzielczość pulpitu. Tryb wyłączny pełnoekranowy używa rozdzielczości z ustawień gry.
 
 Przykład `sunshine.conf` (to samo co w web UI):
@@ -69,6 +69,28 @@ Przykład z dokumentacji Sunshine (narzędzie QRes; Sunshine nie dostarcza go, t
 - Undo: `C:\Narzędzia\qres.exe /x:2560 /y:1440 /r:144` (Twoja zwykła rozdzielczość).
 
 Dla wszystkich aplikacji naraz służy `global_prep_cmd`. Nie łącz 3a i 3b: dwa mechanizmy będą przestawiać ten sam ekran.
+
+### 3c. Rozłączenie a zakończenie sesji (powrót rozdzielczości)
+
+Sprawdzone 12.11.2026 w kodzie Sunshine (`master`): `src/nvhttp.cpp` (`cancel`, `launch`), `src/stream.cpp` (`session::join`), `src/process.cpp` (`proc_t::running`), `src/config.cpp`, Web UI `configs/tabs/audiovideo/DisplayDeviceOptions.vue` i `locale/en.json`.
+
+| Co robi telefon | Gra na PC | Ekran PC (przy `dd_configuration_option` ≠ `disabled`) |
+|---|---|---|
+| **Rozłącz (gra działa dalej)**: menu w grze ☰ → pierwsza pozycja; w trybie legacy też systemowe Wstecz i Ctrl+Alt+Shift+Q | działa dalej, można wznowić z listy | zostaje w rozdzielczości strumienia. Wyjątek: przywraca, gdy `dd_config_revert_on_disconnect` = `enabled` albo gdy aplikacja na PC już się sama zakończyła |
+| **Zakończ sesję…** (menu w grze, z potwierdzeniem) albo **Zakończenie sesji** (przytrzymaj aplikację lub PC na liście) | zamknięta (`/cancel`) | przywrócona zawsze (po `dd_config_revert_delay`, domyślnie 3 s) |
+| Zerwane połączenie (sieć) | działa dalej | jak przy „Rozłącz” |
+| Błąd startu aplikacji (`/launch`) | – | przywrócona |
+
+Szczegóły z kodu:
+- `/cancel` (Zakończ sesję): `rtsp_stream::terminate_sessions()`, potem `proc::proc.terminate()`, jeśli aplikacja działa, i **zawsze** `display_device::revert_configuration()` (komentarz w kodzie: „The config needs to be reverted regardless…”).
+- Koniec ostatniej sesji strumienia (`session::join`, licznik `running_sessions` spada do 0): przywrócenie, gdy `dd_config_revert_on_disconnect` jest włączone **albo** żadna aplikacja nie działa (`proc::proc.running()` = 0). Inaczej ekran zostaje, a Sunshine czeka na wznowienie.
+- Pulpit (aplikacja bez Command) i aplikacje tylko z **Detached Commands** (Steam, Battle.net) są dla Sunshine „uruchomione” aż do `/cancel` (`proc_t::running`: `placebo`), nawet gdy gra na PC została zamknięta ręcznie. Dla nich samo rozłączenie nigdy nie przywraca ekranu, chyba że włączysz opcję niżej. Aplikacja z Command, która sama się zakończyła, przywraca ekran przy rozłączeniu.
+
+**Opcja hosta: przywracanie już przy rozłączeniu.** Klucz `dd_config_revert_on_disconnect` (`src/config.cpp`: `bool_f(vars, "dd_config_revert_on_disconnect", …)`, domyślnie `false`). Web UI: **Configuration** → **Audio/Video** → **Advanced display device options** → pole **Config revert on disconnect** (opis: „Revert configuration upon disconnect of all clients instead of app close or last session termination.”). Pole jest tylko w sekcji Windows i tylko wtedy, gdy `dd_configuration_option` ≠ `disabled`. W `sunshine.conf`: `dd_config_revert_on_disconnect = enabled`.
+- Z tą opcją „Rozłącz” zostawia grę uruchomioną, a PC wraca do swojej rozdzielczości (po rozłączeniu **wszystkich** klientów). Wznowienie z telefonu znowu przełącza ekran (`/resume` woła `configure_display`, gdy nie ma innej sesji).
+- Bez niej „Rozłącz” zostawia rozdzielczość strumienia do czasu wznowienia albo „Zakończ sesję”.
+
+**Dlaczego w Thumbcast nie ma opcji „Zamykaj grę na PC przy rozłączeniu”** (decyzja 12.11.2026): menu w grze ma dwie osobne pozycje (Rozłącz / Zakończ sesję), więc taka opcja zmieniłaby tylko „Rozłącz” w „Zakończ sesję”. Przy zerwanym połączeniu i tak nie da się wysłać `/cancel`, a automatyczne zamykanie gry przy przypadkowym wyjściu (np. Wstecz w trybie legacy) kasowałoby niezapisane postępy. Powrót rozdzielczości bez zamykania gry daje opcja hosta wyżej.
 
 ## 4. Ustawienia aplikacji w Thumbcast (telefon)
 
@@ -100,6 +122,8 @@ Dopasowanie aplikacji (`HostAppSettings.find`): (1) to samo id i nazwa, (2) ta s
 5. ☰ → Profil → inny profil: działa od razu, komunikat „Profil w tej sesji…”. Wyjdź i uruchom grę ponownie: znowu profil MMO. Globalny profil w ustawieniach bez zmian.
 6. Rozłącz i wznów z ekranu PC (przytrzymaj PC → Wznowienie sesji): znowu 720p i profil MMO.
 7. Zakończ grę w Thumbcast (przytrzymaj grę → Zakończenie sesji). Po ok. 3 s PC wraca do swojej rozdzielczości.
+7a. Uruchom grę, ☰ → **Rozłącz (gra działa dalej)**: gra na PC działa, ekran zostaje w 720p (bez `dd_config_revert_on_disconnect`). Wznów i wybierz ☰ → **Zakończ sesję…** → **Zakończ sesję i zamknij grę**: strumień się kończy, komunikat „Zakończono sesję na PC”, gra zamknięta, po ok. 3 s PC wraca do swojej rozdzielczości. Na stronie potwierdzenia **Anuluj** i B wracają do menu.
+7b. Włącz w Sunshine **Config revert on disconnect** (sekcja 3c), uruchom grę i ☰ → **Rozłącz**: gra działa dalej, a PC wraca do swojej rozdzielczości; wznowienie znowu przełącza na 720p.
 8. Uruchom „Steam Big Picture” (bez ustawień aplikacji): profil i rozdzielczość globalne, PC przełącza się na 1920×1080.
 9. Usuń w bibliotece profil przypisany do gry, uruchom grę: komunikat o braku profilu, działa profil globalny. Dialog aplikacji pokazuje ostrzeżenie.
 10. Wyłącz „Optymalizację ustawień gry” i uruchom grę: strumień 720p, ale PC nie zmienia rozdzielczości (w logu Sunshine ostrzeżenie o „Optimize game settings”).
@@ -109,6 +133,7 @@ Dopasowanie aplikacji (`HostAppSettings.find`): (1) to samo id i nazwa, (2) ta s
 - Konfiguracja Sunshine (`dd_*`, `global_prep_cmd`): https://github.com/LizardByte/Sunshine/blob/master/docs/configuration.md (repo przeniesione do `SunshineStream/Sunshine`, stary adres przekierowuje); wersja HTML: https://docs.lizardbyte.dev/projects/sunshine/latest/md_docs_2configuration.html
 - Parsowanie opcji: https://github.com/LizardByte/Sunshine/blob/master/src/config.cpp (`dd::config_option_from_view`, `resolution_option_from_view`, `refresh_rate_option_from_view`, wartości domyślne `video_t::dd`)
 - Zmiana i przywracanie ekranu: https://github.com/LizardByte/Sunshine/blob/master/src/display_device.cpp (`parse_resolution_option`, `parse_refresh_rate_option`, `revert_configuration`) i https://github.com/LizardByte/Sunshine/blob/master/src/nvhttp.cpp (`launch`, `resume`, `cancel`, `make_launch_session`)
-- Zmienne `SUNSHINE_*` i id aplikacji: https://github.com/LizardByte/Sunshine/blob/master/src/process.cpp (`proc_t::execute`, `calculate_app_id`)
+- Przywracanie przy końcu ostatniej sesji (`dd_config_revert_on_disconnect`): https://github.com/LizardByte/Sunshine/blob/master/src/stream.cpp (`session::join`); pole w web UI: `src_assets/common/assets/web/configs/tabs/audiovideo/DisplayDeviceOptions.vue`
+- Zmienne `SUNSHINE_*` i id aplikacji: https://github.com/LizardByte/Sunshine/blob/master/src/process.cpp (`proc_t::execute`, `calculate_app_id`, `proc_t::running`)
 - Przykłady aplikacji (Desktop, Steam Big Picture, QRes): https://github.com/LizardByte/Sunshine/blob/master/docs/app_examples.md
 - Etykiety web UI: https://github.com/LizardByte/Sunshine/blob/master/src_assets/common/assets/web/public/assets/locale/en.json

@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import app.thumbcast.android.stats.StatsToggles;
+
 public final class ThumbcastSettings {
 
     /** ListPreference: wartości tekstowe "60" … "130" (procent rozmiaru kontrolek). */
@@ -76,6 +78,26 @@ public final class ThumbcastSettings {
 
     public void setHideOnGamepad(boolean hide) {
         prefs.edit().putBoolean(KEY_HIDE_ON_GAMEPAD, hide).apply();
+    }
+
+    // ---------- Nakładka statystyk (12.11.2026): menu w grze, StatsToggles ----------
+
+    /**
+     * „Statystyki” = upstreamowy klucz „Pokaż statystyki wydajności” (PreferenceConfiguration.enablePerfOverlay),
+     * więc pole wyboru w ustawieniach i przełącznik w menu w grze to ten sam stan (wł. = linia podstawowa).
+     */
+    public static final String KEY_PERF_OVERLAY = "checkbox_enable_perf_overlay";
+    /** „Szczegółowe statystyki” (tylko tryb Thumbcast), domyślnie wył. */
+    public static final String KEY_PERF_OVERLAY_ADVANCED = "checkbox_thumbcast_perf_advanced";
+
+    public StatsToggles getStatsToggles() {
+        return new StatsToggles(prefs.getBoolean(KEY_PERF_OVERLAY, false),
+                prefs.getBoolean(KEY_PERF_OVERLAY_ADVANCED, false));
+    }
+
+    public void setStatsToggles(StatsToggles toggles) {
+        prefs.edit().putBoolean(KEY_PERF_OVERLAY, toggles.getEnabled())
+                .putBoolean(KEY_PERF_OVERLAY_ADVANCED, toggles.getAdvanced()).apply();
     }
 
     // ---------- Gesty myszy (12.11.2026): przełącznik na profil, MouseGesturesTransform ----------

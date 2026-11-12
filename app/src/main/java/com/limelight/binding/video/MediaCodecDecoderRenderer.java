@@ -33,6 +33,10 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
 import android.os.SystemClock;
+// THUMBCAST:
+import app.thumbcast.android.stats.StreamStats;
+import app.thumbcast.android.stats.StreamStatsListener;
+// THUMBCAST END
 import android.util.Range;
 import android.view.Choreographer;
 import android.view.SurfaceHolder;
@@ -75,6 +79,9 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
     private String glRenderer;
     private boolean foreground = true;
     private PerfOverlayListener perfListener;
+    // THUMBCAST: nakładka statystyk Thumbcast (dane liczbowe, włączana w trakcie strumienia); null = nic nie liczymy.
+    private volatile StreamStatsListener thumbcastStatsListener;
+    // THUMBCAST END
 
     private static final int CR_MAX_TRIES = 10;
     private static final int CR_RECOVERY_TYPE_NONE = 0;
@@ -272,6 +279,46 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
     public void setRenderTarget(SurfaceHolder renderTarget) {
         this.renderTarget = renderTarget;
     }
+
+    // THUMBCAST: statystyki dla nakładki Thumbcast z tych samych liczników co upstreamowa nakładka wydajności.
+    /** Wołać z dowolnego wątku; próbki przychodzą z wątku odbioru wideo mniej więcej co sekundę. null = wyłącz. */
+    public void setThumbcastStatsListener(StreamStatsListener listener) {
+        this.thumbcastStatsListener = listener;
+    }
+
+    private StreamStats buildThumbcastStats() {
+        VideoStats lastTwo = new VideoStats();
+        lastTwo.add(lastWindowVideoStats);
+        lastTwo.add(activeWindowVideoStats);
+        VideoStatsFps fps = lastTwo.getFps();
+        String codec;
+        MediaCodecInfo decoderInfo;
+        if ((videoFormat & MoonBridge.VIDEO_FORMAT_MASK_H264) != 0) {
+            codec = "H.264";
+            decoderInfo = avcDecoder;
+        } else if ((videoFormat & MoonBridge.VIDEO_FORMAT_MASK_H265) != 0) {
+            codec = "HEVC";
+            decoderInfo = hevcDecoder;
+        } else if ((videoFormat & MoonBridge.VIDEO_FORMAT_MASK_AV1) != 0) {
+            codec = "AV1";
+            decoderInfo = av1Decoder;
+        } else {
+            codec = "?";
+            decoderInfo = null;
+        }
+        if ((videoFormat & MoonBridge.VIDEO_FORMAT_MASK_10BIT) != 0) {
+            codec += " HDR";
+        }
+        return StreamStats.fromCounters(initialWidth, initialHeight, codec,
+                decoderInfo != null ? decoderInfo.getName() : "(unknown)",
+                fps.totalFps, fps.receivedFps, fps.renderedFps,
+                lastTwo.totalFrames, lastTwo.totalFramesReceived, lastTwo.framesLost,
+                lastTwo.decoderTimeMs, lastTwo.totalTimeMs,
+                lastTwo.minHostProcessingLatency, lastTwo.maxHostProcessingLatency,
+                lastTwo.totalHostProcessingLatency, lastTwo.framesWithHostProcessingLatency,
+                MoonBridge.getEstimatedRttInfo());
+    }
+    // THUMBCAST END
 
     public MediaCodecDecoderRenderer(Activity activity, PreferenceConfiguration prefs,
                                      CrashListener crashListener, int consecutiveCrashCount,
@@ -1372,6 +1419,12 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
 
         // Flip stats windows roughly every second
         if (SystemClock.uptimeMillis() >= activeWindowVideoStats.measurementStartTimestamp + 1000) {
+            // THUMBCAST: próbka dla nakładki Thumbcast (ThumbcastSession); upstreamowy tekst niżej działa bez zmian.
+            StreamStatsListener thumbcastStats = thumbcastStatsListener;
+            if (thumbcastStats != null) {
+                thumbcastStats.onStreamStats(buildThumbcastStats());
+            }
+            // THUMBCAST END
             if (prefs.enablePerfOverlay) {
                 VideoStats lastTwo = new VideoStats();
                 lastTwo.add(lastWindowVideoStats);

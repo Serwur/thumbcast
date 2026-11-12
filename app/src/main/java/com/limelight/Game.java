@@ -517,6 +517,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         // THUMBCAST:
         thumbcast = ThumbcastSession.createOrNull(this, ThumbcastSession.activityHost(this, this), prefConfig,
                 conn, controllerHandler, keyboardTranslator, streamView);
+        // Nakładka statystyk Thumbcast (włączana w menu w grze) zamiast upstreamowego tekstu performanceOverlay.
+        if (thumbcast != null) thumbcast.attachPerfStats(decoderRenderer, performanceOverlayView);
         // THUMBCAST END
         if (prefConfig.onscreenController && thumbcast == null) {
             // create virtual onscreen controller
@@ -2295,9 +2297,15 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             // thread to keep things smooth for the UI. Inside moonlight-common,
             // we prevent another thread from starting a connection before and
             // during the process of stopping this one.
+            // THUMBCAST: „Zakończ sesję” z menu w grze: po zatrzymaniu strumienia zamknij aplikację na hoście (/cancel).
+            final Runnable thumbcastAfterStop = thumbcast != null ? thumbcast.takeAfterStopTask() : null;
+            // THUMBCAST END
             new Thread() {
                 public void run() {
                     conn.stop();
+                    // THUMBCAST:
+                    if (thumbcastAfterStop != null) thumbcastAfterStop.run();
+                    // THUMBCAST END
                 }
             }.start();
         }

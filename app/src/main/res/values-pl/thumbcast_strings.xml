@@ -71,7 +71,7 @@
     <string name="summary_thumbcast_hide_on_gamepad">Przyciski i gałki znikają, gdy podłączony jest fizyczny pad; gesty i przycisk menu zostają</string>
     <!-- Menu w grze (☰, gest od górnej krawędzi, systemowy Back). -->
     <string name="thumbcast_menu_title">Menu strumienia</string>
-    <string name="thumbcast_menu_disconnect">Rozłącz</string>
+    <string name="thumbcast_menu_disconnect">Rozłącz (gra działa dalej)</string>
     <string name="thumbcast_menu_hide_controls">Ukryj przyciski</string>
     <string name="thumbcast_menu_show_controls">Pokaż przyciski</string>
     <string name="thumbcast_menu_keyboard">Klawiatura</string>
@@ -141,4 +141,34 @@
     <string name="thumbcast_mouse_gestures_off_touchpad">Gesty myszy wył.: dotyk w pustym miejscu nic nie wysyła. Przeciągnięcie w dół od górnej krawędzi nadal otwiera menu.</string>
     <string name="thumbcast_mouse_gestures_on_camera">Gesty myszy wł.: dotknij = lewy klik w tym miejscu, przytrzymaj = prawy klik, szczypanie = kółko myszy. Przeciąganie nadal obraca kamerę.</string>
     <string name="thumbcast_mouse_gestures_off_camera">Gesty myszy wył.: dotknięcia i szczypanie nic nie wysyłają. Przeciąganie nadal obraca kamerę.</string>
+    <!-- Nakładka statystyk i wyjście z sesji (12.11.2026). -->
+    <string name="thumbcast_menu_end_session">Zakończ sesję…</string>
+    <string name="thumbcast_menu_end_session_title">Zakończyć sesję? Gra na PC zostanie zamknięta, niezapisane postępy przepadną. PC przywróci swoją rozdzielczość ekranu, jeśli Sunshine ją zmienił.</string>
+    <string name="thumbcast_menu_end_session_cancel">Anuluj</string>
+    <string name="thumbcast_menu_end_session_confirm">Zakończ sesję i zamknij grę</string>
+    <string name="thumbcast_end_session_progress">Kończenie sesji na PC…</string>
+    <string name="thumbcast_end_session_done">Zakończono sesję na PC: %1$s</string>
+    <string name="thumbcast_end_session_failed">Nie udało się zakończyć sesji na PC: %1$s. Zakończ ją z listy aplikacji (przytrzymaj aplikację → Zakończenie sesji).</string>
+    <string name="thumbcast_end_session_not_owner">Tę sesję uruchomiło inne urządzenie, więc nie można jej zakończyć stąd. Zakończ ją na tamtym urządzeniu albo na PC.</string>
+    <string name="thumbcast_end_session_error">Nie udało się zakończyć sesji na PC (%1$s). Zakończ ją z listy aplikacji (przytrzymaj aplikację → Zakończenie sesji).</string>
+    <string name="thumbcast_menu_stats_on">Statystyki: wł.</string>
+    <string name="thumbcast_menu_stats_off">Statystyki: wył.</string>
+    <string name="thumbcast_menu_stats_advanced_on">Szczegółowe statystyki: wł.</string>
+    <string name="thumbcast_menu_stats_advanced_off">Szczegółowe statystyki: wył.</string>
+    <string name="thumbcast_stats_basic">%1$d FPS · opóźnienie ~%2$d ms</string>
+    <string name="thumbcast_stats_basic_no_delay">%1$d FPS · opóźnienie –</string>
+    <string name="thumbcast_stats_waiting">– FPS · opóźnienie –</string>
+    <string name="thumbcast_stats_video">%1$dx%2$d %3$s · strumień %4$.1f FPS</string>
+    <string name="thumbcast_stats_decoder">Dekoder: %1$s</string>
+    <string name="thumbcast_stats_frames">Odebrane %1$.1f · wyświetlone %2$.1f FPS</string>
+    <string name="thumbcast_stats_drops">Klatki utracone w sieci: %1$.2f%%</string>
+    <string name="thumbcast_stats_network">Sieć (RTT): %1$d ms (wariancja %2$d ms)</string>
+    <string name="thumbcast_stats_network_unknown">Sieć (RTT): –</string>
+    <string name="thumbcast_stats_host">Host min/maks/śr.: %1$.1f/%2$.1f/%3$.1f ms</string>
+    <string name="thumbcast_stats_host_unknown">Host: brak danych</string>
+    <string name="thumbcast_stats_decode">Dekodowanie %1$.2f ms · telefon razem %2$.1f ms</string>
+    <string name="thumbcast_stats_decode_unknown">Dekodowanie: –</string>
+    <string name="thumbcast_stats_breakdown">Opóźnienie ≈ sieć %1$d + host %2$.1f + telefon %3$.1f ms</string>
+    <string name="title_thumbcast_perf_advanced">Szczegółowe statystyki wydajności</string>
+    <string name="summary_thumbcast_perf_advanced">Tryb Thumbcast: razem ze statystykami wydajności pokazuj też rozdzielczość, kodek, dekoder, klatki, sieć, czasy hosta i dekodowania. Oba przełączniki są też w menu w grze.</string>
 </resources>

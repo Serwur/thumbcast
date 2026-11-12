@@ -26,6 +26,15 @@ package com.limelight.thumbcast;
 // Gesty myszy (12.11.2026): przełącznik w menu dla aktywnego profilu (zapis w ThumbcastSettings, klucz = plik
 // profilu), profil efektywny = MouseGesturesTransform(profil z pliku), potem ScaleTransform. Zmiana na żywo.
 // Profil domyślny (list_thumbcast_profile) usunięty poza biblioteką: profil dostarczany z aplikacją i komunikat.
+//
+// Nakładka statystyk (12.11.2026): przełączniki „Statystyki” i „Szczegółowe statystyki” w menu w grze (StatsToggles,
+// zapis globalny w ThumbcastSettings; „Statystyki” = upstreamowy checkbox_enable_perf_overlay). Dane liczbowe
+// z MediaCodecDecoderRenderer (setThumbcastStatsListener), tekst StatsFormatter, widok ThumbcastStatsView w prawym
+// górnym rogu, z dala od kontrolek. Upstreamowy TextView performanceOverlay w trybie Thumbcast jest ukryty.
+//
+// Wyjście (12.11.2026): „Rozłącz (gra działa dalej)” = jak dotąd (finish, aplikacja na PC zostaje) i „Zakończ sesję…”
+// (strona potwierdzenia): finish, a po zatrzymaniu strumienia /cancel (ThumbcastHostQuit, jak „Zakończenie sesji”
+// z listy PC), więc Sunshine zamyka aplikację i przywraca rozdzielczość ekranu.
 
 import android.app.Activity;
 import android.content.Context;
@@ -41,10 +50,13 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import java.util.Locale;
+
 import com.limelight.LimeLog;
 import com.limelight.R;
 import com.limelight.binding.input.ControllerHandler;
 import com.limelight.binding.input.KeyboardTranslator;
+import com.limelight.binding.video.MediaCodecDecoderRenderer;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.preferences.PreferenceConfiguration;
 import com.limelight.ui.GameGestures;
@@ -64,7 +76,15 @@ import app.thumbcast.android.library.ProfileRepository;
 import app.thumbcast.android.menu.MenuCommand;
 import app.thumbcast.android.menu.MenuInputRouter;
 import app.thumbcast.android.menu.MenuKeyResult;
+import app.thumbcast.android.menu.MenuPage;
+import app.thumbcast.android.overlay.PxRect;
 import app.thumbcast.android.overlay.ThumbcastOverlay;
+import app.thumbcast.android.stats.StatsFormatter;
+import app.thumbcast.android.stats.StatsLabels;
+import app.thumbcast.android.stats.StatsMode;
+import app.thumbcast.android.stats.StatsToggles;
+import app.thumbcast.android.stats.StreamStats;
+import app.thumbcast.android.stats.StreamStatsListener;
 import app.thumbcast.model.AppActions;
 import app.thumbcast.model.MouseGesturesTransform;
 import app.thumbcast.model.Profile;
@@ -116,11 +136,24 @@ public final class ThumbcastSession {
     private final FrameLayout overlayParent;
     /** Tworzony przy pierwszym otwarciu; pokazany = dodany do {@link #overlayParent}. */
     private ThumbcastMenuView menuView;
-    /** Strona menu: false = główna, true = lista profili. */
-    private boolean profilesPage;
+    /** Strona menu (główna, profile, potwierdzenie „Zakończ sesję”). */
+    private MenuPage menuPage = MenuPage.MAIN;
     /** Lista profili wczytana przy otwarciu strony profili. */
     private List<ThumbcastMenuModel.ProfileChoice> profileChoices = Collections.emptyList();
     private boolean destroyed;
+
+    /** Przełączniki nakładki statystyk (menu w grze, zapis w ThumbcastSettings). */
+    private StatsToggles statsToggles;
+    /** Źródło danych (attachPerfStats); null = nakładka statystyk niedostępna. */
+    private MediaCodecDecoderRenderer statsSource;
+    /** Tworzony przy pierwszym włączeniu; pod overlayem kontrolek. */
+    private ThumbcastStatsView statsView;
+    private StatsFormatter statsFormatter;
+    /** Ostatnia próbka (przełączenie trybu pokazuje ją od razu, bez czekania sekundy). */
+    private StreamStats lastStats;
+    private boolean inPip;
+    /** „Zakończ sesję”: po zatrzymaniu strumienia zamknąć aplikację na hoście (takeAfterStopTask / onDestroy). */
+    private ThumbcastHostQuit pendingHostQuit;
 
     private final InputManager.InputDeviceListener deviceListener = new InputManager.InputDeviceListener() {
         @Override
@@ -309,6 +342,35 @@ public final class ThumbcastSession {
         } else {
             overlay.setVisibility(View.VISIBLE);
         }
+        this.inPip = inPip;
+        applyStats();
+    }
+
+    /**
+     * Po utworzeniu dekodera (Game.onCreate): nakładka statystyk Thumbcast zamiast upstreamowego tekstu. Upstreamowy
+     * TextView jest chowany, a {@code prefConfig.enablePerfOverlay} zerowane tylko w obiekcie tego strumienia (renderer
+     * nie składa wtedy upstreamowego tekstu, Game nie pokazuje widoku po PiP); zapisana preferencja bez zmian.
+     */
+    public void attachPerfStats(MediaCodecDecoderRenderer renderer, View upstreamPerfView) {
+        if (renderer == null) {
+            return;
+        }
+        statsSource = renderer;
+        prefConfig.enablePerfOverlay = false;
+        if (upstreamPerfView != null) {
+            upstreamPerfView.setVisibility(View.GONE);
+        }
+        applyStats();
+    }
+
+    /**
+     * Game.stopConnection: zadanie do wykonania w wątku zatrzymania po {@code conn.stop()} (null = brak). Po
+     * „Zakończ sesję” to zamknięcie aplikacji na hoście; zadanie jest oddawane raz.
+     */
+    public Runnable takeAfterStopTask() {
+        Runnable task = pendingHostQuit;
+        pendingHostQuit = null;
+        return task;
     }
 
     /** stopConnection: zerowy stan na hosta przed zamknięciem połączenia. */
@@ -319,6 +381,14 @@ public final class ThumbcastSession {
     /** onDestroy: bez zaległych retransmisji, listenerów i menu. */
     public void onDestroy() {
         destroyed = true;
+        if (statsSource != null) {
+            statsSource.setThumbcastStatsListener(null);
+        }
+        // „Zakończ sesję” bez zatrzymania strumienia (np. połączenie jeszcze się nie zestawiło): zamknij teraz.
+        Runnable quit = takeAfterStopTask();
+        if (quit != null) {
+            new Thread(quit, "thumbcast-end-session").start();
+        }
         padReporter.cancelPending();
         mainHandler.removeCallbacksAndMessages(null);
         if (inputManager != null) {
@@ -368,6 +438,8 @@ public final class ThumbcastSession {
     private void applyControlsHidden() {
         boolean hidden = manualHidden != null ? manualHidden : (hideOnGamepad && gamepadConnected);
         overlay.setControlsHidden(hidden);
+        // Ukryte lub pokazane kontrolki zmieniają miejsce wolne dla nakładki statystyk.
+        showStats();
         // Pad podłączony/odłączony przy otwartym menu: etykieta Ukryj/Pokaż przyciski.
         refreshMenu();
     }
@@ -457,6 +529,119 @@ public final class ThumbcastSession {
     }
 
     // =====================================================================================
+    // Wyjście: „Rozłącz” (Host.disconnect) i „Zakończ sesję” (rozłączenie + /cancel na hoście)
+    // =====================================================================================
+
+    /**
+     * „Zakończ sesję” (po potwierdzeniu): zerowy stan na hoście, zatrzymanie strumienia tak jak przy „Rozłącz”
+     * (finish → onStop → stopConnection), a w wątku zatrzymania po {@code conn.stop()} żądanie /cancel
+     * ({@link #takeAfterStopTask}). Sunshine zamyka wtedy aplikację i przywraca konfigurację ekranu.
+     */
+    private void endSession() {
+        if (destroyed || pendingHostQuit != null) {
+            return;
+        }
+        releaseHostInput();
+        pendingHostQuit = new ThumbcastHostQuit(activity, activity.getIntent());
+        Toast.makeText(activity, R.string.thumbcast_end_session_progress, Toast.LENGTH_SHORT).show();
+        host.disconnect();
+    }
+
+    // =====================================================================================
+    // Nakładka statystyk (FPS, opóźnienie; szczegóły z upstreamowej nakładki wydajności)
+    // =====================================================================================
+
+    private StatsToggles currentStatsToggles() {
+        if (statsToggles == null) {
+            statsToggles = settings.getStatsToggles();
+        }
+        return statsToggles;
+    }
+
+    private void setStatsToggles(StatsToggles toggles) {
+        statsToggles = toggles;
+        settings.setStatsToggles(toggles);
+        applyStats();
+    }
+
+    /** Próbki przychodzą z wątku odbioru wideo; widok zmieniamy na wątku UI. */
+    private final StreamStatsListener statsListener = stats -> mainHandler.post(() -> onStreamStats(stats));
+
+    /** Widok i słuchacz zgodnie z trybem: wyłączona nakładka (albo PiP) = renderer nic nie liczy. */
+    private void applyStats() {
+        if (statsSource == null) {
+            return;
+        }
+        StatsMode mode = currentStatsToggles().getMode();
+        boolean show = mode != StatsMode.OFF && !inPip && !destroyed;
+        if (!show) {
+            statsSource.setThumbcastStatsListener(null);
+            if (statsView != null) {
+                statsView.setVisibility(View.GONE);
+            }
+            return;
+        }
+        if (statsView == null) {
+            statsView = new ThumbcastStatsView(activity);
+            statsFormatter = new StatsFormatter(statsLabels(), Locale.getDefault());
+            // Pod overlayem kontrolek (i pod menu): kontrolki są rysowane nad napisem, dotyk idzie do nich.
+            overlayParent.addView(statsView, overlayParent.indexOfChild(overlay), ThumbcastStatsView.layoutParams());
+            // Zmiana rozmiaru ekranu (obrót, okno): nowe położenie po layoucie.
+            overlayParent.addOnLayoutChangeListener((v, l, t, r, b, oldL, oldT, oldR, oldB) -> {
+                if (r - l != oldR - oldL || b - t != oldB - oldT) {
+                    v.post(this::showStats);
+                }
+            });
+        }
+        statsView.setVisibility(View.VISIBLE);
+        statsSource.setThumbcastStatsListener(statsListener);
+        showStats();
+    }
+
+    private void onStreamStats(StreamStats stats) {
+        if (destroyed) {
+            return;
+        }
+        lastStats = stats;
+        showStats();
+    }
+
+    /** Tekst dla bieżącego trybu (bez próbki: „– FPS”) i położenie z dala od kontrolek i komunikatów upstreamu. */
+    private void showStats() {
+        if (statsView == null || statsView.getVisibility() != View.VISIBLE || statsFormatter == null) {
+            return;
+        }
+        StatsMode mode = currentStatsToggles().getMode();
+        String text = lastStats != null ? statsFormatter.format(mode, lastStats)
+                : activity.getString(R.string.thumbcast_stats_waiting);
+        // Overlay leży na całym rodzicu (MATCH_PARENT, bez marginesów), więc jego px = px rodzica.
+        List<PxRect> obstacles = new ArrayList<>(overlay.controlBounds());
+        View notification = activity.findViewById(R.id.notificationOverlay);
+        if (notification != null && notification.getVisibility() == View.VISIBLE) {
+            obstacles.add(new PxRect(notification.getLeft(), notification.getTop(),
+                    notification.getRight(), notification.getBottom()));
+        }
+        statsView.show(text, obstacles);
+    }
+
+    private StatsLabels statsLabels() {
+        return new StatsLabels(
+                activity.getString(R.string.thumbcast_stats_basic),
+                activity.getString(R.string.thumbcast_stats_basic_no_delay),
+                activity.getString(R.string.thumbcast_stats_video),
+                activity.getString(R.string.thumbcast_stats_decoder),
+                activity.getString(R.string.thumbcast_stats_frames),
+                activity.getString(R.string.thumbcast_stats_drops),
+                activity.getString(R.string.thumbcast_stats_network),
+                activity.getString(R.string.thumbcast_stats_network_unknown),
+                activity.getString(R.string.thumbcast_stats_host),
+                activity.getString(R.string.thumbcast_stats_host_unknown),
+                activity.getString(R.string.thumbcast_stats_decode),
+                activity.getString(R.string.thumbcast_stats_decode_unknown),
+                activity.getString(R.string.thumbcast_stats_breakdown));
+    }
+
+    // =====================================================================================
     // Menu w grze (widok nad overlayem w oknie aktywności, bez osobnego okna)
     // =====================================================================================
 
@@ -507,25 +692,26 @@ public final class ThumbcastSession {
         if (isMenuShown()) {
             overlayParent.removeView(menuView);
         }
-        profilesPage = false;
+        menuPage = MenuPage.MAIN;
         menuInput.resetAxes();
         setPhysicalInputBlocked(false);
     }
 
-    /** B, Back, Escape przy otwartym menu: ze strony profili na stronę główną, ze strony głównej do gry. */
+    /** B, Back, Escape przy otwartym menu: z podstrony na stronę główną, ze strony głównej do gry. */
     private void onMenuBack() {
-        if (profilesPage) {
-            showPage(false);
+        MenuPage back = menuPage.back();
+        if (back != null) {
+            showPage(back);
         } else {
             hideMenu();
         }
     }
 
-    private void showPage(boolean profiles) {
-        if (profiles) {
+    private void showPage(MenuPage page) {
+        if (page == MenuPage.PROFILES) {
             profileChoices = loadProfileChoices();
         }
-        profilesPage = profiles;
+        menuPage = page;
         refreshMenu();
         if (isMenuShown()) {
             menuView.scrollToTop();
@@ -600,11 +786,14 @@ public final class ThumbcastSession {
         if (!isMenuShown()) {
             return;
         }
-        if (profilesPage) {
+        if (menuPage == MenuPage.PROFILES) {
             // Wybór w grze zmienia profil domyślny, chyba że sesja ma profil przypisany do aplikacji.
             menuView.setTitle(menuString(sessionOnlyProfile ? R.string.thumbcast_menu_profiles_title_session
                     : R.string.thumbcast_menu_profiles_title));
             menuView.bind(ThumbcastMenuModel.buildProfiles(this::menuString, profileChoices, menuTarget));
+        } else if (menuPage == MenuPage.END_SESSION) {
+            menuView.setTitle(menuString(R.string.thumbcast_menu_end_session_title));
+            menuView.bind(ThumbcastMenuModel.buildEndSession(this::menuString, menuTarget));
         } else {
             menuView.setTitle(menuString(R.string.thumbcast_menu_title));
             menuView.bind(ThumbcastMenuModel.build(this::menuString, menuTarget));
@@ -688,12 +877,32 @@ public final class ThumbcastSession {
 
         @Override
         public void openProfiles() {
-            showPage(true);
+            showPage(MenuPage.PROFILES);
         }
 
         @Override
         public void showMainPage() {
-            showPage(false);
+            showPage(MenuPage.MAIN);
+        }
+
+        @Override
+        public void openEndSession() {
+            showPage(MenuPage.END_SESSION);
+        }
+
+        @Override
+        public void endSession() {
+            ThumbcastSession.this.endSession();
+        }
+
+        @Override
+        public StatsToggles getStatsToggles() {
+            return currentStatsToggles();
+        }
+
+        @Override
+        public void setStatsToggles(StatsToggles toggles) {
+            ThumbcastSession.this.setStatsToggles(toggles);
         }
 
         @Override

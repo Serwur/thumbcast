@@ -166,6 +166,12 @@ class ThumbcastOverlay(
     /** To samo co [controlsHidden] (wygodniejsze z Javy i w warunkach). */
     fun isControlsHidden(): Boolean = controlsHidden
 
+    /**
+     * Prostokąty rysowanych teraz kontrolek w px tego widoku (profil efektywny: skala, ukrycie przy padzie).
+     * Używa tego nakładka statystyk, żeby nie zasłaniać kontrolek (`stats/StatsPlacement`).
+     */
+    fun controlBounds(): List<PxRect> = controlLayout.controls.map { it.bounds }
+
     /** Zwolnienie wszystkich wejść: zerowy stan pada, puszczone klawisze i przyciski myszy. */
     fun releaseAll() {
         engine?.releaseAll()

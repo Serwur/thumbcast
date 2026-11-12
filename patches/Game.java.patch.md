@@ -196,3 +196,53 @@ W PiP sesja woła `releaseAll()`, zamyka menu i chowa overlay.
 - `ControllerHandler` (bloki THUMBCAST): `releaseAllControllerInput()` zeruje stan każdego pada fizycznego, który coś
   trzymał (sesja woła to przy otwarciu menu, razem z `overlay.releaseAll()`), a `setThumbcastInputBlocked(boolean)`
   blokuje `reportControllerState` (pady z własnego sterownika USB omijają `Game`).
+
+## 10. Nakładka statystyk i „Zakończ sesję” (12.11.2026)
+
+**`Game.onCreate`**, w istniejącym bloku THUMBCAST tworzenia sesji (kotwica: `thumbcast = ThumbcastSession.createOrNull(`),
+po `createOrNull(...)`:
+
+```java
++ // Nakładka statystyk Thumbcast (włączana w menu w grze) zamiast upstreamowego tekstu performanceOverlay.
++ if (thumbcast != null) thumbcast.attachPerfStats(decoderRenderer, performanceOverlayView);
+```
+
+`decoderRenderer` i `performanceOverlayView` istnieją już w tym miejscu (renderer tworzony przed `conn = new NvConnection(`).
+Sesja chowa upstreamowy `TextView` i zeruje `prefConfig.enablePerfOverlay` tylko w obiekcie tego strumienia (renderer nie
+składa wtedy upstreamowego tekstu, a gałąź wyjścia z PiP `if (prefConfig.enablePerfOverlay)` nie pokazuje widoku).
+Preferencja zapisana się nie zmienia. W trybie legacy (`thumbcast == null`) wszystko jak w upstreamie.
+
+**`Game.stopConnection()`**, kotwica: `new Thread() {` z `conn.stop();` (komentarz upstreamu „Stop may take a few hundred ms…”):
+
+```java
++ // THUMBCAST: „Zakończ sesję” z menu w grze: po zatrzymaniu strumienia zamknij aplikację na hoście (/cancel).
++ final Runnable thumbcastAfterStop = thumbcast != null ? thumbcast.takeAfterStopTask() : null;
++ // THUMBCAST END
+  new Thread() {
+      public void run() {
+          conn.stop();
++         // THUMBCAST:
++         if (thumbcastAfterStop != null) thumbcastAfterStop.run();
++         // THUMBCAST END
+      }
+  }.start();
+```
+
+`takeAfterStopTask()` zwraca zadanie tylko po „Zakończ sesję” (raz): `ThumbcastHostQuit` buduje `NvHTTP` z intencji `Game`
+(`EXTRA_HOST`, `EXTRA_PORT`, `EXTRA_HTTPS_PORT`, `EXTRA_UNIQUEID`, `EXTRA_SERVER_CERT`) i woła `quitApp()` (to samo `/cancel`
+co `ServerHelper.doQuit` z listy PC i aplikacji), wynik jako Toast. Jeśli strumień nie był zestawiony (`stopConnection` nic nie
+robi), zadanie uruchamia `ThumbcastSession.onDestroy` w osobnym wątku. „Rozłącz” bez zmian (`finish()`).
+
+**`MediaCodecDecoderRenderer`** (`app/src/main/java/com/limelight/binding/video/`), bloki THUMBCAST:
+- importy `app.thumbcast.android.stats.StreamStats` i `StreamStatsListener` po `import android.os.SystemClock;`;
+- pole `private volatile StreamStatsListener thumbcastStatsListener;` po `private PerfOverlayListener perfListener;`;
+- po `setRenderTarget(...)`: `setThumbcastStatsListener(listener)` i `buildThumbcastStats()` (te same liczniki co upstreamowy
+  tekst: `lastWindowVideoStats` + `activeWindowVideoStats`, `getFps()`, dekoder i kodek z `videoFormat`,
+  `MoonBridge.getEstimatedRttInfo()`);
+- kotwica `// Flip stats windows roughly every second` + `if (SystemClock.uptimeMillis() >= activeWindowVideoStats.measurementStartTimestamp + 1000) {`:
+  na początku bloku `if (thumbcastStatsListener != null) listener.onStreamStats(buildThumbcastStats());`. Upstreamowy tekst
+  (`if (prefs.enablePerfOverlay)`) bez zmian.
+
+**`res/xml/preferences.xml`**, kategoria Thumbcast (blok THUMBCAST): `CheckBoxPreference` `checkbox_thumbcast_perf_advanced`
+(„Szczegółowe statystyki wydajności”, domyślnie `false`) przed `checkbox_thumbcast_debug`. Upstreamowe
+`checkbox_enable_perf_overlay` bez zmian: ten sam klucz przełącza „Statystyki” w menu w grze.

@@ -2,9 +2,13 @@ package com.limelight.thumbcast;
 
 // NOWY PLIK (moduł :app). Pozycje menu w grze (etykiety i akcje) bez widoku: ThumbcastMenuView je tylko rysuje,
 // ThumbcastSession dostarcza stan i wykonuje akcje. Kolejność pozycji jak w dawnym AlertDialog.
-// Od 12.11.2026 dwie strony: główna (build) i lista profili do zmiany w trakcie gry (buildProfiles).
+// Od 12.11.2026 trzy strony: główna (build), lista profili do zmiany w trakcie gry (buildProfiles) i potwierdzenie
+// „Zakończ sesję” (buildEndSession). Wyjście z gry ma dwie pozycje: „Rozłącz (gra działa dalej)” i „Zakończ sesję…”
+// (aplikacja na PC zamknięta, Sunshine przywraca rozdzielczość). Przełączniki nakładki statystyk: StatsToggles.
 
 import com.limelight.R;
+
+import app.thumbcast.android.stats.StatsToggles;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,7 +23,20 @@ final class ThumbcastMenuModel {
 
     /** Stan i akcje sesji, które menu pokazuje i wywołuje. */
     interface Target {
+        /** Rozłączenie: strumień zatrzymany, aplikacja na PC działa dalej (wznowienie z listy). */
         void disconnect();
+
+        /** Strona potwierdzenia „Zakończ sesję” (menu zostaje otwarte). */
+        void openEndSession();
+
+        /** Zakończenie sesji: strumień zatrzymany, potem aplikacja na PC zamknięta (wołane po zamknięciu menu). */
+        void endSession();
+
+        /** Przełączniki nakładki statystyk (zapisane globalnie). */
+        StatsToggles getStatsToggles();
+
+        /** Zmiana na żywo i zapis (menu zostaje otwarte). */
+        void setStatsToggles(StatsToggles toggles);
 
         boolean areControlsHidden();
 
@@ -121,7 +138,8 @@ final class ThumbcastMenuModel {
     /** Pozycje menu dla bieżącego stanu. Po każdej akcji, która nie zamyka menu, sesja buduje listę od nowa. */
     static List<Item> build(Strings s, final Target t) {
         List<Item> items = new ArrayList<>();
-        items.add(Item.button(Style.DESTRUCTIVE, s.get(R.string.thumbcast_menu_disconnect), true, t::disconnect));
+        items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_disconnect), true, t::disconnect));
+        items.add(Item.button(Style.DESTRUCTIVE, s.get(R.string.thumbcast_menu_end_session), false, t::openEndSession));
         items.add(Item.button(Style.NORMAL, s.get(t.areControlsHidden()
                 ? R.string.thumbcast_menu_show_controls : R.string.thumbcast_menu_hide_controls),
                 true, t::toggleControls));
@@ -144,6 +162,14 @@ final class ThumbcastMenuModel {
         items.add(Item.button(Style.NORMAL, s.get(hide
                 ? R.string.thumbcast_menu_hide_on_gamepad_on : R.string.thumbcast_menu_hide_on_gamepad_off),
                 false, () -> t.setHideOnGamepad(!hide)));
+
+        final StatsToggles stats = t.getStatsToggles();
+        items.add(Item.button(Style.NORMAL, s.get(stats.getEnabled()
+                ? R.string.thumbcast_menu_stats_on : R.string.thumbcast_menu_stats_off),
+                false, () -> t.setStatsToggles(stats.toggleEnabled())));
+        items.add(Item.button(Style.NORMAL, s.get(stats.getAdvancedShown()
+                ? R.string.thumbcast_menu_stats_advanced_on : R.string.thumbcast_menu_stats_advanced_off),
+                false, () -> t.setStatsToggles(stats.toggleAdvanced())));
         items.add(Item.button(Style.PRIMARY, s.get(R.string.thumbcast_menu_resume), true, () -> { }));
         return Collections.unmodifiableList(items);
     }
@@ -163,6 +189,17 @@ final class ThumbcastMenuModel {
             items.add(Item.button(p.active ? Style.PRIMARY : Style.NORMAL, label,
                     true, () -> t.switchProfile(p.fileName)));
         }
+        return Collections.unmodifiableList(items);
+    }
+
+    /**
+     * Potwierdzenie „Zakończ sesję” (tytuł strony mówi, co się stanie). „Anuluj” jest PRIMARY, więc zaznaczenie
+     * z pada startuje na nim: przypadkowe A nie zamyka gry. Wybór „Zakończ sesję” zamyka menu i kończy sesję.
+     */
+    static List<Item> buildEndSession(Strings s, final Target t) {
+        List<Item> items = new ArrayList<>();
+        items.add(Item.button(Style.PRIMARY, s.get(R.string.thumbcast_menu_end_session_cancel), false, t::showMainPage));
+        items.add(Item.button(Style.DESTRUCTIVE, s.get(R.string.thumbcast_menu_end_session_confirm), true, t::endSession));
         return Collections.unmodifiableList(items);
     }
 
