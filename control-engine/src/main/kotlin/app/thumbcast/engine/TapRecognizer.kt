@@ -4,7 +4,7 @@ import app.thumbcast.model.MouseBtn
 
 /**
  * Tap: krótki dotyk bez ruchu -> mousePosition + LMB down/up w punkcie. Tap dwoma palcami (12.11.2026, rozpoznaje
- * [GestureArbiter]) -> mousePosition + RMB down/up w punkcie pierwszego palca ([fireRight]).
+ * [GestureArbiter]) -> sam RMB down/up tam, gdzie jest kursor, bez ruchu kursora ([fireRight], od 12.11.2026).
  */
 class TapRecognizer(
     private val config: TapConfig,
@@ -25,9 +25,12 @@ class TapRecognizer(
         click(pointerId, bindingId, MouseBtn.LEFT, x, y)
     }
 
-    /** Tap dwoma palcami: wywoływane w cyklu UP ostatniego palca pary, (x, y) = punkt DOWN pierwszego palca. */
+    /** Tap dwoma palcami: wywoływane w cyklu UP ostatniego palca pary, (x, y) = punkt DOWN pierwszego palca, tylko do sprawdzenia, czy dotyk był na obrazie. */
     fun fireRight(pointerId: Int, x: Float, y: Float) {
-        click(pointerId, rightBindingId, MouseBtn.RIGHT, x, y)
+        // (x, y) tylko sprawdza, że dotyk był na obrazie; kursor zostaje na miejscu.
+        video.toVideo(x, y) ?: return
+        emitter.emit(Intent(pointerId, rightBindingId, BindingKind.ONE_SHOT, MouseButtonSet(MouseBtn.RIGHT, true)))
+        emitter.emit(Intent(pointerId, rightBindingId, BindingKind.ONE_SHOT, MouseButtonSet(MouseBtn.RIGHT, false)))
     }
 
     private fun click(pointerId: Int, bid: String, button: MouseBtn, x: Float, y: Float) {

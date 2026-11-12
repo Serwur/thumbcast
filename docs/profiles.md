@@ -36,7 +36,7 @@ Ustawienia → Sterowanie dotykowe → Profile sterowania otwiera bibliotekę (p
 
   | Wolna strefa profilu | Domyślnie | Wł. | Wył. |
   |---|---|---|---|
-  | `none` (Pad – Xbox, Pad – PlayStation) | wył. | mysz bezpośrednia (`direct`): tap = kursor w punkcie dotyku i LPM, tap dwoma palcami = PPM w punkcie pierwszego palca, przeciągnięcie jednym palcem = przewijanie w punkcie dotyku (góra/dół i na boki, treść idzie za palcem) | tylko menu z górnej krawędzi |
+  | `none` (Pad – Xbox, Pad – PlayStation) | wył. | mysz bezpośrednia (`direct`): tap = kursor w punkcie dotyku i LPM, tap dwoma palcami = PPM tam, gdzie stoi kursor (bez jego ruchu), przeciągnięcie jednym palcem = przewijanie w punkcie dotyku (góra/dół i na boki, treść idzie za palcem) | tylko menu z górnej krawędzi |
   | `direct` (Big Picture) | wł. | bez zmian | jak `none`: tylko menu z górnej krawędzi |
   | `touchpad` (Pulpit – Touchpad) | wł. | bez zmian (gładzik: przeciągnięcie = kursor, tap = LPM, dwa palce = PPM i przewijanie, przytrzymanie i ruch = przeciąganie) | jak `none`: tylko menu z górnej krawędzi |
   | `camera` (MMO – Pad+, MMO – Klawiatura) | wł., gdy profil ma tap, long-press albo pinch | tap = LPM w punkcie, tap dwoma palcami albo przytrzymanie = PPM w punkcie, szczypanie = kółko | tap (także dwoma palcami), long-press i pinch wyłączone |

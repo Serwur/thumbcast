@@ -10,7 +10,7 @@ import kotlin.math.hypot
  * | gest | wyjście |
  * |---|---|
  * | 1 palec, tap (ruch ≤ tap.maxMovePx, czas ≤ tap.maxMs) | `MouseAt` w punkcie DOWN + LMB down + up w cyklu UP palca |
- * | 2 palce, tap (oba bez ruchu, od pierwszego DOWN do ostatniego UP ≤ tap.maxMs + twoFingerTapExtraMs) | `MouseAt` w punkcie DOWN pierwszego palca + RMB down + up w cyklu UP ostatniego palca |
+ * | 2 palce, tap (oba bez ruchu, od pierwszego DOWN do ostatniego UP ≤ tap.maxMs + twoFingerTapExtraMs) | RMB down + up w cyklu UP ostatniego palca, bez ruchu kursora (od 12.11.2026, prośba właściciela) |
  * | 1 palec, ruch > tap.maxMovePx | `MouseAt` w punkcie DOWN, potem `Wheel` i `HWheel` z ruchu palca (obie osie naraz) |
  * | 2 palce, ruch któregoś > tap.maxMovePx | nic (para kończy się bez wyjścia) |
  * | 1 palec trzymany bez ruchu dłużej niż tap.maxMs | nic (long-press w tym trybie nie działa) |
@@ -21,8 +21,8 @@ import kotlin.math.hypot
  * akumulowane osobno dla każdej osi, najwyżej `maxNotchesPerEvent` ząbków na zdarzenie i oś. Punkt DOWN poza
  * obrazem (letterbox): tap nic nie daje (jak TapRecognizer), a przeciągnięcie nie przewija.
  *
- * Tap dwoma palcami klika w punkcie pierwszego palca (nie w środku pary): pierwszy palec zwykle wskazuje cel,
- * a drugi tylko „dopowiada” prawy klik; środek pary leżałby obok celu. Przeciągnięcie dwoma palcami nic nie robi,
+ * Tap dwoma palcami daje sam prawy klik tam, gdzie już stoi kursor, bez jego przesuwania (prośba właściciela
+ * 12.11.2026: najpierw tapem wskazuje się cel, potem dwa palce = PPM na nim). Przeciągnięcie dwoma palcami nic nie robi,
  * bo jeden palec już przewija, a drugi mechanizm przewijania tylko zwiększałby ryzyko przypadkowych wejść.
  *
  * 1 dotyk = 1 wejście: palec daje najwyżej jedną krawędź (LMB z tapu, RMB z tapu dwoma palcami przypisany
@@ -154,7 +154,7 @@ class DirectMouseGestures(
                 } else {
                     val maxMs = config.tap.maxMs + config.tuning.twoFingerTapExtraMs
                     if (fire && pairTapValid && config.tap.enabled && f.maxMove <= slop && t - pairStartMs <= maxMs) {
-                        click(p.id, BIND_RIGHT_TAP, MouseBtn.RIGHT, pairX, pairY)
+                        rightClick(p.id, pairX, pairY)
                     }
                     endPair()
                 }
@@ -181,6 +181,16 @@ class DirectMouseGestures(
         emitter.emit(Intent(pointerId, bindingId, BindingKind.ONE_SHOT, MouseAt(v[0], v[1], video.refWidth, video.refHeight)))
         emitter.emit(Intent(pointerId, bindingId, BindingKind.ONE_SHOT, MouseButtonSet(button, true)))
         emitter.emit(Intent(pointerId, bindingId, BindingKind.ONE_SHOT, MouseButtonSet(button, false)))
+    }
+
+    /**
+     * Tap dwoma palcami: sam PPM tam, gdzie już jest kursor (bez `MouseAt`). Punkt pierwszego palca służy tylko do
+     * sprawdzenia, że dotyk był na obrazie (dotyk w czarnych pasach nic nie robi, jak przy tapie).
+     */
+    private fun rightClick(pointerId: Int, x: Float, y: Float) {
+        video.toVideo(x, y) ?: return
+        emitter.emit(Intent(pointerId, BIND_RIGHT_TAP, BindingKind.ONE_SHOT, MouseButtonSet(MouseBtn.RIGHT, true)))
+        emitter.emit(Intent(pointerId, BIND_RIGHT_TAP, BindingKind.ONE_SHOT, MouseButtonSet(MouseBtn.RIGHT, false)))
     }
 
     /** Start przewijania: kursor w punkcie DOWN (przewija się to, co pod palcem), potem ruch od tego punktu. */

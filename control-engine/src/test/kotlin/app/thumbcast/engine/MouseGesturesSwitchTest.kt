@@ -46,7 +46,7 @@ class MouseGesturesSwitchTest {
         val left = r.mouseButtons().filter { it.mouse == MouseBtn.LEFT }.map { it.down }
         assertEquals(listOf(true, false), left, "tap = LPM, przeciągnięcie bez kliku")
         assertTrue(r.sink.ofCall(SinkCall.PAD).all { it.rx.toInt() == 0 && it.ry.toInt() == 0 }, "bez kamery")
-        // Tap dwoma palcami = PPM w punkcie pierwszego palca.
+        // Tap dwoma palcami = sam PPM, kursor bez ruchu.
         r.advance(300)
         r.down(3, fx, fy)
         r.advance(20)
@@ -55,6 +55,7 @@ class MouseGesturesSwitchTest {
         r.up(4)
         r.up(3)
         assertEquals(listOf(true, false), r.mouseButtons().filter { it.mouse == MouseBtn.RIGHT }.map { it.down })
+        assertEquals(2, r.sink.ofCall(SinkCall.POSITION).size, "PPM dwoma palcami nie rusza kursora")
         assertNoViolations(r)
     }
 
@@ -123,7 +124,7 @@ class MouseGesturesSwitchTest {
         r.up(2)
         assertEquals(1, r.sink.ofCall(SinkCall.POSITION).size, "tap w punkcie")
         assertEquals(listOf(true, false), r.mouseButtons().map { it.down })
-        // Tap dwoma palcami = PPM w punkcie pierwszego palca.
+        // Tap dwoma palcami = sam PPM, kursor bez ruchu.
         r.advance(300)
         r.down(3, fx, fy)
         r.advance(20)
@@ -133,7 +134,7 @@ class MouseGesturesSwitchTest {
         r.up(4)
         assertEquals(listOf(MouseBtn.LEFT to true, MouseBtn.LEFT to false, MouseBtn.RIGHT to true, MouseBtn.RIGHT to false),
             r.mouseButtons().map { it.mouse to it.down })
-        assertEquals(listOf(1248 to 432, 1248 to 432), r.sink.ofCall(SinkCall.POSITION).map { it.x to it.y })
+        assertEquals(listOf(1248 to 432), r.sink.ofCall(SinkCall.POSITION).map { it.x to it.y }, "pozycja tylko z tapu; PPM dwoma palcami nie rusza kursora")
         assertNoViolations(r)
     }
 

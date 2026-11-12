@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 
 /**
  * Mysz bezpośrednia (`gestures.freeZone = direct`, [DirectMouseGestures], 12.11.2026): tap = kursor w punkcie
- * dotyku + LPM, tap dwoma palcami = PPM w punkcie pierwszego palca, przeciągnięcie = przewijanie w punkcie (pion
+ * dotyku + LPM, tap dwoma palcami = sam PPM (kursor bez ruchu), przeciągnięcie = przewijanie w punkcie (pion
  * i poziom, treść idzie za palcem). Ekran 2000 x 1000 px, wideo 1920 x 1080 na całym ekranie (TestSupport).
  */
 class DirectMouseTest {
@@ -144,7 +144,7 @@ class DirectMouseTest {
     }
 
     @Test
-    fun twoFingerTapRightClicksAtFirstFinger() {
+    fun twoFingerTapRightClicksWithoutMovingCursor() {
         for (firstUp in listOf(1, 2)) {
             val r = Rig(directProfile())
             r.down(1, fx, fy)
@@ -155,8 +155,7 @@ class DirectMouseTest {
             r.advance(20)
             r.up(3 - firstUp)
             assertEquals(listOf(MouseBtn.RIGHT to true, MouseBtn.RIGHT to false), buttons(r), "bez LPM (firstUp=$firstUp)")
-            val pos = r.sink.ofCall(SinkCall.POSITION).single()
-            assertEquals(vx to vy, pos.x to pos.y, "punkt pierwszego palca")
+            assertTrue(r.sink.ofCall(SinkCall.POSITION).isEmpty(), "PPM dwoma palcami nie rusza kursora")
             assertTrue(r.sink.records.all { it.cause?.bindingId == "gesture:tap2" && it.cause?.pointerId == 3 - firstUp })
             assertTrue(wheels(r).isEmpty() && hwheels(r).isEmpty())
             assertNoViolations(r)

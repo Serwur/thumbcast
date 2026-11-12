@@ -53,7 +53,7 @@ Wszystkie współrzędne są znormalizowane do zakresu 0..1 względem bezpieczne
 
 ### Wolna strefa: `camera`, `touchpad`, `direct` i `none`
 
-`"camera"` to tabela gestów Pad+ z tabeli wyżej: `cameraDrag` w strefie `zone` (połowa ekranu), tap i long-press w punkcie dotyku, pinch, edge swipe. Od 12.11.2026 przy `tapTarget.enabled` dochodzi tap dwoma palcami: drugi palec dotyka, gdy pierwszy jeszcze nic nie wysłał, oba bez ruchu (≤ `maxMovePx`), od pierwszego DOWN do ostatniego UP ≤ `maxMs` + 100 ms, bez kółka z pinchu → RMB w punkcie pierwszego palca (pozycja + wciśnięcie i zwolnienie przy podniesieniu ostatniego palca). Pinch i long-press działają jak dotąd; para palców w ruchu bez pinchu nic nie daje.
+`"camera"` to tabela gestów Pad+ z tabeli wyżej: `cameraDrag` w strefie `zone` (połowa ekranu), tap i long-press w punkcie dotyku, pinch, edge swipe. Od 12.11.2026 przy `tapTarget.enabled` dochodzi tap dwoma palcami: drugi palec dotyka, gdy pierwszy jeszcze nic nie wysłał, oba bez ruchu (≤ `maxMovePx`), od pierwszego DOWN do ostatniego UP ≤ `maxMs` + 100 ms, bez kółka z pinchu → sam RMB tam, gdzie stoi kursor (wciśnięcie i zwolnienie przy podniesieniu ostatniego palca, bez ruchu kursora). Pinch i long-press działają jak dotąd; para palców w ruchu bez pinchu nic nie daje.
 
 `"touchpad"` obejmuje całą wolną część ekranu (bez podziału na połowy) i ma stałą tabelę gestów. Pola `cameraDrag` i `pinchZoom` są wtedy ignorowane. Z `tapTarget` i `longPress` liczą się `enabled`, `maxMovePx`, `maxMs` i `minMs`, a pole `output` nie ma znaczenia (klik idzie w miejscu kursora):
 

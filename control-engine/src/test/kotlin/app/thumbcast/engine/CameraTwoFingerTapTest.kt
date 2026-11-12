@@ -37,16 +37,14 @@ class CameraTwoFingerTapTest {
     }
 
     @Test
-    fun twoFingerTapRightClicksAtFirstFingerWithAndWithoutPinch() {
+    fun twoFingerTapRightClicksWithoutMovingCursor() {
         for (pinch in listOf(true, false)) {
             for (firstUp in listOf(1, 2)) {
                 val r = Rig(profile(pinch = pinch))
                 twoFingerTap(r, firstUp)
                 val what = "pinch=$pinch firstUp=$firstUp"
                 assertEquals(listOf(MouseBtn.RIGHT to true, MouseBtn.RIGHT to false), buttons(r), what)
-                val pos = r.sink.ofCall(SinkCall.POSITION).single()
-                // (1300, 500) px -> (1248, 540) w wideo 1920 x 1080.
-                assertEquals(1248 to 540, pos.x to pos.y, what)
+                assertTrue(r.sink.ofCall(SinkCall.POSITION).isEmpty(), "PPM dwoma palcami nie rusza kursora: $what")
                 assertTrue(r.sink.ofCall(SinkCall.WHEEL).isEmpty(), what)
                 assertTrue(r.sink.ofCall(SinkCall.PAD).all { it.rx.toInt() == 0 && it.ry.toInt() == 0 }, "bez kamery: $what")
                 assertNoViolations(r)

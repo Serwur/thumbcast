@@ -13,7 +13,7 @@ import kotlin.math.hypot
  *
  * Tap dwoma palcami (12.11.2026, gdy `tap.enabled`): drugi palec dotyka, gdy pierwszy jeszcze nic nie wysłał
  * (PENDING, bez ruchu); oba bez ruchu i bez kółka z pinchu, od pierwszego DOWN do ostatniego UP najwyżej
- * tap.maxMs + twoFingerTapExtraMs -> RMB w punkcie DOWN pierwszego palca, w cyklu UP ostatniego palca pary.
+ * tap.maxMs + twoFingerTapExtraMs -> sam RMB (kursor zostaje na miejscu), w cyklu UP ostatniego palca pary.
  * Przy włączonym pinchu para i tak jest pinchem (PINCH), a tap dwoma palcami jest śledzony obok; bez pinchu para
  * ma stan TWO_TAP (ruch pary nic nie daje). Żaden z palców pary nie da tapu LMB ani long-pressu.
  */

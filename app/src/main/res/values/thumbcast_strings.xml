@@ -141,9 +141,9 @@
     <string name="thumbcast_menu_mouse_gestures_off">Mouse gestures: off</string>
     <string name="thumbcast_mouse_gestures_on_touchpad">Mouse gestures on: drag in an empty area moves the cursor, tap = left click, two-finger tap = right click, two-finger drag = scroll, hold then drag = drag.</string>
     <string name="thumbcast_mouse_gestures_off_touchpad">Mouse gestures off: touching an empty area sends nothing. Swiping down from the top edge still opens the menu.</string>
-    <string name="thumbcast_mouse_gestures_on_direct">Mouse gestures on: tap an empty area = cursor jumps there and left-clicks, two-finger tap = right click there, drag with one finger = scroll there (up/down and sideways).</string>
+    <string name="thumbcast_mouse_gestures_on_direct">Mouse gestures on: tap an empty area = cursor jumps there and left-clicks, two-finger tap = right click (cursor stays put), drag with one finger = scroll there (up/down and sideways).</string>
     <string name="thumbcast_mouse_gestures_off_direct">Mouse gestures off: touching an empty area sends nothing. Swiping down from the top edge still opens the menu.</string>
-    <string name="thumbcast_mouse_gestures_on_camera">Mouse gestures on: tap = left click at that spot, two-finger tap or long press = right click, pinch = mouse wheel. Dragging still turns the camera.</string>
+    <string name="thumbcast_mouse_gestures_on_camera">Mouse gestures on: tap = left click at that spot, two-finger tap = right click without moving the cursor, long press = right click at that spot, pinch = mouse wheel. Dragging still turns the camera.</string>
     <string name="thumbcast_mouse_gestures_off_camera">Mouse gestures off: tapping and pinching send nothing. Dragging still turns the camera.</string>
     <!-- Nakładka statystyk i wyjście z sesji (12.11.2026). -->
     <string name="thumbcast_menu_end_session">End session…</string>
