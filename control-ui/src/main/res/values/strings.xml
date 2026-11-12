@@ -1,9 +1,152 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Teksty :control-ui (prefiks ui_, bo zasoby bibliotek łączą się z :app). Polski: values-pl/strings.xml. -->
+<!--
+    Teksty :control-ui, angielski (domyślny). Prefiks ui_, bo zasoby bibliotek łączą się z :app. Polski (język główny):
+    values-pl/strings.xml, te same klucze i ta sama liczba pozycji w string-array. Fragmenty w znakach ` (adresy,
+    nazwy plików) są rysowane czcionką o stałej szerokości.
+-->
 <resources>
     <string name="ui_onboarding_title">Setup</string>
     <string name="ui_setup_guide_title">How to connect your PC</string>
-    <string name="ui_stub_body">This screen is not ready yet.</string>
-    <string name="ui_stub_section">Section: %1$s</string>
-    <string name="ui_close">Close</string>
+    <string name="ui_navigate_up">Back</string>
+
+    <!-- Wizard: common -->
+    <string name="ui_onboarding_step_of">Step %1$d of %2$d</string>
+    <string name="ui_onboarding_skip">Skip</string>
+    <string name="ui_onboarding_back">Back</string>
+    <string name="ui_onboarding_start">Get started</string>
+    <string name="ui_onboarding_next">Next</string>
+    <string name="ui_onboarding_finish">Go to your computers</string>
+
+    <!-- Wizard, step 1: welcome -->
+    <string name="ui_onboarding_welcome_title">Play your PC games on your phone</string>
+    <string name="ui_onboarding_welcome_subtitle">The game runs on your computer, and you control it from your phone.</string>
+    <string name="ui_onboarding_benefit_controls_title">On-screen buttons or a gamepad</string>
+    <string name="ui_onboarding_benefit_controls_body">Play with touch, or connect a gamepad to your phone.</string>
+    <string name="ui_onboarding_benefit_pc_title">Your PC does the heavy lifting</string>
+    <string name="ui_onboarding_benefit_pc_body">Your phone just shows the picture and passes on your input.</string>
+    <string name="ui_onboarding_benefit_remote_title">Away from home, too</string>
+    <string name="ui_onboarding_benefit_remote_body">Through Tailscale, without opening ports on your router.</string>
+
+    <!-- Wizard, step 2: what you play with -->
+    <string name="ui_onboarding_device_title">What do you usually play with?</string>
+    <string name="ui_onboarding_device_subtitle">We will set up the on-screen buttons to match.</string>
+    <string name="ui_onboarding_device_note">You can change this in Settings.</string>
+    <string name="ui_choice_touch_xbox">Touch – Xbox layout</string>
+    <string name="ui_choice_touch_xbox_body">On-screen buttons: A, B, X, Y.</string>
+    <string name="ui_choice_touch_playstation">Touch – PlayStation layout</string>
+    <string name="ui_choice_touch_playstation_body">On-screen buttons: cross, circle, square, triangle.</string>
+    <string name="ui_choice_pad_xbox">Xbox 360 / One / Series gamepad</string>
+    <string name="ui_choice_pad_playstation">PS4 / PS5 gamepad</string>
+    <string name="ui_choice_pad_body">On-screen buttons hide when you connect the gamepad.</string>
+    <string name="ui_choice_mouse_keyboard">Mouse and keyboard (MMO)</string>
+    <string name="ui_choice_mouse_keyboard_body">On-screen keys and mouse. Works even without a gamepad driver on the PC.</string>
+
+    <!-- Wizard, step 3: prepare the PC -->
+    <string name="ui_onboarding_prepare_title">Prepare your PC</string>
+    <string name="ui_onboarding_prepare_subtitle">Your Windows computer needs Sunshine, a free program.</string>
+    <string-array name="ui_onboarding_prepare_points">
+        <item>Download and install Sunshine (version v2026.914 or newer).</item>
+        <item>On the PC, open `https://localhost:47990` and set a username and password.</item>
+        <item>Want to play with a gamepad? Also install a virtual gamepad (ViGEmBus, free). The guide has the details.</item>
+    </string-array>
+    <string name="ui_onboarding_send_link">Send yourself the link</string>
+    <string name="ui_onboarding_show_guide">Show the full guide</string>
+    <string name="ui_onboarding_send_link_hint">Send the link by email or a messenger, for example, and open it on your PC.</string>
+
+    <!-- Wizard, step 4: connect -->
+    <string name="ui_onboarding_connect_title">Connect</string>
+    <string name="ui_onboarding_connect_subtitle">You will do this on the computer list, right after setup.</string>
+    <string-array name="ui_onboarding_connect_points">
+        <item>Connect your phone to the same Wi-Fi as your PC.</item>
+        <item>Pick your PC on the computer list.</item>
+        <item>Your phone shows a PIN. On the PC, open `https://localhost:47990`, go to the PIN tab, and enter the code.</item>
+    </string-array>
+    <string name="ui_onboarding_connect_note">Don\'t see your PC on the list? You can add it by its IP address.</string>
+
+    <!-- Links and sharing -->
+    <string name="ui_link_no_app">No app can open this. The address was copied to the clipboard.</string>
+    <string name="ui_share_chooser_title">Send link</string>
+    <string name="ui_share_sunshine_subject">Sunshine download</string>
+    <string name="ui_share_sunshine_hint">Download Sunshine for your PC (Windows: Sunshine-Windows-AMD64-installer.msi):</string>
+    <string name="ui_share_vigembus_hint">Download ViGEmBus, the virtual gamepad for Sunshine (version 1.17 or newer):</string>
+    <string name="ui_share_tailscale_hint">Download Tailscale for your PC and sign in with the same account as on your phone:</string>
+
+    <!-- Guide: common -->
+    <string name="ui_guide_intro">You only do this once, on a Windows PC. Tick off the parts you have finished.</string>
+    <string name="ui_guide_progress">Done: %1$d of %2$d</string>
+    <string name="ui_guide_section_title">%1$d. %2$s</string>
+    <string name="ui_guide_expand">Expand</string>
+    <string name="ui_guide_collapse">Collapse</string>
+    <string name="ui_guide_state_expanded">Expanded</string>
+    <string name="ui_guide_state_collapsed">Collapsed</string>
+    <string name="ui_guide_done_badge">Done</string>
+    <string name="ui_guide_mark_done">Mark as done</string>
+    <string name="ui_guide_send_link_to_pc">Send link to your PC</string>
+    <string name="ui_guide_open_page">Open page</string>
+    <string name="ui_guide_jump_to">See: %1$s</string>
+    <string name="ui_guide_link_sunshine">Sunshine – download page</string>
+    <string name="ui_guide_link_vigembus">ViGEmBus – download page</string>
+    <string name="ui_guide_link_tailscale">Tailscale – download page</string>
+
+    <!-- Guide, 1: install Sunshine -->
+    <string name="ui_guide_install_title">Install Sunshine on your PC</string>
+    <string name="ui_guide_install_intro">Sunshine is a free program that sends the picture from your PC to your phone.</string>
+    <string-array name="ui_guide_install_steps">
+        <item>On the PC, download Sunshine v2026.914 or newer. For a regular Windows PC, pick `Sunshine-Windows-AMD64-installer.msi`.</item>
+        <item>Run the installer. Sunshine adds its Windows service and firewall rules on its own.</item>
+        <item>On the PC, open `https://localhost:47990` in a browser.</item>
+        <item>Set an admin username and password. Remember them.</item>
+    </string-array>
+    <string name="ui_guide_install_note">Thumbcast also works with Apollo and Vibepollo (Sunshine variants), but this guide covers Sunshine.</string>
+
+    <!-- Guide, 2: virtual gamepad -->
+    <string name="ui_guide_gamepad_title">Virtual gamepad</string>
+    <string name="ui_guide_gamepad_intro">It lets games on your PC see a gamepad. Without it, only mouse and keyboard work.</string>
+    <string-array name="ui_guide_gamepad_steps">
+        <item>Free: ViGEmBus 1.17 or newer. Install it from Sunshine (`https://localhost:47990` → Troubleshooting) or from the page below.</item>
+        <item>Restart the PC if the installer asks you to.</item>
+        <item>In Sunshine, open Configuration → Input and pick the Xbox 360 gamepad (`gamepad = x360`). Save and restart Sunshine.</item>
+        <item>Paid: LizardByte Virtual HID Driver. It emulates more gamepads (DualSense too); you enter the license in Sunshine.</item>
+        <item>Don\'t want to install a driver? Choose Mouse and keyboard (MMO) controls in Thumbcast.</item>
+    </string-array>
+
+    <!-- Guide, 3: pairing -->
+    <string name="ui_guide_pair_title">Pair your phone with the PC</string>
+    <string-array name="ui_guide_pair_steps">
+        <item>Connect your phone to the same network as the PC (the same Wi-Fi at home).</item>
+        <item>In Thumbcast, pick your PC on the list. Your phone shows a PIN.</item>
+        <item>On the PC, open `https://localhost:47990`, go to the PIN tab and enter the code from your phone.</item>
+        <item>You pair only once. After that, just pick the PC on the list.</item>
+        <item>PC not on the list? Add it by its IP address (for example `192.168.1.20`).</item>
+    </string-array>
+
+    <!-- Guide, 4: games -->
+    <string name="ui_guide_apps_title">Add games</string>
+    <string-array name="ui_guide_apps_steps">
+        <item>In Sunshine, open the Applications tab and choose Add New.</item>
+        <item>Example, Steam Big Picture: in Detached Commands enter `steam://open/bigpicture`.</item>
+        <item>Put games started by a launcher (Steam, Battle.net) in Detached Commands, and a regular program in Command.</item>
+        <item>Set resolution and controls for one game in Thumbcast: long-press the game on the list → Game settings.</item>
+        <item>Want the PC to switch its resolution too? In Sunshine: Configuration → Audio/Video → Device configuration (`verify_only`).</item>
+    </string-array>
+
+    <!-- Guide, 5: away from home -->
+    <string name="ui_guide_remote_title">Play away from home</string>
+    <string name="ui_guide_remote_intro">Tailscale connects your phone to your PC over the internet, without opening ports.</string>
+    <string-array name="ui_guide_remote_steps">
+        <item>Install Tailscale on the PC and on your phone. Sign in to the same account on both.</item>
+        <item>Pair your phone with the PC at home (part 3).</item>
+        <item>On the list, long-press the PC → Connection addresses → Add address. Enter the PC\'s Tailscale address (`100.x.y.z`).</item>
+        <item>At home Thumbcast still connects over Wi-Fi; away from home it uses Tailscale.</item>
+        <item>Don\'t forward ports on your router. Tailscale is enough.</item>
+    </string-array>
+
+    <!-- Guide, 6: not working -->
+    <string name="ui_guide_troubleshoot_title">Not working?</string>
+    <string-array name="ui_guide_troubleshoot_steps">
+        <item>PC not on the list: check that your phone and PC are on the same network and that Windows Firewall does not block Sunshine. You can also add the PC by its IP address.</item>
+        <item>Gamepad does not work in the game: install a virtual gamepad (part 2) and restart Sunshine.</item>
+        <item>Video stutters: lower Image quality in Settings. Away from home, choose 720p.</item>
+        <item>Can\'t connect away from home: check that Tailscale is on, on both the PC and your phone.</item>
+    </string-array>
 </resources>

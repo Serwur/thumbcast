@@ -1,8 +1,152 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Teksty :control-ui, polski (język główny). Klucze jak w values/strings.xml. Styl: krótko, w drugiej osobie,
+    bez żargonu (docs/ui-audit.md, D7). Fragmenty w znakach ` (adresy, nazwy plików) są rysowane czcionką o stałej
+    szerokości. Treść poradnika pochodzi z docs/host-setup.md, docs/host-apps.md i docs/tailscale.md.
+-->
 <resources>
     <string name="ui_onboarding_title">Konfiguracja</string>
     <string name="ui_setup_guide_title">Jak podłączyć PC</string>
-    <string name="ui_stub_body">Ten ekran jest w przygotowaniu.</string>
-    <string name="ui_stub_section">Sekcja: %1$s</string>
-    <string name="ui_close">Zamknij</string>
+    <string name="ui_navigate_up">Wróć</string>
+
+    <!-- Kreator: wspólne -->
+    <string name="ui_onboarding_step_of">Krok %1$d z %2$d</string>
+    <string name="ui_onboarding_skip">Pomiń</string>
+    <string name="ui_onboarding_back">Wstecz</string>
+    <string name="ui_onboarding_start">Zaczynamy</string>
+    <string name="ui_onboarding_next">Dalej</string>
+    <string name="ui_onboarding_finish">Przejdź do listy komputerów</string>
+
+    <!-- Kreator, krok 1: powitanie -->
+    <string name="ui_onboarding_welcome_title">Graj w gry z PC na telefonie</string>
+    <string name="ui_onboarding_welcome_subtitle">Gra działa na Twoim komputerze, a Ty sterujesz nią z telefonu.</string>
+    <string name="ui_onboarding_benefit_controls_title">Przyciski na ekranie albo pad</string>
+    <string name="ui_onboarding_benefit_controls_body">Graj dotykiem albo podłącz pad do telefonu.</string>
+    <string name="ui_onboarding_benefit_pc_title">Całą pracę robi PC</string>
+    <string name="ui_onboarding_benefit_pc_body">Telefon tylko pokazuje obraz i przekazuje Twoje ruchy.</string>
+    <string name="ui_onboarding_benefit_remote_title">Także poza domem</string>
+    <string name="ui_onboarding_benefit_remote_body">Przez Tailscale, bez otwierania portów w routerze.</string>
+
+    <!-- Kreator, krok 2: czym grasz -->
+    <string name="ui_onboarding_device_title">Czym grasz najczęściej?</string>
+    <string name="ui_onboarding_device_subtitle">Dobierzemy do tego przyciski na ekranie.</string>
+    <string name="ui_onboarding_device_note">Zmienisz to w Ustawieniach.</string>
+    <string name="ui_choice_touch_xbox">Dotyk – układ Xbox</string>
+    <string name="ui_choice_touch_xbox_body">Przyciski na ekranie: A, B, X, Y.</string>
+    <string name="ui_choice_touch_playstation">Dotyk – układ PlayStation</string>
+    <string name="ui_choice_touch_playstation_body">Przyciski na ekranie: krzyżyk, kółko, kwadrat, trójkąt.</string>
+    <string name="ui_choice_pad_xbox">Pad Xbox 360 / One / Series</string>
+    <string name="ui_choice_pad_playstation">Pad PS4 / PS5</string>
+    <string name="ui_choice_pad_body">Gdy podłączysz pad, przyciski na ekranie się schowają.</string>
+    <string name="ui_choice_mouse_keyboard">Mysz i klawiatura (MMO)</string>
+    <string name="ui_choice_mouse_keyboard_body">Klawisze i mysz na ekranie. Działa też bez sterownika pada na PC.</string>
+
+    <!-- Kreator, krok 3: przygotuj PC -->
+    <string name="ui_onboarding_prepare_title">Przygotuj PC</string>
+    <string name="ui_onboarding_prepare_subtitle">Na komputerze z Windows potrzebny jest darmowy program Sunshine.</string>
+    <string-array name="ui_onboarding_prepare_points">
+        <item>Pobierz i zainstaluj Sunshine (wersja v2026.914 lub nowsza).</item>
+        <item>Na PC otwórz `https://localhost:47990` i ustaw login oraz hasło.</item>
+        <item>Chcesz grać padem? Zainstaluj też wirtualny pad (ViGEmBus, za darmo). Szczegóły są w poradniku.</item>
+    </string-array>
+    <string name="ui_onboarding_send_link">Wyślij sobie link</string>
+    <string name="ui_onboarding_show_guide">Pokaż pełny poradnik</string>
+    <string name="ui_onboarding_send_link_hint">Wyślij link np. mailem albo komunikatorem i otwórz go na PC.</string>
+
+    <!-- Kreator, krok 4: połącz -->
+    <string name="ui_onboarding_connect_title">Połącz</string>
+    <string name="ui_onboarding_connect_subtitle">Zrobisz to na liście komputerów, zaraz po kreatorze.</string>
+    <string-array name="ui_onboarding_connect_points">
+        <item>Połącz telefon z tym samym Wi-Fi, w którym jest PC.</item>
+        <item>Na liście komputerów wybierz swój PC.</item>
+        <item>Telefon pokaże PIN. Na PC otwórz `https://localhost:47990`, zakładkę PIN, i wpisz ten kod.</item>
+    </string-array>
+    <string name="ui_onboarding_connect_note">Nie widzisz PC na liście? Możesz dodać go ręcznie, po adresie IP.</string>
+
+    <!-- Linki i udostępnianie -->
+    <string name="ui_link_no_app">Nie ma aplikacji, która to otworzy. Adres skopiowano do schowka.</string>
+    <string name="ui_share_chooser_title">Wyślij link</string>
+    <string name="ui_share_sunshine_subject">Sunshine – pobieranie</string>
+    <string name="ui_share_sunshine_hint">Pobierz Sunshine na PC (Windows: plik Sunshine-Windows-AMD64-installer.msi):</string>
+    <string name="ui_share_vigembus_hint">Pobierz ViGEmBus, wirtualny pad dla Sunshine (wersja 1.17 lub nowsza):</string>
+    <string name="ui_share_tailscale_hint">Pobierz Tailscale na PC i zaloguj się tym samym kontem co na telefonie:</string>
+
+    <!-- Poradnik: wspólne -->
+    <string name="ui_guide_intro">Te kroki robisz raz, na PC z Windows. Zrobione części możesz odhaczyć.</string>
+    <string name="ui_guide_progress">Zrobione: %1$d z %2$d</string>
+    <string name="ui_guide_section_title">%1$d. %2$s</string>
+    <string name="ui_guide_expand">Rozwiń</string>
+    <string name="ui_guide_collapse">Zwiń</string>
+    <string name="ui_guide_state_expanded">Rozwinięte</string>
+    <string name="ui_guide_state_collapsed">Zwinięte</string>
+    <string name="ui_guide_done_badge">Zrobione</string>
+    <string name="ui_guide_mark_done">Oznacz jako zrobione</string>
+    <string name="ui_guide_send_link_to_pc">Wyślij link na PC</string>
+    <string name="ui_guide_open_page">Otwórz stronę</string>
+    <string name="ui_guide_jump_to">Zobacz: %1$s</string>
+    <string name="ui_guide_link_sunshine">Sunshine – strona pobierania</string>
+    <string name="ui_guide_link_vigembus">ViGEmBus – strona pobierania</string>
+    <string name="ui_guide_link_tailscale">Tailscale – strona pobierania</string>
+
+    <!-- Poradnik, 1: instalacja Sunshine -->
+    <string name="ui_guide_install_title">Zainstaluj Sunshine na PC</string>
+    <string name="ui_guide_install_intro">Sunshine to darmowy program, który wysyła obraz z PC na telefon.</string>
+    <string-array name="ui_guide_install_steps">
+        <item>Na PC pobierz Sunshine w wersji v2026.914 lub nowszej. Na zwykły PC z Windows wybierz plik `Sunshine-Windows-AMD64-installer.msi`.</item>
+        <item>Uruchom instalator. Sunshine sam doda usługę Windows i reguły zapory.</item>
+        <item>Na PC otwórz w przeglądarce `https://localhost:47990`.</item>
+        <item>Ustaw login i hasło administratora. Zapamiętaj je.</item>
+    </string-array>
+    <string name="ui_guide_install_note">Thumbcast działa też z Apollo i Vibepollo (odmiany Sunshine), ale ten poradnik opisuje Sunshine.</string>
+
+    <!-- Poradnik, 2: wirtualny pad -->
+    <string name="ui_guide_gamepad_title">Wirtualny pad</string>
+    <string name="ui_guide_gamepad_intro">Dzięki niemu gra na PC widzi pad. Bez niego działają tylko mysz i klawiatura.</string>
+    <string-array name="ui_guide_gamepad_steps">
+        <item>Za darmo: ViGEmBus w wersji 1.17 lub nowszej. Zainstalujesz go w Sunshine (`https://localhost:47990` → Troubleshooting) albo ze strony poniżej.</item>
+        <item>Uruchom PC ponownie, jeśli instalator o to poprosi.</item>
+        <item>W Sunshine otwórz Configuration → Input i wybierz pad Xbox 360 (`gamepad = x360`). Zapisz i uruchom Sunshine ponownie.</item>
+        <item>Płatnie: LizardByte Virtual HID Driver. Udaje więcej padów (także DualSense), a licencję wpisujesz w Sunshine.</item>
+        <item>Nie chcesz instalować sterownika? Wybierz w Thumbcast sterowanie Mysz i klawiatura (MMO).</item>
+    </string-array>
+
+    <!-- Poradnik, 3: parowanie -->
+    <string name="ui_guide_pair_title">Sparuj telefon z PC</string>
+    <string-array name="ui_guide_pair_steps">
+        <item>Połącz telefon z tą samą siecią co PC (to samo Wi-Fi w domu).</item>
+        <item>W Thumbcast wybierz swój PC z listy. Telefon pokaże PIN.</item>
+        <item>Na PC otwórz `https://localhost:47990`, przejdź do zakładki PIN i wpisz kod z telefonu.</item>
+        <item>Parujesz tylko raz. Potem wystarczy wybrać PC z listy.</item>
+        <item>PC nie pojawia się na liście? Dodaj go ręcznie, po adresie IP (np. `192.168.1.20`).</item>
+    </string-array>
+
+    <!-- Poradnik, 4: gry -->
+    <string name="ui_guide_apps_title">Dodaj gry</string>
+    <string-array name="ui_guide_apps_steps">
+        <item>W Sunshine otwórz zakładkę Applications i wybierz Add New.</item>
+        <item>Przykład, Steam Big Picture: w polu Detached Commands wpisz `steam://open/bigpicture`.</item>
+        <item>Gry z launchera (Steam, Battle.net) wpisuj w Detached Commands, a zwykły program w Command.</item>
+        <item>Rozdzielczość i sterowanie dla jednej gry ustawisz w Thumbcast: przytrzymaj grę na liście → Ustawienia gry.</item>
+        <item>Chcesz, żeby PC też zmieniał rozdzielczość? W Sunshine: Configuration → Audio/Video → Device configuration (`verify_only`).</item>
+    </string-array>
+
+    <!-- Poradnik, 5: poza domem -->
+    <string name="ui_guide_remote_title">Graj poza domem</string>
+    <string name="ui_guide_remote_intro">Tailscale łączy telefon z PC przez internet, bez otwierania portów.</string>
+    <string-array name="ui_guide_remote_steps">
+        <item>Zainstaluj Tailscale na PC i na telefonie. Zaloguj oba urządzenia na to samo konto.</item>
+        <item>Sparuj telefon z PC w domu (punkt 3).</item>
+        <item>Na liście przytrzymaj PC → Adresy połączenia → Dodaj adres. Wpisz adres Tailscale tego PC (`100.x.y.z`).</item>
+        <item>W domu Thumbcast i tak połączy się przez Wi-Fi, a poza domem przez Tailscale.</item>
+        <item>Nie przekierowuj portów w routerze. Tailscale wystarczy.</item>
+    </string-array>
+
+    <!-- Poradnik, 6: nie działa -->
+    <string name="ui_guide_troubleshoot_title">Nie działa?</string>
+    <string-array name="ui_guide_troubleshoot_steps">
+        <item>PC nie widać na liście: sprawdź, czy telefon i PC są w tej samej sieci i czy zapora Windows nie blokuje Sunshine. Możesz też dodać PC ręcznie, po adresie IP.</item>
+        <item>Pad nie działa w grze: zainstaluj wirtualny pad (punkt 2) i uruchom Sunshine ponownie.</item>
+        <item>Obraz się tnie: w Ustawieniach obniż Jakość obrazu. Poza domem wybierz 720p.</item>
+        <item>Poza domem nie łączy: sprawdź, czy Tailscale jest włączony na PC i na telefonie.</item>
+    </string-array>
 </resources>

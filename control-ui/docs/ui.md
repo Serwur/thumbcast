@@ -1,7 +1,8 @@
 # Moduł `:control-ui`
 
 Wspólny motyw Compose i nowe ekrany Thumbcast (kreator pierwszego uruchomienia, poradnik „Jak podłączyć PC”).
-Źródło decyzji: `docs/ui-audit.md` (D1, D2, D8). Moduł powstał w pakiecie P0 (12.11.2026); treść ekranów dodaje P1.
+Źródło decyzji: `docs/ui-audit.md` (D1, D2, D8, sekcje 3 i 4). Moduł powstał w pakiecie P0 (12.11.2026), kreator i
+poradnik dodał pakiet P1 (12.11.2026). Na urządzeniu jeszcze niesprawdzone.
 
 Zależności: Compose + Material 3 (BOM z `libs.versions.toml`), `activity-compose`, `androidx.core`.
 Używają go `:app` (kontrakt, aktywności) i `:control-editor` (motyw). Moduł nie zależy od innych modułów Thumbcast.
@@ -61,16 +62,94 @@ Podział odpowiedzialności:
 - Poradnik nie zwraca wyniku. Nieznana sekcja jest ignorowana (poradnik otwiera się od początku).
 
 Testy JVM: `src/test/.../UiContractTest.kt` (logika kontraktu, istnienie presetów kreatora w `presets/`).
+P1 nie zmienił publicznego API kontraktu (bez dodatków).
 
 ## Aktywności
 
 Zadeklarowane w `src/main/AndroidManifest.xml` (`exported=false`, bez blokady orientacji jak ekrany `:app`
 poza grą, `configChanges` jak w `:app`), motyw okna `Theme.ThumbcastUi` (tło `#0F1115`, bez paska akcji),
-`enableEdgeToEdge` z ciemnymi paskami systemowymi. Stan P0: zaślepki (`StubScreen`) z tytułem i przyciskiem
-„Zamknij”; `OnboardingActivity` zawsze zwraca `RESULT_CANCELED`.
+`enableEdgeToEdge` z ciemnymi paskami systemowymi. Treść ma najwyżej 720 dp szerokości i jest wyśrodkowana
+(tablet, poziom); wszystko się przewija, więc działa też przy dużej czcionce systemowej.
+
+### Kreator (`OnboardingActivity`, `OnboardingScreen.kt`)
+
+Cztery kroki (sekcja 3 audytu), na każdym „Krok N z 4”, pasek postępu i „Pomiń” u góry, na dole „Wstecz”
+(od kroku 2) i przycisk główny:
+1. Powitanie: tytuł, 3 korzyści z ikonami, [Zaczynamy].
+2. „Czym grasz najczęściej?”: 5 kafli (wybór jednokrotny, `Role.RadioButton`, kółko wyboru obok koloru),
+   domyślnie „Pad PS4 / PS5”, dopisek „Zmienisz to w Ustawieniach”. Na szerokim ekranie (≥ 560 dp) dwie kolumny.
+3. „Przygotuj PC”: 3 punkty, [Wyślij sobie link] (systemowy share sheet: jedna linia podpowiedzi i adres wydań
+   Sunshine) i [Pokaż pełny poradnik] (`SetupGuideActivity` od sekcji `install`).
+4. „Połącz”: 3 punkty (to samo Wi-Fi, wybór PC, PIN w Sunshine), przycisk [Przejdź do listy komputerów].
+
+Mapowanie kafli na wynik (`onboarding/OnboardingFlow.kt`, `OnboardingChoice`):
+
+| Kafel | `EXTRA_PRESET_FILE` | `EXTRA_HIDE_ON_GAMEPAD` |
+|---|---|---|
+| Dotyk – układ Xbox | `gamepad-xbox.thumbcast.json` | false |
+| Dotyk – układ PlayStation | `gamepad-playstation.thumbcast.json` | false |
+| Pad Xbox 360 / One / Series | `gamepad-xbox.thumbcast.json` | true |
+| Pad PS4 / PS5 (domyślny) | `gamepad-playstation.thumbcast.json` | true |
+| Mysz i klawiatura (MMO) | `mmo-keyboard.thumbcast.json` | false |
+
+Wynik i nawigacja (decyzja P1, logika w `OnboardingState`, testy `OnboardingFlowTest`):
+
+| Akcja | Krok 1 | Kroki 2–4 |
+|---|---|---|
+| „Pomiń” | `RESULT_CANCELED` (nic nie wybrano, `:app` zostawia ustawienia domyślne) | `RESULT_OK` z bieżącym zaznaczeniem (domyślnie Pad PS4 / PS5) |
+| Wstecz (przycisk, gest systemowy) | zamknięcie z `RESULT_CANCELED` | poprzedni krok, wybór zostaje |
+| Przycisk główny | następny krok | następny krok; na kroku 4 `RESULT_OK` z zaznaczeniem |
+
+Uzasadnienie „Pomiń” od kroku 2: kafel jest już widocznie zaznaczony, więc użytkownik, który go zostawił,
+dostaje to, co widział. W obu przypadkach `:app` zapisuje wersję kreatora (patrz kontrakt). Stan (krok, kafel)
+przetrwa obrót ekranu (`rememberSaveable`).
+
+### Poradnik (`SetupGuideActivity`, `SetupGuideScreen.kt`)
+
+Pasek u góry ze strzałką wstecz i tytułem „Jak podłączyć PC”, wstęp z licznikiem „Zrobione: N z 5”, sześć
+rozwijanych kart w kolejności `UiContract.GUIDE_SECTIONS` (sekcja 4 audytu): instalacja Sunshine, wirtualny pad,
+parowanie, gry, poza domem, „Nie działa?”. Każda karta: ikona, „N. Tytuł”, numerowane kroki (`string-array`),
+kod (`https://localhost:47990`, `100.x.y.z`, nazwy plików) czcionką o stałej szerokości.
+
+- Strony pobierania (`guide/GuideLinks`): Sunshine `https://github.com/SunshineStream/Sunshine/releases`,
+  ViGEmBus `https://github.com/nefarius/ViGEmBus/releases`, Tailscale `https://tailscale.com/download`. Przy każdej
+  [Wyślij link na PC] (share sheet z jedną linią podpowiedzi) i [Otwórz stronę] (`ACTION_VIEW`); adres da się
+  zaznaczyć i skopiować. Brak aplikacji (`ActivityNotFoundException`): adres trafia do schowka, komunikat w snackbarze.
+- „Nie działa?” ma przyciski „Zobacz: …” do sekcji pada i „Poza domem” (rozwija i przewija).
+- Lista kontrolna: pole „Oznacz jako zrobione” w sekcjach 1–5 („Nie działa?” nie ma czego odhaczać), w nagłówku
+  ✓ i napis „Zrobione”. Zapis we własnych SharedPreferences modułu `thumbcast_ui_guide`, klucz `done_sections`
+  (zbiór id sekcji). Czysto informacyjne, nic poza poradnikiem tego nie czyta.
+- Sekcja startowa: poprawna `EXTRA_GUIDE_SECTION` jest rozwinięta i lista zaczyna się od niej; bez niej rozwinięta
+  jest pierwsza nieodhaczona sekcja (nowy użytkownik: instalacja), a gdy wszystko odhaczone, żadna
+  (`SetupGuideModel.initialSection`, testy `SetupGuideModelTest`).
+
+### Dostępność
+
+Obszary dotyku ≥ 48 dp (przyciski, nagłówki kart 64 dp, wiersz pola wyboru), tytuły kroków i nagłówki kart jako
+`heading`, nagłówek karty ma etykietę akcji „Rozwiń”/„Zwiń” i stan „Rozwinięte”/„Zwinięte”, numerowany krok jest
+czytany jako jedna pozycja, „Krok N z 4” to `liveRegion`. Ikony są dekoracyjne (obok zawsze jest tekst), strzałka
+wstecz ma opis „Wróć”. Kolory z palety D1; stan nigdy tylko kolorem (kółko wyboru, ✓ z napisem).
+
+### Ikony (`UiIcons.kt`)
+
+Material Symbols Rounded jako `ImageVector` w kodzie, te same ścieżki co `thumbcast_ic_*` w `:app` (D6), bez
+zależności `material-icons-*` i bez zasobów `drawable` w module.
+
+### Pliki
+
+| Plik | Zawartość |
+|---|---|
+| `onboarding/OnboardingFlow.kt` | `OnboardingStep`, `OnboardingChoice`, `OnboardingState`, `OnboardingOutcome` (czysta logika) |
+| `guide/SetupGuideModel.kt` | `GuideLinks`, `SetupGuideModel`, `parseInlineCode` (czysta logika) |
+| `OnboardingActivity.kt`, `OnboardingScreen.kt` | kreator |
+| `SetupGuideActivity.kt`, `SetupGuideScreen.kt` | poradnik, treść sekcji (`GUIDE_SECTIONS_UI`) |
+| `UiComponents.kt` | `LinkActions` (otwieranie i share sheet), `InlineCodeText`, `NumberedStep` |
 
 ## Teksty
 
 `res/values/strings.xml` (angielski, domyślny) i `res/values-pl/strings.xml` (polski, główny), prefiks `ui_`,
-bo zasoby bibliotek łączą się z zasobami `:app`. Wspólne słowa dla widoków `:app` są w
-`app/src/main/res/values*/thumbcast_strings_common.xml`.
+bo zasoby bibliotek łączą się z zasobami `:app`. Kroki są w `string-array` (ta sama liczba pozycji w obu językach),
+kod zapisuje się w znakach `` ` ``. Treść poradnika pochodzi z `docs/host-setup.md`, `docs/host-apps.md`,
+`docs/tailscale.md` i `docs/DECISIONS.md`; przy zmianie tych dokumentów sprawdź poradnik. Nazwy pozycji menu `:app`
+użyte w tekstach: „Adresy połączenia”, „Dodaj adres”, „Ustawienia gry” (z audytu, U15), „Jakość obrazu” (D7).
+Wspólne słowa dla widoków `:app` są w `app/src/main/res/values*/thumbcast_strings_common.xml`.

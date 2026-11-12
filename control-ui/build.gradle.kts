@@ -30,7 +30,7 @@ android {
     }
 
     testOptions {
-        // Testy JVM obejmują tylko czystą logikę kontraktu (UiContract), bez API Androida.
+        // Testy JVM obejmują tylko czystą logikę (UiContract, kroki kreatora, model poradnika), bez API Androida.
         unitTests.isReturnDefaultValues = true
         // UiContractTest sprawdza, że presety kreatora istnieją w katalogu presets/.
         unitTests.all { it.systemProperty("thumbcast.presetsDir", rootProject.file("presets").absolutePath) }
