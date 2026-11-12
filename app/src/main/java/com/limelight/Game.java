@@ -37,6 +37,7 @@ import com.limelight.utils.ShortcutHelper;
 import com.limelight.utils.SpinnerDialog;
 import com.limelight.utils.UiHelper;
 // THUMBCAST:
+import com.limelight.thumbcast.ThumbcastAppSettings;
 import com.limelight.thumbcast.ThumbcastSession;
 // THUMBCAST END
 
@@ -223,6 +224,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
         // Read the stream preferences
         prefConfig = PreferenceConfiguration.readPreferences(this);
+        // THUMBCAST: ustawienia aplikacji (profil, rozdzielczość, FPS) tylko dla tego strumienia, preferencje bez zmian.
+        ThumbcastAppSettings.applyToStream(this, prefConfig, getIntent());
+        // THUMBCAST END
         tombstonePrefs = Game.this.getSharedPreferences("DecoderTombstone", 0);
 
         // Enter landscape unless we're on a square screen

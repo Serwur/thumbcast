@@ -14,6 +14,7 @@ Thumbcast łączy się z dowolnym hostem zgodnym z GameStream: Sunshine (LizardB
      pulpitu Windows ani gry, nie użyje enkodera GPU dla ekranu Windows i nie da grze wirtualnego pada. Obrazy Dockera Sunshine są dla hostów z Linuksem.
 2. Zainstaluj i otwórz web UI (domyślnie `https://localhost:47990`). Ustaw login i hasło administratora.
 3. Sparuj telefon w domu, w tej samej sieci LAN: w Thumbcast wybierz PC, a PIN wpisz w web UI Sunshine (zakładka PIN).
+4. Aplikacje (Steam Big Picture, gra z Battle.net), rozdzielczość PC zależna od aplikacji i ustawienia aplikacji w Thumbcast: [host-apps.md](host-apps.md).
 
 ## 2. Sterownik pada (Windows): `gamepad_driver`
 

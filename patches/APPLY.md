@@ -35,6 +35,7 @@ własny, pewny diff: `git diff v12.2 -- app/ > patches/0001-thumbcast.diff`.
 | `preferences.patch.md` | nowe preferencje (`list_control_layer`, `list_thumbcast_profile`, `checkbox_thumbcast_debug`), `PreferenceConfiguration`, `StreamSettings`, stringi, kopiowanie presetów do assetów |
 | `manifest-and-appid.patch.md` | `applicationId`, minSdk 26, zależność `:control-android`, manifest, nazwa, ikona |
 | `host-addresses.patch.md` | jeden wpis PC dla LAN i Tailscale/ZeroTier: łączenie adresów, kolejność odpytywania, migracja bazy, dialog „Adresy połączenia” (12.11.2026) |
+| `app-settings.patch.md` | ustawienia Thumbcast dla aplikacji hosta: profil, rozdzielczość i FPS na aplikację (menu aplikacji w `AppView`, hak w `Game.onCreate`), fallback profilu (12.11.2026) |
 | `app/src/main/java/com/limelight/thumbcast/HostConnectionImpl.java` | fasada `HostConnection` -> `NvConnection` (delegacja 1:1) |
 | `app/src/main/java/com/limelight/thumbcast/HostPadReporterImpl.java` | fasada `HostPadReporter` -> `ControllerHandler.reportOscState` + retransmisja 25/50/75 ms tego samego stanu |
 | `app/src/main/java/com/limelight/thumbcast/ThumbcastKeyTranslator.java` | `KeyTranslator` -> upstreamowy `KeyboardTranslator` |

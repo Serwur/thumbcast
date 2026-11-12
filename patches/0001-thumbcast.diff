@@ -206,21 +206,69 @@ index d916899e..3b65fdbf 100644
          <activity
              android:name=".preferences.AddComputerManually"
              android:resizeableActivity="true"
+diff --git a/app/src/main/java/com/limelight/AppView.java b/app/src/main/java/com/limelight/AppView.java
+index 1337627e..7cf6d631 100644
+--- a/app/src/main/java/com/limelight/AppView.java
++++ b/app/src/main/java/com/limelight/AppView.java
+@@ -13,6 +13,9 @@ import com.limelight.nvstream.http.NvApp;
+ import com.limelight.nvstream.http.NvHTTP;
+ import com.limelight.nvstream.http.PairingManager;
+ import com.limelight.preferences.PreferenceConfiguration;
++// THUMBCAST:
++import com.limelight.thumbcast.ThumbcastAppSettingsDialog;
++// THUMBCAST END
+ import com.limelight.ui.AdapterFragment;
+ import com.limelight.ui.AdapterFragmentCallbacks;
+ import com.limelight.utils.CacheHelper;
+@@ -70,6 +73,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
+     private final static int VIEW_DETAILS_ID = 5;
+     private final static int CREATE_SHORTCUT_ID = 6;
+     private final static int HIDE_APP_ID = 7;
++    // THUMBCAST: ustawienia Thumbcast dla aplikacji (profil, rozdzielczość, FPS).
++    private final static int THUMBCAST_APP_SETTINGS_ID = 8;
++    // THUMBCAST END
+ 
+     public final static String HIDDEN_APPS_PREF_FILENAME = "HiddenApps";
+ 
+@@ -415,6 +421,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
+         }
+ 
+         menu.add(Menu.NONE, VIEW_DETAILS_ID, 4, getResources().getString(R.string.applist_menu_details));
++        // THUMBCAST:
++        menu.add(Menu.NONE, THUMBCAST_APP_SETTINGS_ID, 4, getResources().getString(R.string.thumbcast_app_settings_menu));
++        // THUMBCAST END
+ 
+         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+             // Only add an option to create shortcut if box art is loaded
+@@ -492,6 +501,12 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
+                 updateHiddenApps(false);
+                 return true;
+ 
++            // THUMBCAST:
++            case THUMBCAST_APP_SETTINGS_ID:
++                ThumbcastAppSettingsDialog.show(AppView.this, uuidString, app.app.getAppId(), app.app.getAppName());
++                return true;
++            // THUMBCAST END
++
+             case CREATE_SHORTCUT_ID:
+                 ImageView appImageView = info.targetView.findViewById(R.id.grid_image);
+                 Bitmap appBits = ((BitmapDrawable)appImageView.getDrawable()).getBitmap();
 diff --git a/app/src/main/java/com/limelight/Game.java b/app/src/main/java/com/limelight/Game.java
-index 8d369b3e..55b540bd 100644
+index 8d369b3e..9657a57f 100644
 --- a/app/src/main/java/com/limelight/Game.java
 +++ b/app/src/main/java/com/limelight/Game.java
-@@ -36,6 +36,9 @@ import com.limelight.utils.ServerHelper;
+@@ -36,6 +36,10 @@ import com.limelight.utils.ServerHelper;
  import com.limelight.utils.ShortcutHelper;
  import com.limelight.utils.SpinnerDialog;
  import com.limelight.utils.UiHelper;
 +// THUMBCAST:
++import com.limelight.thumbcast.ThumbcastAppSettings;
 +import com.limelight.thumbcast.ThumbcastSession;
 +// THUMBCAST END
  
  import android.annotation.SuppressLint;
  import android.annotation.TargetApi;
-@@ -112,6 +115,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -112,6 +116,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
      private ControllerHandler controllerHandler;
      private KeyboardTranslator keyboardTranslator;
      private VirtualController virtualController;
@@ -230,7 +278,17 @@ index 8d369b3e..55b540bd 100644
  
      private PreferenceConfiguration prefConfig;
      private SharedPreferences tombstonePrefs;
-@@ -504,7 +510,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -217,6 +224,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+ 
+         // Read the stream preferences
+         prefConfig = PreferenceConfiguration.readPreferences(this);
++        // THUMBCAST: ustawienia aplikacji (profil, rozdzielczość, FPS) tylko dla tego strumienia, preferencje bez zmian.
++        ThumbcastAppSettings.applyToStream(this, prefConfig, getIntent());
++        // THUMBCAST END
+         tombstonePrefs = Game.this.getSharedPreferences("DecoderTombstone", 0);
+ 
+         // Enter landscape unless we're on a square screen
+@@ -504,7 +514,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
              }
          }
  
@@ -243,7 +301,7 @@ index 8d369b3e..55b540bd 100644
              // create virtual onscreen controller
              virtualController = new VirtualController(controllerHandler,
                      (FrameLayout)streamView.getParent(),
-@@ -594,6 +604,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -594,6 +608,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                  if (virtualController != null) {
                      virtualController.hide();
                  }
@@ -253,7 +311,7 @@ index 8d369b3e..55b540bd 100644
  
                  performanceOverlayView.setVisibility(View.GONE);
                  notificationOverlayView.setVisibility(View.GONE);
-@@ -612,6 +625,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -612,6 +629,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                  if (virtualController != null) {
                      virtualController.show();
                  }
@@ -263,7 +321,7 @@ index 8d369b3e..55b540bd 100644
  
                  if (prefConfig.enablePerfOverlay) {
                      performanceOverlayView.setVisibility(View.VISIBLE);
-@@ -1036,6 +1052,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1036,6 +1056,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
      protected void onDestroy() {
          super.onDestroy();
  
@@ -274,7 +332,7 @@ index 8d369b3e..55b540bd 100644
          if (controllerHandler != null) {
              controllerHandler.destroy();
          }
-@@ -1326,6 +1346,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1326,6 +1350,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
  
      @Override
      public boolean handleKeyDown(KeyEvent event) {
@@ -287,7 +345,7 @@ index 8d369b3e..55b540bd 100644
          // Pass-through virtual navigation keys
          if ((event.getFlags() & KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0) {
              return false;
-@@ -1408,6 +1434,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1408,6 +1438,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
  
      @Override
      public boolean handleKeyUp(KeyEvent event) {
@@ -300,7 +358,7 @@ index 8d369b3e..55b540bd 100644
          // Pass-through virtual navigation keys
          if ((event.getFlags() & KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0) {
              return false;
-@@ -1471,6 +1503,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1471,6 +1507,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
      }
  
      private boolean handleKeyMultiple(KeyEvent event) {
@@ -310,7 +368,7 @@ index 8d369b3e..55b540bd 100644
          // We can receive keys from a software keyboard that don't correspond to any existing
          // KEYCODE value. Android will give those to us as an ACTION_MULTIPLE KeyEvent.
          //
-@@ -1504,6 +1539,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1504,6 +1543,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
          inputManager.toggleSoftInput(0, 0);
      }
  
@@ -324,7 +382,7 @@ index 8d369b3e..55b540bd 100644
      private byte getLiTouchTypeFromEvent(MotionEvent event) {
          switch (event.getActionMasked()) {
              case MotionEvent.ACTION_DOWN:
-@@ -1783,6 +1825,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1783,6 +1829,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
      // Returns true if the event was consumed
      // NB: View is only present if called from a view callback
      private boolean handleMotionEvent(View view, MotionEvent event) {
@@ -334,7 +392,7 @@ index 8d369b3e..55b540bd 100644
          // Pass through mouse/touch/joystick input if we're not grabbing
          if (!grabbedInput) {
              return false;
-@@ -1993,6 +2038,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -1993,6 +2042,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
              // This case is for fingers
              else
              {
@@ -344,7 +402,7 @@ index 8d369b3e..55b540bd 100644
                  if (virtualController != null &&
                          (virtualController.getControllerMode() == VirtualController.ControllerMode.MoveButtons ||
                           virtualController.getControllerMode() == VirtualController.ControllerMode.ResizeButtons)) {
-@@ -2227,6 +2275,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
+@@ -2227,6 +2279,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
  
      private void stopConnection() {
          if (connecting || connected) {
@@ -782,10 +840,10 @@ index 945f114b..2fe809e6 100644
                      continue;
                  }
 diff --git a/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java b/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java
-index 8ed01e36..1985674b 100644
+index 8ed01e36..3ec73a5a 100644
 --- a/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java
 +++ b/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java
-@@ -131,6 +131,18 @@ public class PreferenceConfiguration {
+@@ -131,6 +131,20 @@ public class PreferenceConfiguration {
      public String language;
      public boolean smallIconMode, multiController, usbDriver, flipFaceButtons;
      public boolean onscreenController;
@@ -799,12 +857,14 @@ index 8ed01e36..1985674b 100644
 +
 +    public ControlLayer controlLayer;
 +    public String thumbcastProfileFile;
++    /** Profil przypisany do uruchamianej aplikacji (ThumbcastAppSettings); null = thumbcastProfileFile. Nie z preferencji. */
++    public String thumbcastAppProfileFile;
 +    public boolean thumbcastDebugOverlay;
 +    // THUMBCAST END
      public boolean onlyL3R3;
      public boolean showGuideButton;
      public boolean enableHdr;
-@@ -579,6 +591,19 @@ public class PreferenceConfiguration {
+@@ -579,6 +593,19 @@ public class PreferenceConfiguration {
          config.multiController = prefs.getBoolean(MULTI_CONTROLLER_PREF_STRING, DEFAULT_MULTI_CONTROLLER);
          config.usbDriver = prefs.getBoolean(USB_DRIVER_PREF_SRING, DEFAULT_USB_DRIVER);
          config.onscreenController = prefs.getBoolean(ONSCREEN_CONTROLLER_PREF_STRING, ONSCREEN_CONTROLLER_DEFAULT);
@@ -2189,6 +2249,321 @@ index 00000000..b76816a4
 +        return true;
 +    }
 +}
+diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastAppSettings.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastAppSettings.java
+new file mode 100644
+index 00000000..5811d5da
+--- /dev/null
++++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastAppSettings.java
+@@ -0,0 +1,92 @@
++package com.limelight.thumbcast;
++
++// NOWY PLIK (moduł :app). Ustawienia Thumbcast dla aplikacji hosta (Sunshine „Applications”): profil sterowania,
++// rozdzielczość i FPS dla strumieni jednej aplikacji. Zapis na telefonie, w osobnym pliku SharedPreferences
++// (jak upstreamowy „HiddenApps”): klucz = uuid PC (HostAppSettings.hostKey), wartość = JSON z wpisami aplikacji
++// (id z listy aplikacji + nazwa jako klucz zapasowy). Logika bez Androida: :control-android, pakiet apps.
++//
++// Na start strumienia (Game.onCreate, zaraz po readPreferences) applyToStream nadpisuje tylko obiekt
++// PreferenceConfiguration tego strumienia: width/height/fps (trafiają do StreamConfiguration i do hosta w /launch)
++// i thumbcastAppProfileFile (ThumbcastSession). Preferencje globalne się nie zmieniają.
++
++import android.content.Context;
++import android.content.Intent;
++import android.content.SharedPreferences;
++
++import com.limelight.Game;
++import com.limelight.LimeLog;
++import com.limelight.nvstream.StreamConfiguration;
++import com.limelight.preferences.PreferenceConfiguration;
++
++import app.thumbcast.android.apps.AppStreamOverrides;
++import app.thumbcast.android.apps.AppStreamSettings;
++import app.thumbcast.android.apps.HostAppSettings;
++import app.thumbcast.android.apps.StreamParams;
++
++public final class ThumbcastAppSettings {
++
++    /** Plik SharedPreferences (data/shared_prefs/ThumbcastAppSettings.xml). */
++    public static final String PREFS_FILE = "ThumbcastAppSettings";
++
++    private ThumbcastAppSettings() {
++    }
++
++    /** Ustawienia wszystkich aplikacji jednego PC (pusta lista, gdy brak albo uszkodzone). */
++    public static HostAppSettings load(Context context, String pcUuid) {
++        String key = HostAppSettings.hostKey(pcUuid);
++        if (key == null) {
++            return HostAppSettings.EMPTY;
++        }
++        return HostAppSettings.decode(prefs(context).getString(key, null));
++    }
++
++    /** Ustawienia jednej aplikacji ({@link AppStreamSettings#NONE}, gdy nic nie przypisano). */
++    public static AppStreamSettings get(Context context, String pcUuid, int appId, String appName) {
++        return load(context, pcUuid).settingsFor(appId, appName);
++    }
++
++    /** Zapis; ustawienia puste (wszystko globalne) usuwają aplikację z listy. */
++    public static void save(Context context, String pcUuid, int appId, String appName, AppStreamSettings settings) {
++        String key = HostAppSettings.hostKey(pcUuid);
++        if (key == null) {
++            return;
++        }
++        HostAppSettings updated = load(context, pcUuid).with(appId, appName, settings);
++        SharedPreferences.Editor editor = prefs(context).edit();
++        if (updated.getEntries().isEmpty()) {
++            editor.remove(key);
++        } else {
++            editor.putString(key, updated.encode());
++        }
++        editor.apply();
++    }
++
++    /**
++     * Hak z Game.onCreate (po readPreferences): nakłada ustawienia uruchamianej aplikacji na konfigurację tego
++     * strumienia. Rozdzielczość i FPS trafiają do hosta w żądaniu /launch (pole mode); host zmienia ekran tylko
++     * wtedy, gdy ma to skonfigurowane (docs/host-apps.md).
++     */
++    public static void applyToStream(Context context, PreferenceConfiguration prefConfig, Intent intent) {
++        int appId = intent.getIntExtra(Game.EXTRA_APP_ID, StreamConfiguration.INVALID_APP_ID);
++        if (appId == StreamConfiguration.INVALID_APP_ID) {
++            return;
++        }
++        AppStreamSettings settings = get(context, intent.getStringExtra(Game.EXTRA_PC_UUID), appId,
++                intent.getStringExtra(Game.EXTRA_APP_NAME));
++        if (settings.isEmpty()) {
++            return;
++        }
++        StreamParams global = new StreamParams(prefConfig.width, prefConfig.height, prefConfig.fps);
++        StreamParams stream = AppStreamOverrides.applyStream(global, settings);
++        prefConfig.width = stream.getWidth();
++        prefConfig.height = stream.getHeight();
++        prefConfig.fps = stream.getFps();
++        prefConfig.thumbcastAppProfileFile = settings.getProfileFile();
++        LimeLog.info("Thumbcast: app settings for app " + appId + ": " + global + " -> " + stream
++                + ", profile " + settings.getProfileFile());
++    }
++
++    private static SharedPreferences prefs(Context context) {
++        return context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE);
++    }
++}
+diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastAppSettingsDialog.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastAppSettingsDialog.java
+new file mode 100644
+index 00000000..f5e7c5bf
+--- /dev/null
++++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastAppSettingsDialog.java
+@@ -0,0 +1,211 @@
++package com.limelight.thumbcast;
++
++// NOWY PLIK (moduł :app). Dialog „Ustawienia Thumbcast dla aplikacji” z menu kontekstowego aplikacji w AppView:
++// profil sterowania (biblioteka albo domyślny), rozdzielczość i FPS (te same opcje co w ustawieniach upstreamu albo
++// ustawienie globalne). Zapis przez ThumbcastAppSettings; nic nie zmienia ustawień globalnych.
++
++import android.app.Activity;
++import android.app.AlertDialog;
++import android.preference.PreferenceManager;
++import android.util.TypedValue;
++import android.view.View;
++import android.widget.ArrayAdapter;
++import android.widget.LinearLayout;
++import android.widget.ScrollView;
++import android.widget.Spinner;
++import android.widget.TextView;
++import android.widget.Toast;
++
++import com.limelight.LimeLog;
++import com.limelight.R;
++import com.limelight.preferences.PreferenceConfiguration;
++
++import java.util.ArrayList;
++import java.util.List;
++
++import app.thumbcast.android.apps.AppStreamSettings;
++import app.thumbcast.android.apps.StreamResolution;
++import app.thumbcast.android.library.ProfileEntry;
++import app.thumbcast.android.library.ProfileRepository;
++
++public final class ThumbcastAppSettingsDialog {
++
++    private ThumbcastAppSettingsDialog() {
++    }
++
++    /** Pozycja listy: etykieta i wartość (null = ustawienie globalne). */
++    private static final class Choice<T> {
++        final String label;
++        final T value;
++
++        Choice(String label, T value) {
++            this.label = label;
++            this.value = value;
++        }
++
++        @Override
++        public String toString() {
++            return label;
++        }
++    }
++
++    public static void show(final Activity activity, final String pcUuid, final int appId, final String appName) {
++        final AppStreamSettings current = ThumbcastAppSettings.get(activity, pcUuid, appId, appName);
++        PreferenceConfiguration global = PreferenceConfiguration.readPreferences(activity);
++
++        // ---- profil ----
++        ProfileRepository repo = ProfileRepository.create(activity);
++        String globalFile = PreferenceManager.getDefaultSharedPreferences(activity)
++                .getString(ProfileLibraryActivity.PREF_PROFILE, ProfileRepository.DEFAULT_PRESET);
++        String globalName = globalFile;
++        List<Choice<String>> profiles = new ArrayList<>();
++        int profileIndex = 0;
++        boolean mappedProfileMissing = current.getProfileFile() != null;
++        try {
++            ProfileEntry globalEntry = repo.entry(globalFile);
++            if (globalEntry != null && globalEntry.isValid()) {
++                globalName = globalEntry.getName();
++            }
++            profiles.add(new Choice<String>(activity.getString(R.string.thumbcast_app_settings_default_profile, globalName), null));
++            for (ProfileEntry e : repo.listAll()) {
++                if (!e.isValid()) {
++                    continue;
++                }
++                if (e.getFileName().equals(current.getProfileFile())) {
++                    profileIndex = profiles.size();
++                    mappedProfileMissing = false;
++                }
++                profiles.add(new Choice<>(e.getName(), e.getFileName()));
++            }
++        } catch (RuntimeException e) {
++            LimeLog.warning("Thumbcast: profile list failed: " + e);
++            if (profiles.isEmpty()) {
++                profiles.add(new Choice<String>(activity.getString(R.string.thumbcast_app_settings_default_profile, globalName), null));
++            }
++        }
++
++        // ---- rozdzielczość (wartości jak list_resolution upstreamu) ----
++        String[] resNames = activity.getResources().getStringArray(R.array.resolution_names);
++        String[] resValues = activity.getResources().getStringArray(R.array.resolution_values);
++        List<Choice<StreamResolution>> resolutions = new ArrayList<>();
++        resolutions.add(new Choice<StreamResolution>(activity.getString(R.string.thumbcast_app_settings_global_resolution,
++                global.width + "x" + global.height), null));
++        int resIndex = 0;
++        for (int i = 0; i < Math.min(resNames.length, resValues.length); i++) {
++            StreamResolution r = StreamResolution.parse(resValues[i]);
++            if (r == null) {
++                continue;
++            }
++            if (r.equals(current.getResolution())) {
++                resIndex = resolutions.size();
++            }
++            resolutions.add(new Choice<>(resNames[i] + " (" + r + ")", r));
++        }
++        if (current.getResolution() != null && resIndex == 0) {
++            // Wartość spoza listy (np. zapisana ręcznie): pokazujemy ją, żeby zapis jej nie zgubił.
++            resIndex = resolutions.size();
++            resolutions.add(new Choice<>(current.getResolution().toString(), current.getResolution()));
++        }
++
++        // ---- FPS (wartości jak list_fps upstreamu) ----
++        String[] fpsNames = activity.getResources().getStringArray(R.array.fps_names);
++        String[] fpsValues = activity.getResources().getStringArray(R.array.fps_values);
++        List<Choice<Integer>> fpsChoices = new ArrayList<>();
++        fpsChoices.add(new Choice<Integer>(activity.getString(R.string.thumbcast_app_settings_global_fps, global.fps), null));
++        int fpsIndex = 0;
++        for (int i = 0; i < Math.min(fpsNames.length, fpsValues.length); i++) {
++            int fps;
++            try {
++                fps = Integer.parseInt(fpsValues[i]);
++            } catch (NumberFormatException e) {
++                continue;
++            }
++            if (current.getFps() != null && current.getFps() == fps) {
++                fpsIndex = fpsChoices.size();
++            }
++            fpsChoices.add(new Choice<>(fpsNames[i], fps));
++        }
++        if (current.getFps() != null && fpsIndex == 0) {
++            fpsIndex = fpsChoices.size();
++            fpsChoices.add(new Choice<>(current.getFps() + " FPS", current.getFps()));
++        }
++
++        // ---- widok ----
++        int pad = dp(activity, 20);
++        LinearLayout column = new LinearLayout(activity);
++        column.setOrientation(LinearLayout.VERTICAL);
++        column.setPadding(pad, pad / 2, pad, 0);
++
++        if (mappedProfileMissing) {
++            addText(activity, column, activity.getString(R.string.thumbcast_app_settings_missing,
++                    current.getProfileFile()), true);
++        }
++        final Spinner profileSpinner = addSpinner(activity, column, R.string.thumbcast_app_settings_profile, profiles, profileIndex);
++        final Spinner resSpinner = addSpinner(activity, column, R.string.thumbcast_app_settings_resolution, resolutions, resIndex);
++        final Spinner fpsSpinner = addSpinner(activity, column, R.string.thumbcast_app_settings_fps, fpsChoices, fpsIndex);
++        addText(activity, column, activity.getString(R.string.thumbcast_app_settings_note), false);
++
++        ScrollView scroll = new ScrollView(activity);
++        scroll.addView(column);
++
++        new AlertDialog.Builder(activity)
++                .setTitle(activity.getString(R.string.thumbcast_app_settings_title, appName))
++                .setView(scroll)
++                .setPositiveButton(R.string.thumbcast_app_settings_save, (d, w) -> {
++                    AppStreamSettings chosen = new AppStreamSettings(
++                            ThumbcastAppSettingsDialog.<String>selected(profileSpinner),
++                            ThumbcastAppSettingsDialog.<StreamResolution>selected(resSpinner),
++                            ThumbcastAppSettingsDialog.<Integer>selected(fpsSpinner));
++                    ThumbcastAppSettings.save(activity, pcUuid, appId, appName, chosen);
++                    Toast.makeText(activity, activity.getString(R.string.thumbcast_app_settings_saved, appName),
++                            Toast.LENGTH_SHORT).show();
++                })
++                .setNeutralButton(R.string.thumbcast_app_settings_reset, (d, w) -> {
++                    ThumbcastAppSettings.save(activity, pcUuid, appId, appName, AppStreamSettings.NONE);
++                    Toast.makeText(activity, activity.getString(R.string.thumbcast_app_settings_cleared, appName),
++                            Toast.LENGTH_SHORT).show();
++                })
++                .setNegativeButton(android.R.string.cancel, null)
++                .show();
++    }
++
++    @SuppressWarnings("unchecked")
++    private static <T> T selected(Spinner spinner) {
++        Object item = spinner.getSelectedItem();
++        return item instanceof Choice ? ((Choice<T>) item).value : null;
++    }
++
++    private static <T> Spinner addSpinner(Activity activity, LinearLayout column, int labelRes,
++                                          List<Choice<T>> items, int selection) {
++        TextView label = new TextView(activity);
++        label.setText(labelRes);
++        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
++        label.setPadding(0, dp(activity, 12), 0, 0);
++        column.addView(label);
++
++        Spinner spinner = new Spinner(activity);
++        ArrayAdapter<Choice<T>> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, items);
++        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
++        spinner.setAdapter(adapter);
++        spinner.setSelection(Math.max(0, Math.min(selection, items.size() - 1)));
++        spinner.setMinimumHeight(dp(activity, 48));
++        column.addView(spinner);
++        return spinner;
++    }
++
++    private static void addText(Activity activity, LinearLayout column, String text, boolean warning) {
++        TextView view = new TextView(activity);
++        view.setText(text);
++        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, warning ? 14 : 12);
++        view.setPadding(0, dp(activity, 12), 0, warning ? 0 : dp(activity, 8));
++        if (!warning) {
++            view.setAlpha(0.75f);
++        }
++        view.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_START);
++        column.addView(view);
++    }
++
++    private static int dp(Activity activity, int value) {
++        return (int) (value * activity.getResources().getDisplayMetrics().density);
++    }
++}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastKeyTranslator.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastKeyTranslator.java
 new file mode 100644
 index 00000000..056ba4cc
@@ -2875,10 +3250,10 @@ index 00000000..56f3dc0b
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
 new file mode 100644
-index 00000000..9af1f31a
+index 00000000..11b561a3
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
-@@ -0,0 +1,636 @@
+@@ -0,0 +1,656 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Cała logika Thumbcast w aktywności Game: Game trzyma jedno pole
@@ -2899,6 +3274,10 @@ index 00000000..9af1f31a
 +// i profile użytkownika). Wybór zeruje stan na hoście, przebudowuje silnik i overlay (setProfile, jak przy
 +// starcie: ten sam plik wczytany przez ThumbcastProfiles, ukrywanie przy padzie i skala z sesji) i zapisuje
 +// nazwę pliku w preferencji list_thumbcast_profile (jak biblioteka profili).
++//
++// Profil aplikacji (12.11.2026, ThumbcastAppSettings): gdy uruchamiana aplikacja hosta ma przypisany profil,
++// sesja startuje z nim (brak pliku albo błąd walidacji = profil globalny i komunikat). Zmiana profilu w grze
++// działa wtedy tylko w tej sesji: nie zmienia ani przypisania aplikacji, ani profilu globalnego.
 +
 +import android.app.Activity;
 +import android.content.Context;
@@ -2930,6 +3309,8 @@ index 00000000..9af1f31a
 +
 +import app.thumbcast.android.ThumbcastOverlayFactory;
 +import app.thumbcast.android.ThumbcastProfiles;
++import app.thumbcast.android.apps.AppStreamOverrides;
++import app.thumbcast.android.apps.ProfileSelection;
 +import app.thumbcast.android.library.ProfileEntry;
 +import app.thumbcast.android.library.ProfileRepository;
 +import app.thumbcast.android.menu.MenuCommand;
@@ -2967,8 +3348,10 @@ index 00000000..9af1f31a
 +    private final MenuInputRouter menuInput = new MenuInputRouter();
 +    /** Profil z pliku z wyłączonym autoHideOnGamepad (ukrywaniem przy padzie steruje sesja), bez skalowania. */
 +    private Profile baseProfile;
-+    /** Nazwa pliku aktywnego profilu (wartość preferencji list_thumbcast_profile). */
++    /** Nazwa pliku aktywnego profilu (wartość preferencji list_thumbcast_profile albo profil aplikacji). */
 +    private String activeProfileFile;
++    /** true = sesja wystartowała z profilem aplikacji: zmiana profilu w grze nie zapisuje preferencji globalnej. */
++    private final boolean sessionOnlyProfile;
 +    private final Map<String, Runnable> commands;
 +    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 +    private final InputManager inputManager;
@@ -3016,14 +3399,21 @@ index 00000000..9af1f31a
 +        if (prefConfig.controlLayer != PreferenceConfiguration.ControlLayer.THUMBCAST) {
 +            return null;
 +        }
-+        Profile profile = ThumbcastProfiles.loadOrNull(activity, prefConfig.thumbcastProfileFile);
++        ProfileSelection<Profile> selection = AppStreamOverrides.selectProfile(prefConfig.thumbcastAppProfileFile,
++                prefConfig.thumbcastProfileFile, name -> ThumbcastProfiles.loadOrNull(activity, name));
++        if (selection.getAppProfileFailed()) {
++            LimeLog.warning("Thumbcast: app profile " + prefConfig.thumbcastAppProfileFile + " failed: "
++                    + ThumbcastProfiles.getLastError());
++            Toast.makeText(activity, R.string.thumbcast_app_profile_missing, Toast.LENGTH_LONG).show();
++        }
++        Profile profile = selection.getValue();
 +        if (profile == null) {
 +            Toast.makeText(activity, activity.getString(R.string.thumbcast_profile_error,
 +                    String.valueOf(ThumbcastProfiles.getLastError())), Toast.LENGTH_LONG).show();
 +            return null;
 +        }
 +        return new ThumbcastSession(activity, host, prefConfig, conn, controllerHandler, keyboardTranslator,
-+                streamView, profile);
++                streamView, profile, selection.getFileName(), selection.getFromApp());
 +    }
 +
 +    /** Host dla aktywności z upstreamowym `toggleKeyboard()` (GameGestures) i zakończeniem przez finish(). */
@@ -3043,12 +3433,14 @@ index 00000000..9af1f31a
 +
 +    private ThumbcastSession(Activity activity, Host host, final PreferenceConfiguration prefConfig,
 +                             NvConnection conn, ControllerHandler controllerHandler,
-+                             KeyboardTranslator keyboardTranslator, View streamView, Profile profile) {
++                             KeyboardTranslator keyboardTranslator, View streamView, Profile profile,
++                             String profileFile, boolean sessionOnlyProfile) {
 +        this.activity = activity;
 +        this.host = host;
 +        this.settings = new ThumbcastSettings(activity);
 +        this.prefConfig = prefConfig;
-+        this.activeProfileFile = prefConfig.thumbcastProfileFile;
++        this.activeProfileFile = profileFile;
++        this.sessionOnlyProfile = sessionOnlyProfile;
 +        this.scalePercent = settings.getControlScalePercent();
 +        this.hideOnGamepad = settings.isHideOnGamepad();
 +        this.baseProfile = ThumbcastOverlayFactory.withAutoHideOnGamepad(profile, false);
@@ -3390,13 +3782,16 @@ index 00000000..9af1f31a
 +        releaseHostInput();
 +        baseProfile = ThumbcastOverlayFactory.withAutoHideOnGamepad(loaded, false);
 +        activeProfileFile = fileName;
-+        prefConfig.thumbcastProfileFile = fileName;
-+        PreferenceManager.getDefaultSharedPreferences(activity).edit()
-+                .putString(ProfileLibraryActivity.PREF_PROFILE, fileName).apply();
++        if (!sessionOnlyProfile) {
++            prefConfig.thumbcastProfileFile = fileName;
++            PreferenceManager.getDefaultSharedPreferences(activity).edit()
++                    .putString(ProfileLibraryActivity.PREF_PROFILE, fileName).apply();
++        }
 +        overlay.setProfile(effectiveProfile());
 +        applyControlsHidden();
-+        Toast.makeText(activity, activity.getString(R.string.thumbcast_library_selected, loaded.getName()),
-+                Toast.LENGTH_SHORT).show();
++        Toast.makeText(activity, activity.getString(sessionOnlyProfile
++                ? R.string.thumbcast_menu_profile_session_only : R.string.thumbcast_library_selected,
++                loaded.getName()), Toast.LENGTH_SHORT).show();
 +    }
 +
 +    /** Polecenie z klawiatury lub pada przy otwartym menu. */
@@ -3720,10 +4115,10 @@ index 00000000..d0fa4d92
 +</LinearLayout>
 diff --git a/app/src/main/res/values-pl/thumbcast_strings.xml b/app/src/main/res/values-pl/thumbcast_strings.xml
 new file mode 100644
-index 00000000..e0810523
+index 00000000..92a28c05
 --- /dev/null
 +++ b/app/src/main/res/values-pl/thumbcast_strings.xml
-@@ -0,0 +1,112 @@
+@@ -0,0 +1,129 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -3835,6 +4230,23 @@ index 00000000..e0810523
 +    <string name="thumbcast_addresses_invalid">Nieprawidłowy adres</string>
 +    <string name="thumbcast_addresses_exists">Ten adres już jest na liście</string>
 +    <string name="thumbcast_addresses_saved">Adresy zapisane</string>
++    <!-- Ustawienia Thumbcast dla aplikacji hosta (AppView, ThumbcastAppSettingsDialog). -->
++    <string name="thumbcast_app_settings_menu">Ustawienia Thumbcast dla aplikacji</string>
++    <string name="thumbcast_app_settings_title">Thumbcast: %1$s</string>
++    <string name="thumbcast_app_settings_profile">Profil sterowania</string>
++    <string name="thumbcast_app_settings_resolution">Rozdzielczość strumienia</string>
++    <string name="thumbcast_app_settings_fps">Liczba klatek (FPS)</string>
++    <string name="thumbcast_app_settings_default_profile">Profil domyślny (%1$s)</string>
++    <string name="thumbcast_app_settings_global_resolution">Ustawienie globalne (%1$s)</string>
++    <string name="thumbcast_app_settings_global_fps">Ustawienie globalne (%1$d FPS)</string>
++    <string name="thumbcast_app_settings_missing">Profil wybrany wcześniej dla tej aplikacji (%1$s) już nie istnieje albo jest niepoprawny. Używany jest profil domyślny.</string>
++    <string name="thumbcast_app_settings_note">Działa tylko przy uruchomieniu tej aplikacji z tego telefonu; ustawienia globalne się nie zmieniają. Rozdzielczość ekranu PC zmienia się tylko wtedy, gdy host jest do tego skonfigurowany (opcje ekranu w Sunshine).</string>
++    <string name="thumbcast_app_settings_save">Zapisz</string>
++    <string name="thumbcast_app_settings_reset">Globalne</string>
++    <string name="thumbcast_app_settings_saved">Zapisano dla: %1$s</string>
++    <string name="thumbcast_app_settings_cleared">%1$s używa ustawień globalnych</string>
++    <string name="thumbcast_app_profile_missing">Profil sterowania wybrany dla tej aplikacji nie istnieje albo jest niepoprawny. Używam profilu domyślnego.</string>
++    <string name="thumbcast_menu_profile_session_only">Profil w tej sesji: %1$s (ustawienie aplikacji bez zmian)</string>
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_arrays.xml b/app/src/main/res/values/thumbcast_arrays.xml
 new file mode 100644
@@ -3873,10 +4285,10 @@ index 00000000..1e5e7040
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_strings.xml b/app/src/main/res/values/thumbcast_strings.xml
 new file mode 100644
-index 00000000..cd54c9b6
+index 00000000..ad32ef0d
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_strings.xml
-@@ -0,0 +1,113 @@
+@@ -0,0 +1,130 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -3989,6 +4401,23 @@ index 00000000..cd54c9b6
 +    <string name="thumbcast_addresses_invalid">Invalid address</string>
 +    <string name="thumbcast_addresses_exists">This address is already on the list</string>
 +    <string name="thumbcast_addresses_saved">Addresses saved</string>
++    <!-- Ustawienia Thumbcast dla aplikacji hosta (AppView, ThumbcastAppSettingsDialog). -->
++    <string name="thumbcast_app_settings_menu">Thumbcast app settings</string>
++    <string name="thumbcast_app_settings_title">Thumbcast: %1$s</string>
++    <string name="thumbcast_app_settings_profile">Control profile</string>
++    <string name="thumbcast_app_settings_resolution">Stream resolution</string>
++    <string name="thumbcast_app_settings_fps">Frame rate</string>
++    <string name="thumbcast_app_settings_default_profile">Default profile (%1$s)</string>
++    <string name="thumbcast_app_settings_global_resolution">Global setting (%1$s)</string>
++    <string name="thumbcast_app_settings_global_fps">Global setting (%1$d FPS)</string>
++    <string name="thumbcast_app_settings_missing">The profile chosen earlier for this app (%1$s) no longer exists or is invalid. The default profile is used.</string>
++    <string name="thumbcast_app_settings_note">Used only when this app is started from this phone; global settings stay unchanged. The PC switches its own screen resolution only if the host is set up for it (Sunshine display device options).</string>
++    <string name="thumbcast_app_settings_save">Save</string>
++    <string name="thumbcast_app_settings_reset">Use global</string>
++    <string name="thumbcast_app_settings_saved">Saved for %1$s</string>
++    <string name="thumbcast_app_settings_cleared">%1$s uses the global settings</string>
++    <string name="thumbcast_app_profile_missing">The control profile chosen for this app is missing or invalid. Using the default profile.</string>
++    <string name="thumbcast_menu_profile_session_only">Profile for this session: %1$s (app setting unchanged)</string>
 +</resources>
 diff --git a/app/src/main/res/xml/preferences.xml b/app/src/main/res/xml/preferences.xml
 index 5b09082b..702825ee 100644

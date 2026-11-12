@@ -109,4 +109,21 @@
     <string name="thumbcast_addresses_invalid">Nieprawidłowy adres</string>
     <string name="thumbcast_addresses_exists">Ten adres już jest na liście</string>
     <string name="thumbcast_addresses_saved">Adresy zapisane</string>
+    <!-- Ustawienia Thumbcast dla aplikacji hosta (AppView, ThumbcastAppSettingsDialog). -->
+    <string name="thumbcast_app_settings_menu">Ustawienia Thumbcast dla aplikacji</string>
+    <string name="thumbcast_app_settings_title">Thumbcast: %1$s</string>
+    <string name="thumbcast_app_settings_profile">Profil sterowania</string>
+    <string name="thumbcast_app_settings_resolution">Rozdzielczość strumienia</string>
+    <string name="thumbcast_app_settings_fps">Liczba klatek (FPS)</string>
+    <string name="thumbcast_app_settings_default_profile">Profil domyślny (%1$s)</string>
+    <string name="thumbcast_app_settings_global_resolution">Ustawienie globalne (%1$s)</string>
+    <string name="thumbcast_app_settings_global_fps">Ustawienie globalne (%1$d FPS)</string>
+    <string name="thumbcast_app_settings_missing">Profil wybrany wcześniej dla tej aplikacji (%1$s) już nie istnieje albo jest niepoprawny. Używany jest profil domyślny.</string>
+    <string name="thumbcast_app_settings_note">Działa tylko przy uruchomieniu tej aplikacji z tego telefonu; ustawienia globalne się nie zmieniają. Rozdzielczość ekranu PC zmienia się tylko wtedy, gdy host jest do tego skonfigurowany (opcje ekranu w Sunshine).</string>
+    <string name="thumbcast_app_settings_save">Zapisz</string>
+    <string name="thumbcast_app_settings_reset">Globalne</string>
+    <string name="thumbcast_app_settings_saved">Zapisano dla: %1$s</string>
+    <string name="thumbcast_app_settings_cleared">%1$s używa ustawień globalnych</string>
+    <string name="thumbcast_app_profile_missing">Profil sterowania wybrany dla tej aplikacji nie istnieje albo jest niepoprawny. Używam profilu domyślnego.</string>
+    <string name="thumbcast_menu_profile_session_only">Profil w tej sesji: %1$s (ustawienie aplikacji bez zmian)</string>
 </resources>

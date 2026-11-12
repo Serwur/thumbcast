@@ -13,6 +13,9 @@ import com.limelight.nvstream.http.NvApp;
 import com.limelight.nvstream.http.NvHTTP;
 import com.limelight.nvstream.http.PairingManager;
 import com.limelight.preferences.PreferenceConfiguration;
+// THUMBCAST:
+import com.limelight.thumbcast.ThumbcastAppSettingsDialog;
+// THUMBCAST END
 import com.limelight.ui.AdapterFragment;
 import com.limelight.ui.AdapterFragmentCallbacks;
 import com.limelight.utils.CacheHelper;
@@ -70,6 +73,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     private final static int VIEW_DETAILS_ID = 5;
     private final static int CREATE_SHORTCUT_ID = 6;
     private final static int HIDE_APP_ID = 7;
+    // THUMBCAST: ustawienia Thumbcast dla aplikacji (profil, rozdzielczość, FPS).
+    private final static int THUMBCAST_APP_SETTINGS_ID = 8;
+    // THUMBCAST END
 
     public final static String HIDDEN_APPS_PREF_FILENAME = "HiddenApps";
 
@@ -415,6 +421,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         }
 
         menu.add(Menu.NONE, VIEW_DETAILS_ID, 4, getResources().getString(R.string.applist_menu_details));
+        // THUMBCAST:
+        menu.add(Menu.NONE, THUMBCAST_APP_SETTINGS_ID, 4, getResources().getString(R.string.thumbcast_app_settings_menu));
+        // THUMBCAST END
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Only add an option to create shortcut if box art is loaded
@@ -491,6 +500,12 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
                 }
                 updateHiddenApps(false);
                 return true;
+
+            // THUMBCAST:
+            case THUMBCAST_APP_SETTINGS_ID:
+                ThumbcastAppSettingsDialog.show(AppView.this, uuidString, app.app.getAppId(), app.app.getAppName());
+                return true;
+            // THUMBCAST END
 
             case CREATE_SHORTCUT_ID:
                 ImageView appImageView = info.targetView.findViewById(R.id.grid_image);

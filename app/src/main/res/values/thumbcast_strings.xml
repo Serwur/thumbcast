@@ -110,4 +110,21 @@
     <string name="thumbcast_addresses_invalid">Invalid address</string>
     <string name="thumbcast_addresses_exists">This address is already on the list</string>
     <string name="thumbcast_addresses_saved">Addresses saved</string>
+    <!-- Ustawienia Thumbcast dla aplikacji hosta (AppView, ThumbcastAppSettingsDialog). -->
+    <string name="thumbcast_app_settings_menu">Thumbcast app settings</string>
+    <string name="thumbcast_app_settings_title">Thumbcast: %1$s</string>
+    <string name="thumbcast_app_settings_profile">Control profile</string>
+    <string name="thumbcast_app_settings_resolution">Stream resolution</string>
+    <string name="thumbcast_app_settings_fps">Frame rate</string>
+    <string name="thumbcast_app_settings_default_profile">Default profile (%1$s)</string>
+    <string name="thumbcast_app_settings_global_resolution">Global setting (%1$s)</string>
+    <string name="thumbcast_app_settings_global_fps">Global setting (%1$d FPS)</string>
+    <string name="thumbcast_app_settings_missing">The profile chosen earlier for this app (%1$s) no longer exists or is invalid. The default profile is used.</string>
+    <string name="thumbcast_app_settings_note">Used only when this app is started from this phone; global settings stay unchanged. The PC switches its own screen resolution only if the host is set up for it (Sunshine display device options).</string>
+    <string name="thumbcast_app_settings_save">Save</string>
+    <string name="thumbcast_app_settings_reset">Use global</string>
+    <string name="thumbcast_app_settings_saved">Saved for %1$s</string>
+    <string name="thumbcast_app_settings_cleared">%1$s uses the global settings</string>
+    <string name="thumbcast_app_profile_missing">The control profile chosen for this app is missing or invalid. Using the default profile.</string>
+    <string name="thumbcast_menu_profile_session_only">Profile for this session: %1$s (app setting unchanged)</string>
 </resources>

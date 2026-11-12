@@ -141,6 +141,8 @@ public class PreferenceConfiguration {
 
     public ControlLayer controlLayer;
     public String thumbcastProfileFile;
+    /** Profil przypisany do uruchamianej aplikacji (ThumbcastAppSettings); null = thumbcastProfileFile. Nie z preferencji. */
+    public String thumbcastAppProfileFile;
     public boolean thumbcastDebugOverlay;
     // THUMBCAST END
     public boolean onlyL3R3;

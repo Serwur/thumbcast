@@ -41,6 +41,9 @@ dependencies {
     // `api`, bo publiczne API modułu (fabryka, overlay) używa typów Profile i InputSink.
     api(project(":control-model"))
     api(project(":control-engine"))
+    // Ustawienia aplikacji hosta (apps/AppStreamSettings): tylko API JsonElement z biblioteki, bez pluginu
+    // kotlin-serialization. Ta sama biblioteka jest już w APK przez :control-model.
+    implementation(libs.kotlinx.serialization.json)
 
     // Testy JVM (JUnit 4 – domyślny runner testów jednostkowych AGP). Bez Robolectric: logika
     // testowana w testach nie dotyka API Androida (patrz docs/android.md, „Testy”).
