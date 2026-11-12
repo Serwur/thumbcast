@@ -60,6 +60,35 @@ Test w aplikacji (ekran diagnostyki, etap E3): Thumbcast wyśle przycisk A, a Ty
 - `lan_encryption_mode = 0`, `wan_encryption_mode = 1` (domyślnie).
 - Poza domem użyj Tailscale (albo ZeroTier): [tailscale.md](tailscale.md). Tunele HTTP (Cloudflare Tunnel, ngrok) się nie nadają, bo strumień to UDP ([DECISIONS.md](DECISIONS.md), pkt e).
 
+## 3a. Jeden PC w domu (LAN) i poza domem (Tailscale/ZeroTier)
+
+Od 12.11.2026 jeden wpis PC w Thumbcast trzyma kilka adresów: adres LAN i adresy alternatywne (Tailscale, ZeroTier, inne). Parowanie jest jedno, bo zależy od certyfikatu PC, nie od adresu. Na urządzeniu jeszcze niesprawdzone (HANDOFF 4f).
+
+Jak to działa:
+- **LAN ma pierwszeństwo.** Aplikacja pyta wszystkie znane adresy równolegle, ale wybiera adres LAN (192.168.x, 10.x, 172.16–31.x), jeśli odpowie. Adres alternatywny jest używany dopiero, gdy LAN nie odpowie w ok. 3 s (poza domem). W domu z włączonym Tailscale stream idzie przez LAN.
+- Stream, lista aplikacji i parowanie używają adresu, który właśnie odpowiedział. Po zmianie sieci (Wi-Fi ↔ LTE, włączenie VPN) aplikacja najpierw odpytuje PC od nowa.
+- Odpowiedź przez Tailscale nie kasuje adresu LAN (Sunshine zgłasza wtedy jako „LocalIP” adres `100.x`; wcześniej nadpisywał on adres LAN i trzeba było usuwać PC i parować od nowa).
+- Wake-on-LAN idzie na wszystkie znane adresy i na broadcast.
+
+Co robi użytkownik (raz):
+1. Sparuj PC w domu, w LAN (sekcja 1, krok 3).
+2. Dodaj adres Tailscale tego PC (`100.x.y.z` albo nazwa MagicDNS, np. `pc.tailnet.ts.net`). Dwie drogi, obie bez parowania:
+   - przytrzymaj PC na liście → **Adresy połączenia** → **Dodaj adres**;
+   - albo „Dodaj PC” z adresem Tailscale: aplikacja rozpozna ten sam PC (po `uniqueid` z Sunshine) i dopisze adres do istniejącego wpisu.
+3. Sprawdź w **Adresy połączenia**: grupa „LAN” i „Alternatywny”, ✓ przy adresie używanym w tej chwili. Tam też usuniesz stary adres (np. po zmianie IP w Tailscale). Adres LAN zgłoszony przez PC wraca sam po następnym połączeniu w LAN.
+
+ZeroTier: adres ZeroTier bywa prywatny (np. `10.147.x.x`), więc lista pokaże go w grupie „LAN”. Nie nadpisze on jednak adresu domowego (adresy dodane ręcznie tylko się dopisują), a kolejność wśród adresów LAN to: adres zgłoszony przez PC, potem ręczne.
+
+Aktualizacja ze starszej wersji: wpis, który po sesji przez Tailscale miał zapisany `100.x` jako adres LAN, zostaje poprawiony przy starcie (adres trafia do alternatywnych, parowanie zostaje). Jeśli adres LAN zginął wcześniej, wróci po wykryciu PC w sieci (mDNS) albo po jednorazowym dodaniu IP LAN jak w kroku 2.
+
+Scenariusz testu (telefon + PC z Sunshine i Tailscale):
+1. W domu (Wi-Fi, Tailscale na telefonie wyłączony): PC online, „Adresy połączenia” → ✓ przy adresie LAN. Uruchom stream pulpitu, wyjdź.
+2. Dodaj adres Tailscale (krok 2 wyżej). PC dalej jeden na liście, dalej sparowany, ✓ dalej przy LAN.
+3. Wyłącz Wi-Fi, włącz LTE i Tailscale. Po kilku sekundach PC online, ✓ przy `100.x`. Uruchom stream.
+4. Wróć na Wi-Fi i wyłącz Tailscale. PC online bez usuwania i parowania, ✓ przy LAN. Uruchom stream.
+5. Powtórz 4 z włączonym Tailscale: ✓ ma być przy LAN.
+6. Opcjonalnie: uśpij PC, „Wyślij Wake-on-LAN” w domu.
+
 ## 4. Ustawienia w grze (MMO z trybem pada, np. WoW: Forever)
 
 Tryb pada w grze ma status „Alpha”, więc nazwy opcji mogą się zmieniać.

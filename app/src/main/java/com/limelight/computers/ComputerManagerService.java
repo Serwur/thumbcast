@@ -290,6 +290,17 @@ public class ComputerManagerService extends Service {
             return null;
         }
 
+        // THUMBCAST: edycja adresów PC (dialog „Adresy połączenia” w PcView). Nie wołać z wątku UI:
+        // czeka na networkLock trwającego odpytania.
+        public ComputerDetails addAddress(String uuid, ComputerDetails.AddressTuple address) {
+            return editAddresses(uuid, address, true);
+        }
+
+        public ComputerDetails removeAddress(String uuid, ComputerDetails.AddressTuple address) {
+            return editAddresses(uuid, address, false);
+        }
+        // THUMBCAST END
+
         public void invalidateStateForComputer(String uuid) {
             synchronized (pollingTuples) {
                 for (PollingTuple tuple : pollingTuples) {
@@ -304,6 +315,41 @@ public class ComputerManagerService extends Service {
             }
         }
     }
+
+    // THUMBCAST: zmiana listy adresów jednego PC; zapis do bazy w całości (bez łączenia), żeby usunięcie działało.
+    private ComputerDetails editAddresses(String uuid, ComputerDetails.AddressTuple address, boolean add) {
+        PollingTuple target = null;
+        synchronized (pollingTuples) {
+            for (PollingTuple tuple : pollingTuples) {
+                if (uuid.equals(tuple.computer.uuid)) {
+                    target = tuple;
+                    break;
+                }
+            }
+        }
+        if (target == null) {
+            return null;
+        }
+
+        boolean changed;
+        synchronized (target.networkLock) {
+            changed = add ? com.limelight.thumbcast.ThumbcastAddressBook.addManual(target.computer, address)
+                    : com.limelight.thumbcast.ThumbcastAddressBook.remove(target.computer, address);
+            if (changed && getLocalDatabaseReference()) {
+                dbManager.updateComputer(target.computer);
+                releaseLocalDatabaseReference();
+            }
+            if (changed && !add && target.computer.activeAddress == null) {
+                // Usunięty adres był aktywny: nowe odpytanie wybierze następny.
+                target.computer.state = ComputerDetails.State.UNKNOWN;
+            }
+        }
+        if (changed && listener != null) {
+            listener.notifyComputerUpdated(target.computer);
+        }
+        return target.computer;
+    }
+    // THUMBCAST END
 
     @Override
     public boolean onUnbind(Intent intent) {
@@ -625,86 +671,60 @@ public class ComputerManagerService extends Service {
     }
 
     private ComputerDetails parallelPollPc(ComputerDetails details) throws InterruptedException {
-        ParallelPollTuple localInfo = new ParallelPollTuple(details.localAddress, details);
-        ParallelPollTuple manualInfo = new ParallelPollTuple(details.manualAddress, details);
-        ParallelPollTuple remoteInfo = new ParallelPollTuple(details.remoteAddress, details);
-        ParallelPollTuple ipv6Info = new ParallelPollTuple(details.ipv6Address, details);
-
-        // These must be started in order of precedence for the deduplication algorithm
-        // to result in the correct behavior.
+        // THUMBCAST: wszystkie znane adresy (LAN, ręczne/alternatywne, remote, IPv6) zamiast stałych czterech.
+        // Kolejność z HostAddresses.pollOrder: najpierw grupa LAN, potem alternatywne (Tailscale, ZeroTier, publiczne).
+        // Odpytujemy równolegle, ale wynik bierzemy w tej kolejności: adres alternatywny wygrywa dopiero, gdy
+        // wcześniejsze nie odpowiedzą (timeout połączenia NvHTTP, 3 s; 5 s dla aktywnego adresu).
+        // Upstream: local, manual, remote, ipv6 (ta sama zasada „pierwszy w kolejności wygrywa”).
+        java.util.List<ComputerDetails.AddressTuple> order =
+                com.limelight.thumbcast.ThumbcastAddressBook.pollOrder(details);
+        java.util.List<ParallelPollTuple> tuples = new java.util.ArrayList<>();
         HashSet<ComputerDetails.AddressTuple> uniqueAddresses = new HashSet<>();
-        startParallelPollThread(localInfo, uniqueAddresses);
-        startParallelPollThread(manualInfo, uniqueAddresses);
-        startParallelPollThread(remoteInfo, uniqueAddresses);
-        startParallelPollThread(ipv6Info, uniqueAddresses);
+        for (ComputerDetails.AddressTuple address : order) {
+            ParallelPollTuple tuple = new ParallelPollTuple(address, details);
+            startParallelPollThread(tuple, uniqueAddresses);
+            tuples.add(tuple);
+        }
 
         try {
-            // Check local first
-            synchronized (localInfo) {
-                while (!localInfo.complete) {
-                    localInfo.wait();
-                }
+            for (ParallelPollTuple tuple : tuples) {
+                synchronized (tuple) {
+                    while (!tuple.complete) {
+                        tuple.wait();
+                    }
 
-                if (localInfo.returnedDetails != null) {
-                    localInfo.returnedDetails.activeAddress = localInfo.address;
-                    return localInfo.returnedDetails;
-                }
-            }
-
-            // Now manual
-            synchronized (manualInfo) {
-                while (!manualInfo.complete) {
-                    manualInfo.wait();
-                }
-
-                if (manualInfo.returnedDetails != null) {
-                    manualInfo.returnedDetails.activeAddress = manualInfo.address;
-                    return manualInfo.returnedDetails;
-                }
-            }
-
-            // Now remote IPv4
-            synchronized (remoteInfo) {
-                while (!remoteInfo.complete) {
-                    remoteInfo.wait();
-                }
-
-                if (remoteInfo.returnedDetails != null) {
-                    remoteInfo.returnedDetails.activeAddress = remoteInfo.address;
-                    return remoteInfo.returnedDetails;
-                }
-            }
-
-            // Now global IPv6
-            synchronized (ipv6Info) {
-                while (!ipv6Info.complete) {
-                    ipv6Info.wait();
-                }
-
-                if (ipv6Info.returnedDetails != null) {
-                    ipv6Info.returnedDetails.activeAddress = ipv6Info.address;
-                    return ipv6Info.returnedDetails;
+                    if (tuple.returnedDetails != null) {
+                        tuple.returnedDetails.activeAddress = tuple.address;
+                        return tuple.returnedDetails;
+                    }
                 }
             }
         } finally {
             // Stop any further polling if we've found a working address or we've been
             // interrupted by an attempt to stop polling.
-            localInfo.interrupt();
-            manualInfo.interrupt();
-            remoteInfo.interrupt();
-            ipv6Info.interrupt();
+            for (ParallelPollTuple tuple : tuples) {
+                tuple.interrupt();
+            }
         }
 
         return null;
+        // THUMBCAST END
     }
 
     private boolean pollComputer(ComputerDetails details) throws InterruptedException {
         // Poll all addresses in parallel to speed up the process
         LimeLog.info("Starting parallel poll for "+details.name+" ("+details.localAddress +", "+details.remoteAddress +", "+details.manualAddress+", "+details.ipv6Address+")");
+        // THUMBCAST:
+        LimeLog.info("Extra addresses for "+details.name+": "+details.extraAddresses);
+        // THUMBCAST END
         ComputerDetails polledDetails = parallelPollPc(details);
         LimeLog.info("Parallel poll for "+details.name+" returned address: "+details.activeAddress);
 
         if (polledDetails != null) {
+            // THUMBCAST: LocalIP z odpowiedzi (Sunshine: adres, na który przyszło zapytanie, np. 100.x przez
+            // Tailscale) zmienia slot LAN tylko wg HostAddresses.decideLocal; adres VPN nigdy go nie nadpisuje.
+            com.limelight.thumbcast.ThumbcastAddressBook.applyPollReply(details, polledDetails);
+            // THUMBCAST END
             details.update(polledDetails);
             return true;
         }
@@ -747,6 +767,10 @@ public class ComputerManagerService extends Service {
                     synchronized (pollingTuples) {
                         for (PollingTuple tuple : pollingTuples) {
                             tuple.computer.state = ComputerDetails.State.UNKNOWN;
+                            // THUMBCAST: po zmianie sieci (Wi-Fi <-> LTE, włączenie Tailscale) stary aktywny adres
+                            // może być nieosiągalny; stream i lista aplikacji czekają na adres z nowego odpytania.
+                            tuple.computer.activeAddress = null;
+                            // THUMBCAST END
                             if (listener != null) {
                                 listener.notifyComputerUpdated(tuple.computer);
                             }

@@ -64,6 +64,9 @@ public class ComputerDetails {
     public AddressTuple remoteAddress;
     public AddressTuple manualAddress;
     public AddressTuple ipv6Address;
+    // THUMBCAST: kolejne adresy ręczne/alternatywne (Tailscale, ZeroTier) poza manualAddress; zapis w bazie pod "thumbcastExtra".
+    public java.util.List<AddressTuple> extraAddresses = new java.util.ArrayList<>();
+    // THUMBCAST END
     public String macAddress;
     public X509Certificate serverCert;
 
@@ -115,10 +118,11 @@ public class ComputerDetails {
         if (details.activeAddress != null) {
             this.activeAddress = details.activeAddress;
         }
-        // We can get IPv4 loopback addresses with GS IPv6 Forwarder
-        if (details.localAddress != null && !details.localAddress.address.startsWith("127.")) {
-            this.localAddress = details.localAddress;
-        }
+        // THUMBCAST: localAddress i adresy ręczne są łączone, nie nadpisywane: odpowiedź przez Tailscale
+        // (LocalIP = 100.x) nie kasuje adresu LAN, a nowy adres ręczny nie kasuje poprzedniego.
+        // Upstream nadpisywał localAddress (poza 127.*) i manualAddress. Reguły: HostAddresses (:control-android).
+        com.limelight.thumbcast.ThumbcastAddressBook.mergeInto(this, details);
+        // THUMBCAST END
         if (details.remoteAddress != null) {
             this.remoteAddress = details.remoteAddress;
         }
@@ -128,9 +132,8 @@ public class ComputerDetails {
             // port to the current remote address. We may have tried to guess it previously.
             this.remoteAddress.port = details.externalPort;
         }
-        if (details.manualAddress != null) {
-            this.manualAddress = details.manualAddress;
-        }
+        // THUMBCAST: tu upstream nadpisywał manualAddress; teraz łączy go mergeInto() wyżej.
+        // THUMBCAST END
         if (details.ipv6Address != null) {
             this.ipv6Address = details.ipv6Address;
         }
@@ -159,6 +162,9 @@ public class ComputerDetails {
         str.append("Remote Address: ").append(remoteAddress).append("\n");
         str.append("IPv6 Address: ").append(ipv6Address).append("\n");
         str.append("Manual Address: ").append(manualAddress).append("\n");
+        // THUMBCAST:
+        str.append("Extra Addresses: ").append(extraAddresses).append("\n");
+        // THUMBCAST END
         str.append("MAC Address: ").append(macAddress).append("\n");
         str.append("Pair State: ").append(pairState).append("\n");
         str.append("Running Game ID: ").append(runningGameId).append("\n");

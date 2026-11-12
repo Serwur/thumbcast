@@ -67,10 +67,15 @@ public class WakeOnLanSender {
             // Try all resolved remote and local addresses and broadcast addresses.
             // The broadcast address is required to avoid stale ARP cache entries
             // making the sleeping machine unreachable.
-            for (ComputerDetails.AddressTuple address : new ComputerDetails.AddressTuple[] {
+            // THUMBCAST: także adresy dodatkowe (Tailscale, ZeroTier); broadcast idzie dla każdego adresu jak w upstreamie.
+            java.util.List<ComputerDetails.AddressTuple> addresses = new java.util.ArrayList<>(java.util.Arrays.asList(
                     computer.localAddress, computer.remoteAddress,
-                    computer.manualAddress, computer.ipv6Address,
-            }) {
+                    computer.manualAddress, computer.ipv6Address));
+            if (computer.extraAddresses != null) {
+                addresses.addAll(computer.extraAddresses);
+            }
+            for (ComputerDetails.AddressTuple address : addresses) {
+            // THUMBCAST END
                 if (address == null) {
                     continue;
                 }

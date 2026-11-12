@@ -86,4 +86,27 @@
     <string name="thumbcast_menu_profiles_title">Profil sterowania</string>
     <string name="thumbcast_menu_back">‹ Wstecz</string>
     <string name="thumbcast_menu_profile_switch_error">Nie udało się wczytać profilu: %1$s</string>
+    <!-- THUMBCAST: adresy połączenia PC (LAN + Tailscale/ZeroTier), menu PC w PcView -->
+    <string name="thumbcast_pcview_menu_addresses">Adresy połączenia</string>
+    <string name="thumbcast_addresses_title">Adresy: %1$s</string>
+    <string name="thumbcast_addresses_add">Dodaj adres</string>
+    <string name="thumbcast_addresses_add_confirm">Dodaj</string>
+    <string name="thumbcast_addresses_close">Zamknij</string>
+    <string name="thumbcast_addresses_empty">Brak znanych adresów. Dodaj adres LAN albo VPN tego PC.</string>
+    <string name="thumbcast_addresses_group_lan">LAN</string>
+    <string name="thumbcast_addresses_group_alt">Alternatywny</string>
+    <string name="thumbcast_addresses_source_local">zgłoszony przez PC</string>
+    <string name="thumbcast_addresses_source_manual">dodany</string>
+    <string name="thumbcast_addresses_source_remote">publiczny</string>
+    <string name="thumbcast_addresses_source_ipv6">IPv6</string>
+    <string name="thumbcast_addresses_item">%1$s · %2$s (%3$s)</string>
+    <string name="thumbcast_addresses_item_active">✓ %1$s · używany</string>
+    <string name="thumbcast_addresses_remove_title">Usunąć adres?</string>
+    <string name="thumbcast_addresses_remove_message">Thumbcast przestanie próbować adresu %1$s. Adres LAN zgłoszony przez PC wróci po następnym połączeniu w LAN. Parowanie zostaje bez zmian.</string>
+    <string name="thumbcast_addresses_remove">Usuń</string>
+    <string name="thumbcast_addresses_add_hint">np. 100.64.1.2 albo pc.tailnet.ts.net</string>
+    <string name="thumbcast_addresses_add_message">Adresy LAN są zawsze próbowane jako pierwsze. Adresy alternatywne (Tailscale, ZeroTier) są używane, gdy LAN nie odpowiada. Parowanie zostaje to samo.</string>
+    <string name="thumbcast_addresses_invalid">Nieprawidłowy adres</string>
+    <string name="thumbcast_addresses_exists">Ten adres już jest na liście</string>
+    <string name="thumbcast_addresses_saved">Adresy zapisane</string>
 </resources>

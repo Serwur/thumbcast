@@ -19,6 +19,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -33,6 +34,9 @@ public class ComputerDatabaseManager {
         String REMOTE = "remote";
         String MANUAL = "manual";
         String IPv6 = "ipv6";
+        // THUMBCAST: kolejne adresy ręczne/alternatywne (ComputerDetails.extraAddresses); starsze wersje ignorują klucz.
+        String THUMBCAST_EXTRA = "thumbcastExtra";
+        // THUMBCAST END
 
         String ADDRESS = "address";
         String PORT = "port";
@@ -118,6 +122,15 @@ public class ComputerDatabaseManager {
             addresses.put(AddressFields.REMOTE, tupleToJson(details.remoteAddress));
             addresses.put(AddressFields.MANUAL, tupleToJson(details.manualAddress));
             addresses.put(AddressFields.IPv6, tupleToJson(details.ipv6Address));
+            // THUMBCAST:
+            if (details.extraAddresses != null && !details.extraAddresses.isEmpty()) {
+                JSONArray extra = new JSONArray();
+                for (ComputerDetails.AddressTuple tuple : details.extraAddresses) {
+                    extra.put(tupleToJson(tuple));
+                }
+                addresses.put(AddressFields.THUMBCAST_EXTRA, extra);
+            }
+            // THUMBCAST END
             values.put(ADDRESSES_COLUMN_NAME, addresses.toString());
         } catch (JSONException e) {
             throw new RuntimeException(e);
@@ -149,6 +162,20 @@ public class ComputerDatabaseManager {
             details.remoteAddress = tupleFromJson(addresses, AddressFields.REMOTE);
             details.manualAddress = tupleFromJson(addresses, AddressFields.MANUAL);
             details.ipv6Address = tupleFromJson(addresses, AddressFields.IPv6);
+            // THUMBCAST: adresy dodatkowe i migracja (adres Tailscale zapisany przez starszą wersję jako LAN
+            // trafia do alternatywnych). Para i certyfikat bez zmian.
+            JSONArray extra = addresses.optJSONArray(AddressFields.THUMBCAST_EXTRA);
+            if (extra != null) {
+                for (int i = 0; i < extra.length(); i++) {
+                    JSONObject tuple = extra.optJSONObject(i);
+                    if (tuple != null && tuple.has(AddressFields.ADDRESS)) {
+                        details.extraAddresses.add(new ComputerDetails.AddressTuple(
+                                tuple.getString(AddressFields.ADDRESS), tuple.getInt(AddressFields.PORT)));
+                    }
+                }
+            }
+            com.limelight.thumbcast.ThumbcastAddressBook.migrate(details);
+            // THUMBCAST END
         } catch (JSONException e) {
             throw new RuntimeException(e);
          }

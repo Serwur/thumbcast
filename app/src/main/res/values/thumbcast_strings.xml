@@ -87,4 +87,27 @@
     <string name="thumbcast_menu_profile_active" translatable="false">✓ %1$s</string>
     <string name="thumbcast_menu_profile_switch_error">Could not load the profile: %1$s</string>
     <string name="thumbcast_menu_scale_plus" translatable="false">+</string>
+    <!-- THUMBCAST: adresy połączenia PC (LAN + Tailscale/ZeroTier), menu PC w PcView -->
+    <string name="thumbcast_pcview_menu_addresses">Connection addresses</string>
+    <string name="thumbcast_addresses_title">Addresses: %1$s</string>
+    <string name="thumbcast_addresses_add">Add address</string>
+    <string name="thumbcast_addresses_add_confirm">Add</string>
+    <string name="thumbcast_addresses_close">Close</string>
+    <string name="thumbcast_addresses_empty">No known addresses. Add the LAN or VPN address of this PC.</string>
+    <string name="thumbcast_addresses_group_lan">LAN</string>
+    <string name="thumbcast_addresses_group_alt">Alternative</string>
+    <string name="thumbcast_addresses_source_local">reported by the PC</string>
+    <string name="thumbcast_addresses_source_manual">added</string>
+    <string name="thumbcast_addresses_source_remote">public</string>
+    <string name="thumbcast_addresses_source_ipv6">IPv6</string>
+    <string name="thumbcast_addresses_item">%1$s · %2$s (%3$s)</string>
+    <string name="thumbcast_addresses_item_active">✓ %1$s · in use</string>
+    <string name="thumbcast_addresses_remove_title">Remove address?</string>
+    <string name="thumbcast_addresses_remove_message">%1$s will no longer be tried. A LAN address reported by the PC comes back after the next connection over the LAN. Pairing is not affected.</string>
+    <string name="thumbcast_addresses_remove">Remove</string>
+    <string name="thumbcast_addresses_add_hint">e.g. 100.64.1.2 or pc.tailnet.ts.net</string>
+    <string name="thumbcast_addresses_add_message">LAN addresses are always tried first. Alternative addresses (Tailscale, ZeroTier) are used when the LAN does not answer. Pairing stays the same.</string>
+    <string name="thumbcast_addresses_invalid">Invalid address</string>
+    <string name="thumbcast_addresses_exists">This address is already on the list</string>
+    <string name="thumbcast_addresses_saved">Addresses saved</string>
 </resources>

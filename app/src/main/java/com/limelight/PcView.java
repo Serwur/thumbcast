@@ -119,6 +119,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
     private final static int FULL_APP_LIST_ID = 9;
     private final static int TEST_NETWORK_ID = 10;
     private final static int GAMESTREAM_EOL_ID = 11;
+    // THUMBCAST: dialog „Adresy połączenia” (LAN + Tailscale/ZeroTier w jednym wpisie PC).
+    private final static int THUMBCAST_ADDRESSES_ID = 100;
+    // THUMBCAST END
 
     private void initializeViews() {
         setContentView(R.layout.activity_pc_view);
@@ -382,6 +385,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
         menu.add(Menu.NONE, TEST_NETWORK_ID, 5, getResources().getString(R.string.pcview_menu_test_network));
         menu.add(Menu.NONE, DELETE_ID, 6, getResources().getString(R.string.pcview_menu_delete_pc));
         menu.add(Menu.NONE, VIEW_DETAILS_ID, 7,  getResources().getString(R.string.pcview_menu_details));
+        // THUMBCAST:
+        menu.add(Menu.NONE, THUMBCAST_ADDRESSES_ID, 8, getResources().getString(R.string.thumbcast_pcview_menu_addresses));
+        // THUMBCAST END
     }
 
     @Override
@@ -674,6 +680,16 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
             case GAMESTREAM_EOL_ID:
                 HelpLauncher.launchGameStreamEolFaq(PcView.this);
                 return true;
+
+            // THUMBCAST:
+            case THUMBCAST_ADDRESSES_ID:
+                if (managerBinder == null) {
+                    Toast.makeText(PcView.this, getResources().getString(R.string.error_manager_not_running), Toast.LENGTH_LONG).show();
+                    return true;
+                }
+                com.limelight.thumbcast.HostAddressesDialog.show(PcView.this, managerBinder, computer.details);
+                return true;
+            // THUMBCAST END
 
             default:
                 return super.onContextItemSelected(item);

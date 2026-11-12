@@ -354,6 +354,47 @@ index 8d369b3e..55b540bd 100644
              connecting = connected = false;
              updatePipAutoEnter();
  
+diff --git a/app/src/main/java/com/limelight/PcView.java b/app/src/main/java/com/limelight/PcView.java
+index 4ec6094f..ed48f5b3 100644
+--- a/app/src/main/java/com/limelight/PcView.java
++++ b/app/src/main/java/com/limelight/PcView.java
+@@ -119,6 +119,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
+     private final static int FULL_APP_LIST_ID = 9;
+     private final static int TEST_NETWORK_ID = 10;
+     private final static int GAMESTREAM_EOL_ID = 11;
++    // THUMBCAST: dialog „Adresy połączenia” (LAN + Tailscale/ZeroTier w jednym wpisie PC).
++    private final static int THUMBCAST_ADDRESSES_ID = 100;
++    // THUMBCAST END
+ 
+     private void initializeViews() {
+         setContentView(R.layout.activity_pc_view);
+@@ -382,6 +385,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
+         menu.add(Menu.NONE, TEST_NETWORK_ID, 5, getResources().getString(R.string.pcview_menu_test_network));
+         menu.add(Menu.NONE, DELETE_ID, 6, getResources().getString(R.string.pcview_menu_delete_pc));
+         menu.add(Menu.NONE, VIEW_DETAILS_ID, 7,  getResources().getString(R.string.pcview_menu_details));
++        // THUMBCAST:
++        menu.add(Menu.NONE, THUMBCAST_ADDRESSES_ID, 8, getResources().getString(R.string.thumbcast_pcview_menu_addresses));
++        // THUMBCAST END
+     }
+ 
+     @Override
+@@ -675,6 +681,16 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
+                 HelpLauncher.launchGameStreamEolFaq(PcView.this);
+                 return true;
+ 
++            // THUMBCAST:
++            case THUMBCAST_ADDRESSES_ID:
++                if (managerBinder == null) {
++                    Toast.makeText(PcView.this, getResources().getString(R.string.error_manager_not_running), Toast.LENGTH_LONG).show();
++                    return true;
++                }
++                com.limelight.thumbcast.HostAddressesDialog.show(PcView.this, managerBinder, computer.details);
++                return true;
++            // THUMBCAST END
++
+             default:
+                 return super.onContextItemSelected(item);
+         }
 diff --git a/app/src/main/java/com/limelight/binding/input/ControllerHandler.java b/app/src/main/java/com/limelight/binding/input/ControllerHandler.java
 index 0fffe5d0..9a165bfd 100644
 --- a/app/src/main/java/com/limelight/binding/input/ControllerHandler.java
@@ -411,6 +452,335 @@ index 0fffe5d0..9a165bfd 100644
          sendControllerInputPacket(context);
      }
  
+diff --git a/app/src/main/java/com/limelight/computers/ComputerDatabaseManager.java b/app/src/main/java/com/limelight/computers/ComputerDatabaseManager.java
+index 692c433f..ac596585 100644
+--- a/app/src/main/java/com/limelight/computers/ComputerDatabaseManager.java
++++ b/app/src/main/java/com/limelight/computers/ComputerDatabaseManager.java
+@@ -19,6 +19,7 @@ import android.database.Cursor;
+ import android.database.sqlite.SQLiteDatabase;
+ import android.database.sqlite.SQLiteException;
+ 
++import org.json.JSONArray;
+ import org.json.JSONException;
+ import org.json.JSONObject;
+ 
+@@ -33,6 +34,9 @@ public class ComputerDatabaseManager {
+         String REMOTE = "remote";
+         String MANUAL = "manual";
+         String IPv6 = "ipv6";
++        // THUMBCAST: kolejne adresy ręczne/alternatywne (ComputerDetails.extraAddresses); starsze wersje ignorują klucz.
++        String THUMBCAST_EXTRA = "thumbcastExtra";
++        // THUMBCAST END
+ 
+         String ADDRESS = "address";
+         String PORT = "port";
+@@ -118,6 +122,15 @@ public class ComputerDatabaseManager {
+             addresses.put(AddressFields.REMOTE, tupleToJson(details.remoteAddress));
+             addresses.put(AddressFields.MANUAL, tupleToJson(details.manualAddress));
+             addresses.put(AddressFields.IPv6, tupleToJson(details.ipv6Address));
++            // THUMBCAST:
++            if (details.extraAddresses != null && !details.extraAddresses.isEmpty()) {
++                JSONArray extra = new JSONArray();
++                for (ComputerDetails.AddressTuple tuple : details.extraAddresses) {
++                    extra.put(tupleToJson(tuple));
++                }
++                addresses.put(AddressFields.THUMBCAST_EXTRA, extra);
++            }
++            // THUMBCAST END
+             values.put(ADDRESSES_COLUMN_NAME, addresses.toString());
+         } catch (JSONException e) {
+             throw new RuntimeException(e);
+@@ -149,6 +162,20 @@ public class ComputerDatabaseManager {
+             details.remoteAddress = tupleFromJson(addresses, AddressFields.REMOTE);
+             details.manualAddress = tupleFromJson(addresses, AddressFields.MANUAL);
+             details.ipv6Address = tupleFromJson(addresses, AddressFields.IPv6);
++            // THUMBCAST: adresy dodatkowe i migracja (adres Tailscale zapisany przez starszą wersję jako LAN
++            // trafia do alternatywnych). Para i certyfikat bez zmian.
++            JSONArray extra = addresses.optJSONArray(AddressFields.THUMBCAST_EXTRA);
++            if (extra != null) {
++                for (int i = 0; i < extra.length(); i++) {
++                    JSONObject tuple = extra.optJSONObject(i);
++                    if (tuple != null && tuple.has(AddressFields.ADDRESS)) {
++                        details.extraAddresses.add(new ComputerDetails.AddressTuple(
++                                tuple.getString(AddressFields.ADDRESS), tuple.getInt(AddressFields.PORT)));
++                    }
++                }
++            }
++            com.limelight.thumbcast.ThumbcastAddressBook.migrate(details);
++            // THUMBCAST END
+         } catch (JSONException e) {
+             throw new RuntimeException(e);
+          }
+diff --git a/app/src/main/java/com/limelight/computers/ComputerManagerService.java b/app/src/main/java/com/limelight/computers/ComputerManagerService.java
+index 990a8953..e067c379 100644
+--- a/app/src/main/java/com/limelight/computers/ComputerManagerService.java
++++ b/app/src/main/java/com/limelight/computers/ComputerManagerService.java
+@@ -290,6 +290,17 @@ public class ComputerManagerService extends Service {
+             return null;
+         }
+ 
++        // THUMBCAST: edycja adresów PC (dialog „Adresy połączenia” w PcView). Nie wołać z wątku UI:
++        // czeka na networkLock trwającego odpytania.
++        public ComputerDetails addAddress(String uuid, ComputerDetails.AddressTuple address) {
++            return editAddresses(uuid, address, true);
++        }
++
++        public ComputerDetails removeAddress(String uuid, ComputerDetails.AddressTuple address) {
++            return editAddresses(uuid, address, false);
++        }
++        // THUMBCAST END
++
+         public void invalidateStateForComputer(String uuid) {
+             synchronized (pollingTuples) {
+                 for (PollingTuple tuple : pollingTuples) {
+@@ -305,6 +316,41 @@ public class ComputerManagerService extends Service {
+         }
+     }
+ 
++    // THUMBCAST: zmiana listy adresów jednego PC; zapis do bazy w całości (bez łączenia), żeby usunięcie działało.
++    private ComputerDetails editAddresses(String uuid, ComputerDetails.AddressTuple address, boolean add) {
++        PollingTuple target = null;
++        synchronized (pollingTuples) {
++            for (PollingTuple tuple : pollingTuples) {
++                if (uuid.equals(tuple.computer.uuid)) {
++                    target = tuple;
++                    break;
++                }
++            }
++        }
++        if (target == null) {
++            return null;
++        }
++
++        boolean changed;
++        synchronized (target.networkLock) {
++            changed = add ? com.limelight.thumbcast.ThumbcastAddressBook.addManual(target.computer, address)
++                    : com.limelight.thumbcast.ThumbcastAddressBook.remove(target.computer, address);
++            if (changed && getLocalDatabaseReference()) {
++                dbManager.updateComputer(target.computer);
++                releaseLocalDatabaseReference();
++            }
++            if (changed && !add && target.computer.activeAddress == null) {
++                // Usunięty adres był aktywny: nowe odpytanie wybierze następny.
++                target.computer.state = ComputerDetails.State.UNKNOWN;
++            }
++        }
++        if (changed && listener != null) {
++            listener.notifyComputerUpdated(target.computer);
++        }
++        return target.computer;
++    }
++    // THUMBCAST END
++
+     @Override
+     public boolean onUnbind(Intent intent) {
+         if (discoveryBinder != null) {
+@@ -625,86 +671,60 @@ public class ComputerManagerService extends Service {
+     }
+ 
+     private ComputerDetails parallelPollPc(ComputerDetails details) throws InterruptedException {
+-        ParallelPollTuple localInfo = new ParallelPollTuple(details.localAddress, details);
+-        ParallelPollTuple manualInfo = new ParallelPollTuple(details.manualAddress, details);
+-        ParallelPollTuple remoteInfo = new ParallelPollTuple(details.remoteAddress, details);
+-        ParallelPollTuple ipv6Info = new ParallelPollTuple(details.ipv6Address, details);
+-
+-        // These must be started in order of precedence for the deduplication algorithm
+-        // to result in the correct behavior.
++        // THUMBCAST: wszystkie znane adresy (LAN, ręczne/alternatywne, remote, IPv6) zamiast stałych czterech.
++        // Kolejność z HostAddresses.pollOrder: najpierw grupa LAN, potem alternatywne (Tailscale, ZeroTier, publiczne).
++        // Odpytujemy równolegle, ale wynik bierzemy w tej kolejności: adres alternatywny wygrywa dopiero, gdy
++        // wcześniejsze nie odpowiedzą (timeout połączenia NvHTTP, 3 s; 5 s dla aktywnego adresu).
++        // Upstream: local, manual, remote, ipv6 (ta sama zasada „pierwszy w kolejności wygrywa”).
++        java.util.List<ComputerDetails.AddressTuple> order =
++                com.limelight.thumbcast.ThumbcastAddressBook.pollOrder(details);
++        java.util.List<ParallelPollTuple> tuples = new java.util.ArrayList<>();
+         HashSet<ComputerDetails.AddressTuple> uniqueAddresses = new HashSet<>();
+-        startParallelPollThread(localInfo, uniqueAddresses);
+-        startParallelPollThread(manualInfo, uniqueAddresses);
+-        startParallelPollThread(remoteInfo, uniqueAddresses);
+-        startParallelPollThread(ipv6Info, uniqueAddresses);
++        for (ComputerDetails.AddressTuple address : order) {
++            ParallelPollTuple tuple = new ParallelPollTuple(address, details);
++            startParallelPollThread(tuple, uniqueAddresses);
++            tuples.add(tuple);
++        }
+ 
+         try {
+-            // Check local first
+-            synchronized (localInfo) {
+-                while (!localInfo.complete) {
+-                    localInfo.wait();
+-                }
+-
+-                if (localInfo.returnedDetails != null) {
+-                    localInfo.returnedDetails.activeAddress = localInfo.address;
+-                    return localInfo.returnedDetails;
+-                }
+-            }
+-
+-            // Now manual
+-            synchronized (manualInfo) {
+-                while (!manualInfo.complete) {
+-                    manualInfo.wait();
+-                }
+-
+-                if (manualInfo.returnedDetails != null) {
+-                    manualInfo.returnedDetails.activeAddress = manualInfo.address;
+-                    return manualInfo.returnedDetails;
+-                }
+-            }
+-
+-            // Now remote IPv4
+-            synchronized (remoteInfo) {
+-                while (!remoteInfo.complete) {
+-                    remoteInfo.wait();
+-                }
+-
+-                if (remoteInfo.returnedDetails != null) {
+-                    remoteInfo.returnedDetails.activeAddress = remoteInfo.address;
+-                    return remoteInfo.returnedDetails;
+-                }
+-            }
+-
+-            // Now global IPv6
+-            synchronized (ipv6Info) {
+-                while (!ipv6Info.complete) {
+-                    ipv6Info.wait();
+-                }
++            for (ParallelPollTuple tuple : tuples) {
++                synchronized (tuple) {
++                    while (!tuple.complete) {
++                        tuple.wait();
++                    }
+ 
+-                if (ipv6Info.returnedDetails != null) {
+-                    ipv6Info.returnedDetails.activeAddress = ipv6Info.address;
+-                    return ipv6Info.returnedDetails;
++                    if (tuple.returnedDetails != null) {
++                        tuple.returnedDetails.activeAddress = tuple.address;
++                        return tuple.returnedDetails;
++                    }
+                 }
+             }
+         } finally {
+             // Stop any further polling if we've found a working address or we've been
+             // interrupted by an attempt to stop polling.
+-            localInfo.interrupt();
+-            manualInfo.interrupt();
+-            remoteInfo.interrupt();
+-            ipv6Info.interrupt();
++            for (ParallelPollTuple tuple : tuples) {
++                tuple.interrupt();
++            }
+         }
+ 
+         return null;
++        // THUMBCAST END
+     }
+ 
+     private boolean pollComputer(ComputerDetails details) throws InterruptedException {
+         // Poll all addresses in parallel to speed up the process
+         LimeLog.info("Starting parallel poll for "+details.name+" ("+details.localAddress +", "+details.remoteAddress +", "+details.manualAddress+", "+details.ipv6Address+")");
++        // THUMBCAST:
++        LimeLog.info("Extra addresses for "+details.name+": "+details.extraAddresses);
++        // THUMBCAST END
+         ComputerDetails polledDetails = parallelPollPc(details);
+         LimeLog.info("Parallel poll for "+details.name+" returned address: "+details.activeAddress);
+ 
+         if (polledDetails != null) {
++            // THUMBCAST: LocalIP z odpowiedzi (Sunshine: adres, na który przyszło zapytanie, np. 100.x przez
++            // Tailscale) zmienia slot LAN tylko wg HostAddresses.decideLocal; adres VPN nigdy go nie nadpisuje.
++            com.limelight.thumbcast.ThumbcastAddressBook.applyPollReply(details, polledDetails);
++            // THUMBCAST END
+             details.update(polledDetails);
+             return true;
+         }
+@@ -747,6 +767,10 @@ public class ComputerManagerService extends Service {
+                     synchronized (pollingTuples) {
+                         for (PollingTuple tuple : pollingTuples) {
+                             tuple.computer.state = ComputerDetails.State.UNKNOWN;
++                            // THUMBCAST: po zmianie sieci (Wi-Fi <-> LTE, włączenie Tailscale) stary aktywny adres
++                            // może być nieosiągalny; stream i lista aplikacji czekają na adres z nowego odpytania.
++                            tuple.computer.activeAddress = null;
++                            // THUMBCAST END
+                             if (listener != null) {
+                                 listener.notifyComputerUpdated(tuple.computer);
+                             }
+diff --git a/app/src/main/java/com/limelight/nvstream/http/ComputerDetails.java b/app/src/main/java/com/limelight/nvstream/http/ComputerDetails.java
+index 44ed5962..7aa4b2c0 100644
+--- a/app/src/main/java/com/limelight/nvstream/http/ComputerDetails.java
++++ b/app/src/main/java/com/limelight/nvstream/http/ComputerDetails.java
+@@ -64,6 +64,9 @@ public class ComputerDetails {
+     public AddressTuple remoteAddress;
+     public AddressTuple manualAddress;
+     public AddressTuple ipv6Address;
++    // THUMBCAST: kolejne adresy ręczne/alternatywne (Tailscale, ZeroTier) poza manualAddress; zapis w bazie pod "thumbcastExtra".
++    public java.util.List<AddressTuple> extraAddresses = new java.util.ArrayList<>();
++    // THUMBCAST END
+     public String macAddress;
+     public X509Certificate serverCert;
+ 
+@@ -115,10 +118,11 @@ public class ComputerDetails {
+         if (details.activeAddress != null) {
+             this.activeAddress = details.activeAddress;
+         }
+-        // We can get IPv4 loopback addresses with GS IPv6 Forwarder
+-        if (details.localAddress != null && !details.localAddress.address.startsWith("127.")) {
+-            this.localAddress = details.localAddress;
+-        }
++        // THUMBCAST: localAddress i adresy ręczne są łączone, nie nadpisywane: odpowiedź przez Tailscale
++        // (LocalIP = 100.x) nie kasuje adresu LAN, a nowy adres ręczny nie kasuje poprzedniego.
++        // Upstream nadpisywał localAddress (poza 127.*) i manualAddress. Reguły: HostAddresses (:control-android).
++        com.limelight.thumbcast.ThumbcastAddressBook.mergeInto(this, details);
++        // THUMBCAST END
+         if (details.remoteAddress != null) {
+             this.remoteAddress = details.remoteAddress;
+         }
+@@ -128,9 +132,8 @@ public class ComputerDetails {
+             // port to the current remote address. We may have tried to guess it previously.
+             this.remoteAddress.port = details.externalPort;
+         }
+-        if (details.manualAddress != null) {
+-            this.manualAddress = details.manualAddress;
+-        }
++        // THUMBCAST: tu upstream nadpisywał manualAddress; teraz łączy go mergeInto() wyżej.
++        // THUMBCAST END
+         if (details.ipv6Address != null) {
+             this.ipv6Address = details.ipv6Address;
+         }
+@@ -159,6 +162,9 @@ public class ComputerDetails {
+         str.append("Remote Address: ").append(remoteAddress).append("\n");
+         str.append("IPv6 Address: ").append(ipv6Address).append("\n");
+         str.append("Manual Address: ").append(manualAddress).append("\n");
++        // THUMBCAST:
++        str.append("Extra Addresses: ").append(extraAddresses).append("\n");
++        // THUMBCAST END
+         str.append("MAC Address: ").append(macAddress).append("\n");
+         str.append("Pair State: ").append(pairState).append("\n");
+         str.append("Running Game ID: ").append(runningGameId).append("\n");
+diff --git a/app/src/main/java/com/limelight/nvstream/wol/WakeOnLanSender.java b/app/src/main/java/com/limelight/nvstream/wol/WakeOnLanSender.java
+index 945f114b..2fe809e6 100644
+--- a/app/src/main/java/com/limelight/nvstream/wol/WakeOnLanSender.java
++++ b/app/src/main/java/com/limelight/nvstream/wol/WakeOnLanSender.java
+@@ -67,10 +67,15 @@ public class WakeOnLanSender {
+             // Try all resolved remote and local addresses and broadcast addresses.
+             // The broadcast address is required to avoid stale ARP cache entries
+             // making the sleeping machine unreachable.
+-            for (ComputerDetails.AddressTuple address : new ComputerDetails.AddressTuple[] {
++            // THUMBCAST: także adresy dodatkowe (Tailscale, ZeroTier); broadcast idzie dla każdego adresu jak w upstreamie.
++            java.util.List<ComputerDetails.AddressTuple> addresses = new java.util.ArrayList<>(java.util.Arrays.asList(
+                     computer.localAddress, computer.remoteAddress,
+-                    computer.manualAddress, computer.ipv6Address,
+-            }) {
++                    computer.manualAddress, computer.ipv6Address));
++            if (computer.extraAddresses != null) {
++                addresses.addAll(computer.extraAddresses);
++            }
++            for (ComputerDetails.AddressTuple address : addresses) {
++            // THUMBCAST END
+                 if (address == null) {
+                     continue;
+                 }
 diff --git a/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java b/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java
 index 8ed01e36..1985674b 100644
 --- a/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java
@@ -526,6 +896,164 @@ index 70701041..94ffc29e 100644
              Display display = getActivity().getWindowManager().getDefaultDisplay();
              float maxSupportedFps = display.getRefreshRate();
  
+diff --git a/app/src/main/java/com/limelight/thumbcast/HostAddressesDialog.java b/app/src/main/java/com/limelight/thumbcast/HostAddressesDialog.java
+new file mode 100644
+index 00000000..3a89d293
+--- /dev/null
++++ b/app/src/main/java/com/limelight/thumbcast/HostAddressesDialog.java
+@@ -0,0 +1,152 @@
++package com.limelight.thumbcast;
++
++import android.app.Activity;
++import android.app.AlertDialog;
++import android.text.InputType;
++import android.widget.EditText;
++import android.widget.FrameLayout;
++import android.widget.Toast;
++
++import com.limelight.R;
++import com.limelight.computers.ComputerManagerService;
++import com.limelight.nvstream.http.ComputerDetails;
++
++import java.util.List;
++
++import app.thumbcast.android.net.AddressEntry;
++import app.thumbcast.android.net.AddressGroup;
++import app.thumbcast.android.net.Endpoint;
++import app.thumbcast.android.net.HostAddresses;
++
++/**
++ * Dialog „Adresy połączenia” z menu PC (długie przytrzymanie w PcView): adresy LAN i alternatywne
++ * w kolejności łączenia, aktywny oznaczony; tap = usuń, „Dodaj adres” = nowy adres alternatywny.
++ * Zmiany idą przez {@code ComputerManagerBinder.addAddress/removeAddress} (zapis do bazy, bez parowania).
++ */
++public final class HostAddressesDialog {
++    private HostAddressesDialog() {}
++
++    public static void show(final Activity activity, final ComputerManagerService.ComputerManagerBinder binder,
++                            final ComputerDetails computer) {
++        if (activity.isFinishing() || binder == null || computer == null || computer.uuid == null) {
++            return;
++        }
++
++        final List<AddressEntry> entries = ThumbcastAddressBook.entries(computer);
++        String[] items = new String[entries.size()];
++        for (int i = 0; i < entries.size(); i++) {
++            items[i] = describe(activity, entries.get(i));
++        }
++
++        AlertDialog.Builder builder = new AlertDialog.Builder(activity)
++                .setTitle(activity.getString(R.string.thumbcast_addresses_title, computer.name))
++                .setNeutralButton(R.string.thumbcast_addresses_add, (d, w) -> showAdd(activity, binder, computer))
++                .setPositiveButton(R.string.thumbcast_addresses_close, null);
++        if (entries.isEmpty()) {
++            builder.setMessage(R.string.thumbcast_addresses_empty);
++        } else {
++            builder.setItems(items, (d, which) -> confirmRemove(activity, binder, computer, entries.get(which)));
++        }
++        builder.show();
++    }
++
++    private static String describe(Activity activity, AddressEntry entry) {
++        String group = activity.getString(entry.getGroup() == AddressGroup.LAN
++                ? R.string.thumbcast_addresses_group_lan : R.string.thumbcast_addresses_group_alt);
++        int sourceRes;
++        switch (entry.getSource()) {
++            case LOCAL:
++                sourceRes = R.string.thumbcast_addresses_source_local;
++                break;
++            case REMOTE:
++                sourceRes = R.string.thumbcast_addresses_source_remote;
++                break;
++            case IPV6:
++                sourceRes = R.string.thumbcast_addresses_source_ipv6;
++                break;
++            case MANUAL:
++            default:
++                sourceRes = R.string.thumbcast_addresses_source_manual;
++                break;
++        }
++        String text = activity.getString(R.string.thumbcast_addresses_item, group,
++                display(entry.getEndpoint()), activity.getString(sourceRes));
++        if (entry.getActive()) {
++            text = activity.getString(R.string.thumbcast_addresses_item_active, text);
++        }
++        return text;
++    }
++
++    private static String display(Endpoint e) {
++        if (e.getPort() == HostAddresses.DEFAULT_HTTP_PORT) {
++            return e.getHost();
++        }
++        return e.toString();
++    }
++
++    private static void confirmRemove(final Activity activity, final ComputerManagerService.ComputerManagerBinder binder,
++                                      final ComputerDetails computer, final AddressEntry entry) {
++        new AlertDialog.Builder(activity)
++                .setTitle(R.string.thumbcast_addresses_remove_title)
++                .setMessage(activity.getString(R.string.thumbcast_addresses_remove_message, display(entry.getEndpoint())))
++                .setPositiveButton(R.string.thumbcast_addresses_remove, (d, w) -> edit(activity, binder, computer,
++                        new ComputerDetails.AddressTuple(entry.getEndpoint().getHost(), entry.getEndpoint().getPort()), false))
++                .setNegativeButton(android.R.string.cancel, (d, w) -> show(activity, binder, computer))
++                .show();
++    }
++
++    private static void showAdd(final Activity activity, final ComputerManagerService.ComputerManagerBinder binder,
++                                final ComputerDetails computer) {
++        final EditText input = new EditText(activity);
++        input.setSingleLine(true);
++        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
++        input.setHint(R.string.thumbcast_addresses_add_hint);
++        FrameLayout frame = new FrameLayout(activity);
++        int pad = (int) (20 * activity.getResources().getDisplayMetrics().density);
++        frame.setPadding(pad, pad / 2, pad, 0);
++        frame.addView(input);
++
++        new AlertDialog.Builder(activity)
++                .setTitle(R.string.thumbcast_addresses_add)
++                .setMessage(R.string.thumbcast_addresses_add_message)
++                .setView(frame)
++                .setPositiveButton(R.string.thumbcast_addresses_add_confirm, (d, w) -> {
++                    Endpoint endpoint = HostAddresses.parseEndpoint(input.getText().toString());
++                    if (endpoint == null) {
++                        Toast.makeText(activity, R.string.thumbcast_addresses_invalid, Toast.LENGTH_SHORT).show();
++                        showAdd(activity, binder, computer);
++                        return;
++                    }
++                    for (AddressEntry e : ThumbcastAddressBook.entries(computer)) {
++                        if (e.getEndpoint().equals(endpoint)) {
++                            Toast.makeText(activity, R.string.thumbcast_addresses_exists, Toast.LENGTH_SHORT).show();
++                            show(activity, binder, computer);
++                            return;
++                        }
++                    }
++                    edit(activity, binder, computer,
++                            new ComputerDetails.AddressTuple(endpoint.getHost(), endpoint.getPort()), true);
++                })
++                .setNegativeButton(android.R.string.cancel, (d, w) -> show(activity, binder, computer))
++                .show();
++    }
++
++    private static void edit(final Activity activity, final ComputerManagerService.ComputerManagerBinder binder,
++                             final ComputerDetails computer, final ComputerDetails.AddressTuple address, final boolean add) {
++        // Poza wątkiem UI: serwis czeka na networkLock trwającego odpytania PC.
++        Thread t = new Thread(() -> {
++            ComputerDetails updated = add ? binder.addAddress(computer.uuid, address)
++                    : binder.removeAddress(computer.uuid, address);
++            activity.runOnUiThread(() -> {
++                if (activity.isFinishing()) {
++                    return;
++                }
++                Toast.makeText(activity, updated != null ? R.string.thumbcast_addresses_saved
++                        : R.string.error_manager_not_running, Toast.LENGTH_SHORT).show();
++                show(activity, binder, updated != null ? updated : computer);
++            });
++        });
++        t.setName("Thumbcast address edit");
++        t.start();
++    }
++}
 diff --git a/app/src/main/java/com/limelight/thumbcast/HostConnectionImpl.java b/app/src/main/java/com/limelight/thumbcast/HostConnectionImpl.java
 new file mode 100644
 index 00000000..ffdd2a88
@@ -1519,6 +2047,146 @@ index 00000000..cc81a5fb
 +    @Override
 +    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
 +        throw new UnsupportedOperationException("read-only");
++    }
++}
+diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastAddressBook.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastAddressBook.java
+new file mode 100644
+index 00000000..b76816a4
+--- /dev/null
++++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastAddressBook.java
+@@ -0,0 +1,134 @@
++package com.limelight.thumbcast;
++
++import com.limelight.nvstream.http.ComputerDetails;
++
++import java.util.ArrayList;
++import java.util.List;
++
++import app.thumbcast.android.net.AddressBook;
++import app.thumbcast.android.net.AddressEntry;
++import app.thumbcast.android.net.Endpoint;
++import app.thumbcast.android.net.HostAddresses;
++
++/**
++ * Most między polami adresów {@link ComputerDetails} a czystą logiką {@link HostAddresses}
++ * (:control-android, testy JVM). Mapowanie:
++ * <ul>
++ *   <li>{@code localAddress} = slot LAN (nigdy adres VPN),</li>
++ *   <li>{@code manualAddress} + {@code extraAddresses} = lista ręczna (alternatywne i ręczne LAN) w kolejności dodania,</li>
++ *   <li>{@code remoteAddress}, {@code ipv6Address} jak w upstreamie.</li>
++ * </ul>
++ * Opis: patches/host-addresses.patch.md.
++ */
++public final class ThumbcastAddressBook {
++    private ThumbcastAddressBook() {}
++
++    private static Endpoint toEndpoint(ComputerDetails.AddressTuple t) {
++        return t == null ? null : new Endpoint(t.address, t.port);
++    }
++
++    private static ComputerDetails.AddressTuple toTuple(Endpoint e) {
++        return e == null ? null : new ComputerDetails.AddressTuple(e.getHost(), e.getPort());
++    }
++
++    public static AddressBook toBook(ComputerDetails d) {
++        List<Endpoint> manual = new ArrayList<>();
++        if (d.manualAddress != null) {
++            manual.add(toEndpoint(d.manualAddress));
++        }
++        if (d.extraAddresses != null) {
++            for (ComputerDetails.AddressTuple t : d.extraAddresses) {
++                Endpoint e = toEndpoint(t);
++                if (e != null && !manual.contains(e)) {
++                    manual.add(e);
++                }
++            }
++        }
++        return new AddressBook(toEndpoint(d.localAddress), manual,
++                toEndpoint(d.remoteAddress), toEndpoint(d.ipv6Address));
++    }
++
++    /** Zapisuje slot LAN i listę ręczną (remote i ipv6 zostają bez zmian). */
++    private static void writeLocalAndManual(ComputerDetails d, AddressBook b) {
++        ComputerDetails.AddressTuple local = toTuple(b.getLocal());
++        List<ComputerDetails.AddressTuple> manual = new ArrayList<>();
++        for (Endpoint e : b.getManual()) {
++            manual.add(toTuple(e));
++        }
++        d.localAddress = local;
++        d.manualAddress = manual.isEmpty() ? null : manual.get(0);
++        d.extraAddresses = manual.size() > 1 ? new ArrayList<>(manual.subList(1, manual.size())) : new ArrayList<>();
++    }
++
++    /** Pełny zapis (także remote i ipv6), np. po usunięciu adresu w dialogu. */
++    private static void writeAll(ComputerDetails d, AddressBook b) {
++        ComputerDetails.AddressTuple remote = toTuple(b.getRemote());
++        ComputerDetails.AddressTuple ipv6 = toTuple(b.getIpv6());
++        writeLocalAndManual(d, b);
++        d.remoteAddress = remote;
++        d.ipv6Address = ipv6;
++    }
++
++    /** Migracja wpisu z bazy (adres VPN zapisany przez starszą wersję w slocie LAN). */
++    public static void migrate(ComputerDetails d) {
++        writeLocalAndManual(d, HostAddresses.normalize(toBook(d)));
++    }
++
++    /**
++     * Wywoływane w {@code ComputerDetails.update()} zamiast nadpisywania localAddress i manualAddress.
++     */
++    public static void mergeInto(ComputerDetails target, ComputerDetails incoming) {
++        AddressBook incomingBook = toBook(incoming);
++        // Upstream: loopback IPv4 z GS IPv6 Forwarder nie jest adresem LAN (decideLocal też go odrzuca).
++        writeLocalAndManual(target, HostAddresses.merge(toBook(target), incomingBook));
++    }
++
++    /**
++     * Przed {@code details.update(polled)}: decyduje o slocie LAN na podstawie {@code LocalIP} i adresu,
++     * który odpowiedział. Ustawia {@code polled.localAddress} na wynik, żeby update() go nie nadpisał.
++     */
++    public static void applyPollReply(ComputerDetails details, ComputerDetails polled) {
++        AddressBook after = HostAddresses.applyPollReply(toBook(details),
++                toEndpoint(polled.localAddress), toEndpoint(polled.activeAddress));
++        writeLocalAndManual(details, after);
++        polled.localAddress = details.localAddress;
++    }
++
++    /** Kolejność odpytywania: LAN, potem alternatywne. */
++    public static List<ComputerDetails.AddressTuple> pollOrder(ComputerDetails d) {
++        List<ComputerDetails.AddressTuple> out = new ArrayList<>();
++        for (Endpoint e : HostAddresses.pollOrder(toBook(d))) {
++            out.add(toTuple(e));
++        }
++        return out;
++    }
++
++    public static List<AddressEntry> entries(ComputerDetails d) {
++        return HostAddresses.entries(toBook(d), toEndpoint(d.activeAddress));
++    }
++
++    /** @return true, jeśli adres został dodany (false: już był). */
++    public static boolean addManual(ComputerDetails d, ComputerDetails.AddressTuple t) {
++        AddressBook before = HostAddresses.normalize(toBook(d));
++        AddressBook after = HostAddresses.addManual(before, toEndpoint(t));
++        if (after.equals(before)) {
++            return false;
++        }
++        writeAll(d, after);
++        return true;
++    }
++
++    /** @return true, jeśli coś usunięto. */
++    public static boolean remove(ComputerDetails d, ComputerDetails.AddressTuple t) {
++        AddressBook before = HostAddresses.normalize(toBook(d));
++        AddressBook after = HostAddresses.remove(before, toEndpoint(t));
++        if (after.equals(before)) {
++            return false;
++        }
++        writeAll(d, after);
++        if (t.equals(d.activeAddress)) {
++            d.activeAddress = null;
++        }
++        return true;
 +    }
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastKeyTranslator.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastKeyTranslator.java
@@ -3052,10 +3720,10 @@ index 00000000..d0fa4d92
 +</LinearLayout>
 diff --git a/app/src/main/res/values-pl/thumbcast_strings.xml b/app/src/main/res/values-pl/thumbcast_strings.xml
 new file mode 100644
-index 00000000..89c02a4b
+index 00000000..e0810523
 --- /dev/null
 +++ b/app/src/main/res/values-pl/thumbcast_strings.xml
-@@ -0,0 +1,89 @@
+@@ -0,0 +1,112 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -3144,6 +3812,29 @@ index 00000000..89c02a4b
 +    <string name="thumbcast_menu_profiles_title">Profil sterowania</string>
 +    <string name="thumbcast_menu_back">‹ Wstecz</string>
 +    <string name="thumbcast_menu_profile_switch_error">Nie udało się wczytać profilu: %1$s</string>
++    <!-- THUMBCAST: adresy połączenia PC (LAN + Tailscale/ZeroTier), menu PC w PcView -->
++    <string name="thumbcast_pcview_menu_addresses">Adresy połączenia</string>
++    <string name="thumbcast_addresses_title">Adresy: %1$s</string>
++    <string name="thumbcast_addresses_add">Dodaj adres</string>
++    <string name="thumbcast_addresses_add_confirm">Dodaj</string>
++    <string name="thumbcast_addresses_close">Zamknij</string>
++    <string name="thumbcast_addresses_empty">Brak znanych adresów. Dodaj adres LAN albo VPN tego PC.</string>
++    <string name="thumbcast_addresses_group_lan">LAN</string>
++    <string name="thumbcast_addresses_group_alt">Alternatywny</string>
++    <string name="thumbcast_addresses_source_local">zgłoszony przez PC</string>
++    <string name="thumbcast_addresses_source_manual">dodany</string>
++    <string name="thumbcast_addresses_source_remote">publiczny</string>
++    <string name="thumbcast_addresses_source_ipv6">IPv6</string>
++    <string name="thumbcast_addresses_item">%1$s · %2$s (%3$s)</string>
++    <string name="thumbcast_addresses_item_active">✓ %1$s · używany</string>
++    <string name="thumbcast_addresses_remove_title">Usunąć adres?</string>
++    <string name="thumbcast_addresses_remove_message">Thumbcast przestanie próbować adresu %1$s. Adres LAN zgłoszony przez PC wróci po następnym połączeniu w LAN. Parowanie zostaje bez zmian.</string>
++    <string name="thumbcast_addresses_remove">Usuń</string>
++    <string name="thumbcast_addresses_add_hint">np. 100.64.1.2 albo pc.tailnet.ts.net</string>
++    <string name="thumbcast_addresses_add_message">Adresy LAN są zawsze próbowane jako pierwsze. Adresy alternatywne (Tailscale, ZeroTier) są używane, gdy LAN nie odpowiada. Parowanie zostaje to samo.</string>
++    <string name="thumbcast_addresses_invalid">Nieprawidłowy adres</string>
++    <string name="thumbcast_addresses_exists">Ten adres już jest na liście</string>
++    <string name="thumbcast_addresses_saved">Adresy zapisane</string>
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_arrays.xml b/app/src/main/res/values/thumbcast_arrays.xml
 new file mode 100644
@@ -3182,10 +3873,10 @@ index 00000000..1e5e7040
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_strings.xml b/app/src/main/res/values/thumbcast_strings.xml
 new file mode 100644
-index 00000000..dade9fe5
+index 00000000..cd54c9b6
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_strings.xml
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,113 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -3275,6 +3966,29 @@ index 00000000..dade9fe5
 +    <string name="thumbcast_menu_profile_active" translatable="false">✓ %1$s</string>
 +    <string name="thumbcast_menu_profile_switch_error">Could not load the profile: %1$s</string>
 +    <string name="thumbcast_menu_scale_plus" translatable="false">+</string>
++    <!-- THUMBCAST: adresy połączenia PC (LAN + Tailscale/ZeroTier), menu PC w PcView -->
++    <string name="thumbcast_pcview_menu_addresses">Connection addresses</string>
++    <string name="thumbcast_addresses_title">Addresses: %1$s</string>
++    <string name="thumbcast_addresses_add">Add address</string>
++    <string name="thumbcast_addresses_add_confirm">Add</string>
++    <string name="thumbcast_addresses_close">Close</string>
++    <string name="thumbcast_addresses_empty">No known addresses. Add the LAN or VPN address of this PC.</string>
++    <string name="thumbcast_addresses_group_lan">LAN</string>
++    <string name="thumbcast_addresses_group_alt">Alternative</string>
++    <string name="thumbcast_addresses_source_local">reported by the PC</string>
++    <string name="thumbcast_addresses_source_manual">added</string>
++    <string name="thumbcast_addresses_source_remote">public</string>
++    <string name="thumbcast_addresses_source_ipv6">IPv6</string>
++    <string name="thumbcast_addresses_item">%1$s · %2$s (%3$s)</string>
++    <string name="thumbcast_addresses_item_active">✓ %1$s · in use</string>
++    <string name="thumbcast_addresses_remove_title">Remove address?</string>
++    <string name="thumbcast_addresses_remove_message">%1$s will no longer be tried. A LAN address reported by the PC comes back after the next connection over the LAN. Pairing is not affected.</string>
++    <string name="thumbcast_addresses_remove">Remove</string>
++    <string name="thumbcast_addresses_add_hint">e.g. 100.64.1.2 or pc.tailnet.ts.net</string>
++    <string name="thumbcast_addresses_add_message">LAN addresses are always tried first. Alternative addresses (Tailscale, ZeroTier) are used when the LAN does not answer. Pairing stays the same.</string>
++    <string name="thumbcast_addresses_invalid">Invalid address</string>
++    <string name="thumbcast_addresses_exists">This address is already on the list</string>
++    <string name="thumbcast_addresses_saved">Addresses saved</string>
 +</resources>
 diff --git a/app/src/main/res/xml/preferences.xml b/app/src/main/res/xml/preferences.xml
 index 5b09082b..702825ee 100644

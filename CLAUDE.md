@@ -7,6 +7,7 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 - `control-engine` (JVM): `InputEngine`, rozpoznawanie gestów, `ActionPolicy`. Wszystkie wyjścia idą przez politykę. Szczegóły: `control-engine/docs/engine.md`.
 - `control-android`: `ThumbcastOverlay` i adaptery. Retransmisja stanu pada (25/50/75 ms) jest tylko w `HostPadReporterImpl`, silnik jej nie robi.
   Biblioteka profili (`library/ProfileRepository`, import/eksport) i `EditorContract`; opis `docs/profiles.md`.
+  Adresy PC (`net/HostAddresses`, czysta logika z testami JVM): jeden wpis PC = slot LAN + adresy alternatywne (Tailscale, ZeroTier); odpowiedź przez VPN nie nadpisuje LAN, kolejność LAN → alternatywne. Most w `:app`: `thumbcast/ThumbcastAddressBook`, dialog `HostAddressesDialog`; opis `patches/host-addresses.patch.md`.
   Menu w grze: `menu/MenuInputRouter` (klawiatura/pad przy otwartym menu nie idą do hosta, nawigacja padem); zmiana profilu w trakcie gry w `ThumbcastSession` (`:app`).
 - `control-editor` (Compose): `LayoutEditorActivity`, edytor układu (od 11.11.2026). Opis: `control-editor/docs/editor.md`.
 - `patches/`: opisy zmian w `:app` (`*.patch.md`) i pewny diff `0001-thumbcast.diff` (`git diff v12.2 -- app/`). Od 11.11.2026 nałożone w `app/` (bloki `THUMBCAST`).
