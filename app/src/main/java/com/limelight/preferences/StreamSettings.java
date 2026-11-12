@@ -307,17 +307,12 @@ public class StreamSettings extends Activity {
             if (requestCode != THUMBCAST_REQ_ONBOARDING || getActivity() == null) {
                 return;
             }
+            // Jedno miejsce zapisu wyniku kreatora (to samo co po starcie z PcView).
+            com.limelight.thumbcast.ThumbcastOnboardingHook.applyResult(getActivity(), resultCode, data);
             OnboardingResult result = UiContract.parseOnboardingResult(resultCode, data);
-            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit()
-                    .putInt(UiContract.PREF_ONBOARDING_VERSION, UiContract.CURRENT_ONBOARDING_VERSION);
-            if (result != null) {
-                editor.putString(ProfileLibraryActivity.PREF_PROFILE, result.getPresetFile());
-            }
-            editor.apply();
             if (result == null) {
                 return;
             }
-            new ThumbcastSettings(getActivity()).setHideOnGamepad(result.isHideOnGamepad());
             Preference hide = findPreference(ThumbcastSettings.KEY_HIDE_ON_GAMEPAD);
             if (hide instanceof CheckBoxPreference) {
                 ((CheckBoxPreference) hide).setChecked(result.isHideOnGamepad());

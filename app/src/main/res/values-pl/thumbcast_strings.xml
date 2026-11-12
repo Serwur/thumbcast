@@ -8,14 +8,8 @@
     <string name="title_thumbcast_profile">Profile sterowania</string>
     <string name="title_thumbcast_debug">Nakładka debug wejścia</string>
     <string name="summary_thumbcast_debug">Pokazuje aktywne wskaźniki, wysłane flagi pada i opóźnienie dotyk→wysyłka</string>
-    <string name="thumbcast_profile_error">Nie udało się wczytać profilu, używam klasycznego kontrolera: %1$s</string>
     <!-- Biblioteka profili (ProfileLibraryActivity, docs/profiles.md). -->
     <string name="thumbcast_library_title">Profile sterowania</string>
-    <string name="thumbcast_library_import_file">Importuj plik</string>
-    <string name="thumbcast_library_import_clipboard">Wklej ze schowka</string>
-    <string name="thumbcast_library_section_builtin">Presety wbudowane</string>
-    <string name="thumbcast_library_section_user">Moje profile</string>
-    <string name="thumbcast_library_empty_user">Brak własnych profili. Zduplikuj preset albo zaimportuj profil.</string>
     <string name="thumbcast_library_builtin">Wbudowany</string>
     <string name="thumbcast_library_custom">Własny</string>
     <string name="thumbcast_library_mode_pad_plus">Pad+</string>
@@ -27,9 +21,6 @@
         <item quantity="other">%d kontrolki</item>
     </plurals>
     <string name="thumbcast_library_invalid">Niepoprawny profil: %1$s</string>
-    <string name="thumbcast_library_active_description">%1$s, domyślny</string>
-    <string name="thumbcast_library_action_select">Ustaw jako domyślny</string>
-    <string name="thumbcast_library_action_edit">Edytuj układ</string>
     <string name="thumbcast_library_action_duplicate">Duplikuj</string>
     <string name="thumbcast_library_action_rename">Zmień nazwę</string>
     <string name="thumbcast_library_action_export">Eksportuj do pliku</string>
@@ -70,36 +61,16 @@
     <string name="title_thumbcast_hide_on_gamepad">Ukryj przyciski przy podłączonym padzie</string>
     <string name="summary_thumbcast_hide_on_gamepad">Przyciski i gałki znikają, gdy podłączony jest fizyczny pad; gesty i przycisk menu zostają</string>
     <!-- Menu w grze (☰, gest od górnej krawędzi, systemowy Back). -->
-    <string name="thumbcast_menu_title">Menu strumienia</string>
-    <string name="thumbcast_menu_disconnect">Rozłącz (gra działa dalej)</string>
-    <string name="thumbcast_menu_hide_controls">Ukryj przyciski</string>
-    <string name="thumbcast_menu_show_controls">Pokaż przyciski</string>
-    <string name="thumbcast_menu_keyboard">Klawiatura</string>
-    <string name="thumbcast_menu_control_size">Rozmiar kontrolek: %1$d%%</string>
-    <string name="thumbcast_menu_hide_on_gamepad_on">Ukryj przyciski przy podłączonym padzie: wł.</string>
-    <string name="thumbcast_menu_hide_on_gamepad_off">Ukryj przyciski przy podłączonym padzie: wył.</string>
-    <string name="thumbcast_menu_resume">Wróć do gry</string>
-    <string name="thumbcast_menu_scale_decrease">Mniejsze kontrolki</string>
-    <string name="thumbcast_menu_scale_increase">Większe kontrolki</string>
-    <string name="thumbcast_menu_profile">Profil: %1$s</string>
-    <string name="thumbcast_menu_profiles_title">Profil domyślny</string>
-    <string name="thumbcast_menu_back">‹ Wstecz</string>
-    <string name="thumbcast_menu_profile_switch_error">Nie udało się wczytać profilu: %1$s</string>
     <!-- THUMBCAST: adresy połączenia PC (LAN + Tailscale/ZeroTier), menu PC w PcView -->
     <string name="thumbcast_pcview_menu_addresses">Adresy połączenia</string>
-    <string name="thumbcast_addresses_title">Adresy: %1$s</string>
     <string name="thumbcast_addresses_add">Dodaj adres</string>
     <string name="thumbcast_addresses_add_confirm">Dodaj</string>
     <string name="thumbcast_addresses_close">Zamknij</string>
     <string name="thumbcast_addresses_empty">Brak znanych adresów. Dodaj adres LAN albo VPN tego PC.</string>
-    <string name="thumbcast_addresses_group_lan">LAN</string>
-    <string name="thumbcast_addresses_group_alt">Alternatywny</string>
     <string name="thumbcast_addresses_source_local">zgłoszony przez PC</string>
     <string name="thumbcast_addresses_source_manual">dodany</string>
     <string name="thumbcast_addresses_source_remote">publiczny</string>
     <string name="thumbcast_addresses_source_ipv6">IPv6</string>
-    <string name="thumbcast_addresses_item">%1$s · %2$s (%3$s)</string>
-    <string name="thumbcast_addresses_item_active">✓ %1$s · używany</string>
     <string name="thumbcast_addresses_remove_title">Usunąć adres?</string>
     <string name="thumbcast_addresses_remove_message">Thumbcast przestanie próbować adresu %1$s. Adres LAN zgłoszony przez PC wróci po następnym połączeniu w LAN. Parowanie zostaje bez zmian.</string>
     <string name="thumbcast_addresses_remove">Usuń</string>
@@ -110,33 +81,21 @@
     <string name="thumbcast_addresses_saved">Adresy zapisane</string>
     <!-- Ustawienia Thumbcast dla aplikacji hosta (AppView, ThumbcastAppSettingsDialog). -->
     <string name="thumbcast_app_settings_menu">Ustawienia Thumbcast dla aplikacji</string>
-    <string name="thumbcast_app_settings_title">Thumbcast: %1$s</string>
     <string name="thumbcast_app_settings_profile">Profil sterowania</string>
-    <string name="thumbcast_app_settings_resolution">Rozdzielczość strumienia</string>
-    <string name="thumbcast_app_settings_fps">Liczba klatek (FPS)</string>
     <string name="thumbcast_app_settings_default_profile">Profil domyślny (%1$s)</string>
     <string name="thumbcast_app_settings_global_resolution">Ustawienie globalne (%1$s)</string>
     <string name="thumbcast_app_settings_global_fps">Ustawienie globalne (%1$d FPS)</string>
     <string name="thumbcast_app_settings_missing">Profil wybrany wcześniej dla tej aplikacji (%1$s) już nie istnieje albo jest niepoprawny. Używany jest profil domyślny.</string>
     <string name="thumbcast_app_settings_note">Działa tylko przy uruchomieniu tej aplikacji z tego telefonu; ustawienia globalne się nie zmieniają. Rozdzielczość ekranu PC zmienia się tylko wtedy, gdy host jest do tego skonfigurowany (opcje ekranu w Sunshine).</string>
     <string name="thumbcast_app_settings_save">Zapisz</string>
-    <string name="thumbcast_app_settings_reset">Globalne</string>
     <string name="thumbcast_app_settings_saved">Zapisano dla: %1$s</string>
     <string name="thumbcast_app_settings_cleared">%1$s używa ustawień globalnych</string>
     <string name="thumbcast_app_profile_missing">Profil sterowania wybrany dla tej aplikacji nie istnieje albo jest niepoprawny. Używam profilu domyślnego.</string>
-    <string name="thumbcast_menu_profile_session_only">Profil w tej sesji: %1$s (ustawienie aplikacji bez zmian)</string>
     <!-- Profil domyślny i gesty myszy (12.11.2026). -->
     <string name="thumbcast_profile_summary">Domyślny: %1$s</string>
     <string name="thumbcast_library_default_set">Profil domyślny: %1$s</string>
-    <string name="thumbcast_library_default_marker">%1$s  ★ Domyślny</string>
-    <string name="thumbcast_library_default_hint">★ Profil domyślny działa w każdym strumieniu, chyba że aplikacja na PC ma własny profil (przytrzymaj aplikację na liście aplikacji).</string>
     <string name="thumbcast_default_profile_missing">Profil domyślny nie istnieje albo jest niepoprawny. Używam „%1$s”.</string>
-    <string name="thumbcast_menu_profiles_title_session">Profil w tej sesji</string>
-    <string name="thumbcast_library_action_mouse_gestures_on">Gesty myszy: wł.</string>
-    <string name="thumbcast_library_action_mouse_gestures_off">Gesty myszy: wył.</string>
     <string name="thumbcast_library_mouse_gestures_tag">gesty myszy</string>
-    <string name="thumbcast_menu_mouse_gestures_on">Gesty myszy: wł.</string>
-    <string name="thumbcast_menu_mouse_gestures_off">Gesty myszy: wył.</string>
     <string name="thumbcast_mouse_gestures_on_touchpad">Gesty myszy wł.: przeciągnij w pustym miejscu = kursor, dotknij = lewy klik, dotknij dwoma palcami = prawy klik, przeciągnij dwoma palcami = przewijanie, przytrzymaj i przeciągnij = przeciąganie.</string>
     <string name="thumbcast_mouse_gestures_off_touchpad">Gesty myszy wył.: dotyk w pustym miejscu nic nie wysyła. Przeciągnięcie w dół od górnej krawędzi nadal otwiera menu.</string>
     <string name="thumbcast_mouse_gestures_on_direct">Gesty myszy wł.: dotknij pustego miejsca = kursor skacze tam i klika lewym, dotknij dwoma palcami = prawy klik (kursor zostaje na miejscu), przeciągnij jednym palcem = przewijanie w tym miejscu (góra/dół i na boki).</string>
@@ -144,22 +103,6 @@
     <string name="thumbcast_mouse_gestures_on_camera">Gesty myszy wł.: dotknij = lewy klik w tym miejscu, dotknij dwoma palcami = prawy klik bez ruszania kursora, przytrzymaj = prawy klik w tym miejscu, szczypanie = kółko myszy. Przeciąganie nadal obraca kamerę.</string>
     <string name="thumbcast_mouse_gestures_off_camera">Gesty myszy wył.: dotknięcia i szczypanie nic nie wysyłają. Przeciąganie nadal obraca kamerę.</string>
     <!-- Nakładka statystyk i wyjście z sesji (12.11.2026). -->
-    <string name="thumbcast_menu_end_session">Zakończ sesję…</string>
-    <string name="thumbcast_menu_end_session_title">Zakończyć sesję? Gra na PC zostanie zamknięta, niezapisane postępy przepadną. PC przywróci swoją rozdzielczość ekranu, jeśli Sunshine ją zmienił.</string>
-    <string name="thumbcast_menu_end_session_cancel">Anuluj</string>
-    <string name="thumbcast_menu_end_session_confirm">Zakończ sesję i zamknij grę</string>
-    <string name="thumbcast_end_session_progress">Kończenie sesji na PC…</string>
-    <string name="thumbcast_end_session_done">Zakończono sesję na PC: %1$s</string>
-    <string name="thumbcast_end_session_failed">Nie udało się zakończyć sesji na PC: %1$s. Zakończ ją z listy aplikacji (przytrzymaj aplikację → Zakończenie sesji).</string>
-    <string name="thumbcast_end_session_not_owner">Tę sesję uruchomiło inne urządzenie, więc nie można jej zakończyć stąd. Zakończ ją na tamtym urządzeniu albo na PC.</string>
-    <string name="thumbcast_end_session_error">Nie udało się zakończyć sesji na PC (%1$s). Zakończ ją z listy aplikacji (przytrzymaj aplikację → Zakończenie sesji).</string>
-    <string name="thumbcast_menu_stats_on">Statystyki: wł.</string>
-    <string name="thumbcast_menu_stats_off">Statystyki: wył.</string>
-    <string name="thumbcast_menu_stats_advanced_on">Szczegółowe statystyki: wł.</string>
-    <string name="thumbcast_menu_stats_advanced_off">Szczegółowe statystyki: wył.</string>
-    <string name="thumbcast_stats_basic">%1$d FPS · opóźnienie ~%2$d ms</string>
-    <string name="thumbcast_stats_basic_no_delay">%1$d FPS · opóźnienie –</string>
-    <string name="thumbcast_stats_waiting">– FPS · opóźnienie –</string>
     <string name="thumbcast_stats_video">%1$dx%2$d %3$s · strumień %4$.1f FPS</string>
     <string name="thumbcast_stats_decoder">Dekoder: %1$s</string>
     <string name="thumbcast_stats_frames">Odebrane %1$.1f · wyświetlone %2$.1f FPS</string>

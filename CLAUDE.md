@@ -13,6 +13,7 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
   Menu w grze: `menu/MenuInputRouter` (klawiatura/pad przy otwartym menu nie idą do hosta, nawigacja padem); zmiana profilu w trakcie gry w `ThumbcastSession` (`:app`).
   Ustawienia aplikacji hosta (`apps/AppStreamSettings`, `AppStreamOverrides`, testy JVM): profil, rozdzielczość i FPS na aplikację Sunshine, klucz = uuid PC + id aplikacji (zapasowo nazwa). Most w `:app`: `thumbcast/ThumbcastAppSettings` (hak w `Game.onCreate`), dialog `ThumbcastAppSettingsDialog` (menu aplikacji w `AppView`); opis `docs/host-apps.md`, `patches/app-settings.patch.md`.
 - `control-editor` (Compose): `LayoutEditorActivity`, edytor układu (od 11.11.2026). Opis: `control-editor/docs/editor.md`.
+- `control-ui` (Compose, od 12.11.2026): `ThumbcastTheme`, `UiContract`, kreator pierwszego uruchomienia (`OnboardingActivity`) i poradnik „Jak podłączyć PC” (`SetupGuideActivity`, offline). Opis: `control-ui/docs/ui.md`. Wygląd całej aplikacji: specyfikacja `docs/ui-audit.md` (paleta D1, ikony `thumbcast_ic_*`, słownik D7, teksty w plikach `thumbcast_strings_<obszar>.xml`), `Theme.Thumbcast` w `:app`; ustawienia z `xml/thumbcast_preferences.xml` (nowa preferencja także w upstreamowym `preferences.xml`, bo czyta go `setDefaultValues`).
 - `patches/`: opisy zmian w `:app` (`*.patch.md`) i pewny diff `0001-thumbcast.diff` (`git diff v12.2 -- app/`). Od 11.11.2026 nałożone w `app/` (bloki `THUMBCAST`).
 
 ## Zasady
