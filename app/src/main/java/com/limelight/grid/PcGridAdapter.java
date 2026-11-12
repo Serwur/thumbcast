@@ -22,7 +22,9 @@ public class PcGridAdapter extends GenericGridAdapter<PcView.ComputerObject> {
     }
 
     private static int getLayoutIdForPreferences(PreferenceConfiguration prefs) {
-        return R.layout.pc_grid_item;
+        // THUMBCAST: karta PC z plakietką stanu i przyciskiem ⋮ (U9). Upstream: return R.layout.pc_grid_item;
+        return R.layout.thumbcast_pc_grid_item;
+        // THUMBCAST END
     }
 
     public void updateLayoutWithPreferences(Context context, PreferenceConfiguration prefs) {
@@ -50,6 +52,11 @@ public class PcGridAdapter extends GenericGridAdapter<PcView.ComputerObject> {
 
     @Override
     public void populateView(View parentView, ImageView imgView, ProgressBar prgView, TextView txtView, ImageView overlayView, PcView.ComputerObject obj) {
+        // THUMBCAST: karta PC (U9): stan tekstem na plakietce, kolor jako drugi sygnał, ⋮ otwiera menu PC.
+        if (com.limelight.thumbcast.ThumbcastLauncherUi.populatePcCard(parentView, imgView, prgView, txtView, overlayView, obj.details)) {
+            return;
+        }
+        // THUMBCAST END
         imgView.setImageResource(R.drawable.ic_computer);
         if (obj.details.state == ComputerDetails.State.ONLINE) {
             imgView.setAlpha(1.0f);

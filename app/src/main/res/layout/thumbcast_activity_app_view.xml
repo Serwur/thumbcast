@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    THUMBCAST (P2, U15): lista gier zamiast activity_app_view.xml (AppView.onCreate, blok THUMBCAST).
+    Pasek jak na liście PC: „Wróć”, nazwa PC (appListText, ustawia upstream) i podpowiedź o przycisku ⋮.
+    Identyfikatory upstreamu zostają: appListText, appFragmentContainer.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".AppView">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="64dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/thumbcast_space_xsmall"
+        android:paddingEnd="@dimen/thumbcast_space_medium"
+        android:preferKeepClear="true">
+
+        <ImageButton
+            android:id="@+id/thumbcast_app_back"
+            style="@style/ThumbcastIconButton"
+            android:contentDescription="@string/thumbcast_common_navigate_up"
+            android:nextFocusDown="@+id/fragmentView"
+            android:src="@drawable/thumbcast_ic_arrow_back"
+            android:tooltipText="@string/thumbcast_common_navigate_up" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/thumbcast_space_xsmall"
+            android:orientation="vertical"
+            android:paddingTop="@dimen/thumbcast_space_small"
+            android:paddingBottom="@dimen/thumbcast_space_small">
+
+            <TextView
+                android:id="@+id/appListText"
+                style="@style/ThumbcastText.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:accessibilityHeading="true"
+                android:ellipsize="end"
+                android:maxLines="1" />
+
+            <TextView
+                style="@style/ThumbcastText.BodySecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/thumbcast_launcher_apps_hint" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/appFragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+</LinearLayout>

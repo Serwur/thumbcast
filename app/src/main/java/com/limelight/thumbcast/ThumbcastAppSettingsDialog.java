@@ -3,10 +3,11 @@ package com.limelight.thumbcast;
 // NOWY PLIK (moduł :app). Dialog „Ustawienia Thumbcast dla aplikacji” z menu kontekstowego aplikacji w AppView:
 // profil sterowania (biblioteka albo domyślny), rozdzielczość i FPS (te same opcje co w ustawieniach upstreamu albo
 // ustawienie globalne). Zapis przez ThumbcastAppSettings; nic nie zmienia ustawień globalnych.
+// Od 12.11.2026 (P2, U17): tytuł „Ustawienia gry”, słownik D7, style ThumbcastText (notka 14 sp w kolorze drugorzędnym
+// zamiast 12 sp z przezroczystością, ostrzeżenie w kolorze ostrzeżenia z ikoną).
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.util.TypedValue;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
@@ -129,25 +130,25 @@ public final class ThumbcastAppSettingsDialog {
         }
 
         // ---- widok ----
-        int pad = dp(activity, 20);
+        int pad = dp(activity, 24);
         LinearLayout column = new LinearLayout(activity);
         column.setOrientation(LinearLayout.VERTICAL);
-        column.setPadding(pad, pad / 2, pad, 0);
+        column.setPadding(pad, dp(activity, 8), pad, 0);
 
         if (mappedProfileMissing) {
             addText(activity, column, activity.getString(R.string.thumbcast_app_settings_missing,
                     current.getProfileFile()), true);
         }
         final Spinner profileSpinner = addSpinner(activity, column, R.string.thumbcast_app_settings_profile, profiles, profileIndex);
-        final Spinner resSpinner = addSpinner(activity, column, R.string.thumbcast_app_settings_resolution, resolutions, resIndex);
-        final Spinner fpsSpinner = addSpinner(activity, column, R.string.thumbcast_app_settings_fps, fpsChoices, fpsIndex);
+        final Spinner resSpinner = addSpinner(activity, column, R.string.thumbcast_launcher_app_settings_resolution, resolutions, resIndex);
+        final Spinner fpsSpinner = addSpinner(activity, column, R.string.thumbcast_launcher_app_settings_fps, fpsChoices, fpsIndex);
         addText(activity, column, activity.getString(R.string.thumbcast_app_settings_note), false);
 
         ScrollView scroll = new ScrollView(activity);
         scroll.addView(column);
 
         new AlertDialog.Builder(activity)
-                .setTitle(activity.getString(R.string.thumbcast_app_settings_title, appName))
+                .setTitle(activity.getString(R.string.thumbcast_launcher_app_settings_title, appName))
                 .setView(scroll)
                 .setPositiveButton(R.string.thumbcast_app_settings_save, (d, w) -> {
                     AppStreamSettings chosen = new AppStreamSettings(
@@ -158,12 +159,12 @@ public final class ThumbcastAppSettingsDialog {
                     Toast.makeText(activity, activity.getString(R.string.thumbcast_app_settings_saved, appName),
                             Toast.LENGTH_SHORT).show();
                 })
-                .setNeutralButton(R.string.thumbcast_app_settings_reset, (d, w) -> {
+                .setNeutralButton(R.string.thumbcast_launcher_app_settings_reset, (d, w) -> {
                     ThumbcastAppSettings.save(activity, pcUuid, appId, appName, AppStreamSettings.NONE);
                     Toast.makeText(activity, activity.getString(R.string.thumbcast_app_settings_cleared, appName),
                             Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton(android.R.string.cancel, null)
+                .setNegativeButton(R.string.thumbcast_common_cancel, null)
                 .show();
     }
 
@@ -177,11 +178,13 @@ public final class ThumbcastAppSettingsDialog {
                                           List<Choice<T>> items, int selection) {
         TextView label = new TextView(activity);
         label.setText(labelRes);
-        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        label.setPadding(0, dp(activity, 12), 0, 0);
+        label.setTextAppearance(R.style.ThumbcastText_ListSubtitle);
+        label.setPadding(0, dp(activity, 16), 0, 0);
+        label.setLabelFor(View.generateViewId());
         column.addView(label);
 
         Spinner spinner = new Spinner(activity);
+        spinner.setId(label.getLabelFor());
         ArrayAdapter<Choice<T>> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_item, items);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
@@ -194,11 +197,16 @@ public final class ThumbcastAppSettingsDialog {
     private static void addText(Activity activity, LinearLayout column, String text, boolean warning) {
         TextView view = new TextView(activity);
         view.setText(text);
-        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, warning ? 14 : 12);
-        view.setPadding(0, dp(activity, 12), 0, warning ? 0 : dp(activity, 8));
-        if (!warning) {
-            view.setAlpha(0.75f);
+        // U17: notka 14 sp w kolorze drugorzędnym z palety (bez przezroczystości), ostrzeżenie z ikoną (kolor nie jest
+        // jedynym sygnałem).
+        view.setTextAppearance(R.style.ThumbcastText_BodySecondary);
+        if (warning) {
+            view.setTextColor(activity.getColor(R.color.thumbcast_warning));
+            view.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.thumbcast_ic_warning, 0, 0, 0);
+            view.setCompoundDrawableTintList(activity.getColorStateList(R.color.thumbcast_warning));
+            view.setCompoundDrawablePadding(dp(activity, 8));
         }
+        view.setPadding(0, dp(activity, 16), 0, warning ? 0 : dp(activity, 8));
         view.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_START);
         column.addView(view);
     }

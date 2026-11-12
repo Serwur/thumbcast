@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST (P2): selektor siatki kart PC: tylko obrys fokusu w akcencie, dotyk obsługuje tło karty. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:state_pressed="false">
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+            <stroke android:width="2dp" android:color="@color/thumbcast_accent" />
+            <corners android:radius="@dimen/thumbcast_corner_medium" />
+        </shape>
+    </item>
+    <item android:drawable="@android:color/transparent" />
+</selector>

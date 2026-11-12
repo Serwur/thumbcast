@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    THUMBCAST (P2, U3, U8): lista PC zamiast upstreamowego activity_pc_view.xml (PcView.initializeViews, blok THUMBCAST).
+    Jeden układ na pion i poziom. Identyfikatory szukane przez kod upstreamu zostają: settingsButton, helpButton,
+    manuallyAddPc (ImageButton), pcFragmentContainer, no_pc_found_layout (RelativeLayout), pcs_loading.
+    Pusty stan leży NAD kontenerem siatki (rodzeństwo w FrameLayout), bo pusta siatka dodana do kontenera
+    przechwytywałaby dotyk przycisków karty „Nie widzę komputera”.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".PcView">
+
+    <!-- Pasek: tytuł i przyciski-ikony 24 dp w polu 48 dp z opisami (U8). -->
+    <LinearLayout
+        android:id="@+id/thumbcast_pc_top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/thumbcast_space_medium"
+        android:paddingEnd="@dimen/thumbcast_space_xsmall"
+        android:preferKeepClear="true">
+
+        <TextView
+            android:id="@+id/thumbcast_pc_title"
+            style="@style/ThumbcastText.Title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:accessibilityHeading="true"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/thumbcast_launcher_title" />
+
+        <ImageButton
+            android:id="@+id/manuallyAddPc"
+            style="@style/ThumbcastIconButton"
+            android:contentDescription="@string/thumbcast_launcher_add_pc"
+            android:nextFocusDown="@+id/fragmentView"
+            android:src="@drawable/thumbcast_ic_add"
+            android:tooltipText="@string/thumbcast_launcher_add_pc" />
+
+        <ImageButton
+            android:id="@+id/helpButton"
+            style="@style/ThumbcastIconButton"
+            android:contentDescription="@string/thumbcast_launcher_guide"
+            android:nextFocusDown="@+id/fragmentView"
+            android:src="@drawable/thumbcast_ic_help"
+            android:tooltipText="@string/thumbcast_launcher_guide" />
+
+        <ImageButton
+            android:id="@+id/settingsButton"
+            style="@style/ThumbcastIconButton"
+            android:contentDescription="@string/thumbcast_common_settings"
+            android:nextFocusDown="@+id/fragmentView"
+            android:src="@drawable/thumbcast_ic_settings"
+            android:tooltipText="@string/thumbcast_common_settings" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- Siatka kart PC (AdapterFragment z thumbcast_pc_grid_view). -->
+        <RelativeLayout
+            android:id="@+id/pcFragmentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Pusty stan: najpierw wskaźnik wyszukiwania, po ok. 5 s karta „Nie widzę komputera” (U3).
+             Widoczność całości ustawia kod upstreamu (VISIBLE przy pustej liście). -->
+        <RelativeLayout
+            android:id="@+id/no_pc_found_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:id="@+id/thumbcast_pc_searching"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="@dimen/thumbcast_space_large">
+
+                <ProgressBar
+                    android:id="@+id/pcs_loading"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/thumbcast_accent" />
+
+                <TextView
+                    style="@style/ThumbcastText.BodySecondary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/thumbcast_space_medium"
+                    android:accessibilityLiveRegion="polite"
+                    android:gravity="center"
+                    android:text="@string/thumbcast_launcher_searching" />
+            </LinearLayout>
+
+            <ScrollView
+                android:id="@+id/thumbcast_pc_empty_scroll"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:visibility="gone">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/thumbcast_space_medium">
+
+                    <LinearLayout
+                        android:id="@+id/thumbcast_pc_empty_card"
+                        style="@style/ThumbcastCard"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:accessibilityLiveRegion="polite"
+                        android:orientation="vertical"
+                        android:padding="@dimen/thumbcast_space_large">
+
+                        <ImageView
+                            android:layout_width="@dimen/thumbcast_touch_target"
+                            android:layout_height="@dimen/thumbcast_touch_target"
+                            android:importantForAccessibility="no"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/thumbcast_ic_wifi_off"
+                            android:tint="@color/thumbcast_text_secondary" />
+
+                        <TextView
+                            style="@style/ThumbcastText.Title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/thumbcast_space_medium"
+                            android:accessibilityHeading="true"
+                            android:maxWidth="480dp"
+                            android:text="@string/thumbcast_launcher_empty_title" />
+
+                        <TextView
+                            style="@style/ThumbcastText.Body"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/thumbcast_space_medium"
+                            android:drawableStart="@drawable/thumbcast_ic_check"
+                            android:drawablePadding="@dimen/thumbcast_space_small"
+                            android:drawableTint="@color/thumbcast_text_secondary"
+                            android:maxWidth="480dp"
+                            android:text="@string/thumbcast_launcher_empty_hint_wifi" />
+
+                        <TextView
+                            style="@style/ThumbcastText.Body"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/thumbcast_space_small"
+                            android:drawableStart="@drawable/thumbcast_ic_check"
+                            android:drawablePadding="@dimen/thumbcast_space_small"
+                            android:drawableTint="@color/thumbcast_text_secondary"
+                            android:maxWidth="480dp"
+                            android:text="@string/thumbcast_launcher_empty_hint_sunshine" />
+
+                        <TextView
+                            style="@style/ThumbcastText.Body"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/thumbcast_space_small"
+                            android:drawableStart="@drawable/thumbcast_ic_check"
+                            android:drawablePadding="@dimen/thumbcast_space_small"
+                            android:drawableTint="@color/thumbcast_text_secondary"
+                            android:maxWidth="480dp"
+                            android:text="@string/thumbcast_launcher_empty_hint_firewall" />
+
+                        <Button
+                            android:id="@+id/thumbcast_pc_empty_guide"
+                            style="@style/ThumbcastButton.Primary"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/thumbcast_space_large"
+                            android:text="@string/thumbcast_launcher_empty_guide" />
+
+                        <Button
+                            android:id="@+id/thumbcast_pc_empty_add"
+                            style="@style/ThumbcastButton.Outlined"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/thumbcast_space_small"
+                            android:text="@string/thumbcast_launcher_empty_add" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="@dimen/thumbcast_space_medium"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ProgressBar
+                                android:layout_width="@dimen/thumbcast_icon_size_small"
+                                android:layout_height="@dimen/thumbcast_icon_size_small"
+                                android:importantForAccessibility="no"
+                                android:indeterminate="true"
+                                android:indeterminateTint="@color/thumbcast_text_secondary" />
+
+                            <TextView
+                                style="@style/ThumbcastText.BodySecondary"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/thumbcast_space_small"
+                                android:text="@string/thumbcast_launcher_still_searching" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </FrameLayout>
+            </ScrollView>
+        </RelativeLayout>
+    </FrameLayout>
+</LinearLayout>
