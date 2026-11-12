@@ -242,7 +242,7 @@ class ProfileRepository(
             val p = decode(read())
             ProfileEntry(fileName, p.id, p.name, p.mode, p.controls.size, builtIn, null,
                 mouseGesturesDefault = MouseGesturesTransform.isEnabled(p),
-                mouseGesturesTouchpad = MouseGesturesTransform.style(p) == MouseGesturesTransform.Style.TOUCHPAD)
+                mouseGesturesStyle = MouseGesturesTransform.style(p))
         } catch (e: Exception) {
             // ProfileLibraryException (zły profil) albo IOException (odczyt).
             val msg = (e as? ProfileLibraryException)?.details?.firstOrNull() ?: e.message ?: e.toString()
@@ -416,8 +416,8 @@ class ProfileRepository(
 /**
  * Wiersz listy w bibliotece. Przy uszkodzonym pliku `id` i `mode` są null, a `error` ma pierwszy błąd.
  * [mouseGesturesDefault]: czy profil sam z siebie ma gesty myszy (wartość przełącznika „Gesty myszy” bez wpisu
- * użytkownika); [mouseGesturesTouchpad]: po włączeniu wolna strefa działa jak gładzik (inaczej kliki w punkcie
- * przy kamerze). Patrz `MouseGesturesTransform`.
+ * użytkownika); [mouseGesturesStyle]: jak wyglądają gesty myszy po włączeniu (mysz bezpośrednia, gładzik albo kliki
+ * w punkcie przy kamerze), do opisu przełącznika. Patrz `MouseGesturesTransform`.
  */
 data class ProfileEntry(
     val fileName: String,
@@ -428,7 +428,7 @@ data class ProfileEntry(
     val builtIn: Boolean,
     val error: String?,
     val mouseGesturesDefault: Boolean = false,
-    val mouseGesturesTouchpad: Boolean = true,
+    val mouseGesturesStyle: MouseGesturesTransform.Style = MouseGesturesTransform.Style.DIRECT,
 ) {
     val isValid: Boolean get() = error == null
 }

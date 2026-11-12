@@ -425,19 +425,23 @@ public final class ThumbcastSession {
         mouseGestures = MouseGesturesTransform.toStore(baseProfile, enabled);
         settings.setMouseGestures(activeProfileFile, mouseGestures);
         overlay.setProfile(effectiveProfile());
-        Toast.makeText(activity, mouseGesturesHint(activity, enabled,
-                MouseGesturesTransform.style(baseProfile) == MouseGesturesTransform.Style.TOUCHPAD),
+        Toast.makeText(activity, mouseGesturesHint(activity, enabled, MouseGesturesTransform.style(baseProfile)),
                 Toast.LENGTH_LONG).show();
     }
 
     /** Krótki opis, co robi przełącznik w danym profilu (menu w grze i biblioteka). */
-    static String mouseGesturesHint(Context context, boolean enabled, boolean touchpadStyle) {
-        if (!enabled) {
-            return context.getString(touchpadStyle ? R.string.thumbcast_mouse_gestures_off_touchpad
-                    : R.string.thumbcast_mouse_gestures_off_camera);
+    static String mouseGesturesHint(Context context, boolean enabled, MouseGesturesTransform.Style style) {
+        switch (style) {
+            case AT_POINT:
+                return context.getString(enabled ? R.string.thumbcast_mouse_gestures_on_camera
+                        : R.string.thumbcast_mouse_gestures_off_camera);
+            case TOUCHPAD:
+                return context.getString(enabled ? R.string.thumbcast_mouse_gestures_on_touchpad
+                        : R.string.thumbcast_mouse_gestures_off_touchpad);
+            default:
+                return context.getString(enabled ? R.string.thumbcast_mouse_gestures_on_direct
+                        : R.string.thumbcast_mouse_gestures_off_direct);
         }
-        return context.getString(touchpadStyle ? R.string.thumbcast_mouse_gestures_on_touchpad
-                : R.string.thumbcast_mouse_gestures_on_camera);
     }
 
     private void applyScale(int percent) {

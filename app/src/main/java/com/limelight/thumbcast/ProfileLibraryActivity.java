@@ -245,7 +245,7 @@ public class ProfileLibraryActivity extends Activity {
     private void toggleMouseGestures(ProfileEntry entry, boolean enabled) {
         settings.setMouseGestures(entry.getFileName(), enabled == entry.getMouseGesturesDefault() ? null : enabled);
         refresh();
-        Toast.makeText(this, ThumbcastSession.mouseGesturesHint(this, enabled, entry.getMouseGesturesTouchpad()),
+        Toast.makeText(this, ThumbcastSession.mouseGesturesHint(this, enabled, entry.getMouseGesturesStyle()),
                 Toast.LENGTH_LONG).show();
     }
 

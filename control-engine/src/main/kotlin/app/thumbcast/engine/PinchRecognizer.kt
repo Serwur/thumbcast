@@ -27,19 +27,20 @@ class PinchRecognizer(
         anchor = hypot(second.x - first.x, second.y - first.y)
     }
 
-    /** causePointerId = palec, którego ruch (w bieżącym zdarzeniu) spowodował zmianę. */
-    fun move(pa: TrackedPointer, pb: TrackedPointer, causePointerId: Int) {
-        if (a == -1) return
+    /** causePointerId = palec, którego ruch (w bieżącym zdarzeniu) spowodował zmianę. true, gdy wysłał kółko. */
+    fun move(pa: TrackedPointer, pb: TrackedPointer, causePointerId: Int): Boolean {
+        if (a == -1) return false
         val d = hypot(pb.x - pa.x, pb.y - pa.y)
         val diff = d - anchor
         var notches = (diff / config.pxPerNotch).toInt()
-        if (notches == 0) return
+        if (notches == 0) return false
         anchor += notches.toFloat() * config.pxPerNotch
         val cap = tuning.maxNotchesPerEvent
         if (notches > cap) notches = cap
         if (notches < -cap) notches = -cap
         // Rozsuwanie palców = przybliżenie = kółko w górę (dodatnie).
         emitter.emit(Intent(causePointerId, bindingId, BindingKind.HOLD, Wheel(notches * 120)))
+        return true
     }
 
     val firstId: Int get() = a

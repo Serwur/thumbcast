@@ -130,7 +130,7 @@ object ProfileValidator {
      * Jedna gałka pada = jedno źródło (tylko PAD_PLUS; w KEYBOARD_MOUSE joystick wysyła klawisze z `kbmKeys`,
      * a kamera musi być `mouse_look`). Źródłem jest kontrolka `stick` albo gest kamery z wyjściem `pad_right_stick`
      * (gest nie ma przełącznika `enabled`, więc przy `freeZone = camera` zawsze zajmuje prawą gałkę; przy
-     * `freeZone = touchpad` i `none` kamery nie ma i prawa gałka jest wolna dla kontrolki). Silnik przy dwóch źródłach
+     * `freeZone = touchpad`, `none` i `direct` kamery nie ma i prawa gałka jest wolna dla kontrolki). Silnik przy dwóch źródłach
      * nadpisuje oś ostatnim zapisem, dlatego taki profil jest odrzucany.
      */
     private fun checkStickSources(p: Profile, errors: MutableList<String>) {
@@ -151,7 +151,7 @@ object ProfileValidator {
             val name = if (stick == PadStick.LEFT) "left_stick" else "right_stick"
             val hint = if (stick == PadStick.RIGHT && cameraOnPad) {
                 "; gałka right_stick działa razem z kamerą tylko przy gestures.cameraDrag.output = mouse_look " +
-                    "albo bez kamery (gestures.freeZone = touchpad albo none)"
+                    "albo bez kamery (gestures.freeZone = touchpad, direct albo none)"
             } else {
                 ""
             }

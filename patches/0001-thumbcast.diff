@@ -1264,7 +1264,7 @@ index 00000000..6711a759
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ProfileLibraryActivity.java b/app/src/main/java/com/limelight/thumbcast/ProfileLibraryActivity.java
 new file mode 100644
-index 00000000..a705564e
+index 00000000..f0ae1dd3
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ProfileLibraryActivity.java
 @@ -0,0 +1,752 @@
@@ -1515,7 +1515,7 @@ index 00000000..a705564e
 +    private void toggleMouseGestures(ProfileEntry entry, boolean enabled) {
 +        settings.setMouseGestures(entry.getFileName(), enabled == entry.getMouseGesturesDefault() ? null : enabled);
 +        refresh();
-+        Toast.makeText(this, ThumbcastSession.mouseGesturesHint(this, enabled, entry.getMouseGesturesTouchpad()),
++        Toast.makeText(this, ThumbcastSession.mouseGesturesHint(this, enabled, entry.getMouseGesturesStyle()),
 +                Toast.LENGTH_LONG).show();
 +    }
 +
@@ -3307,10 +3307,10 @@ index 00000000..56f3dc0b
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
 new file mode 100644
-index 00000000..b606d5b6
+index 00000000..47100047
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
-@@ -0,0 +1,714 @@
+@@ -0,0 +1,718 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Cała logika Thumbcast w aktywności Game: Game trzyma jedno pole
@@ -3738,19 +3738,23 @@ index 00000000..b606d5b6
 +        mouseGestures = MouseGesturesTransform.toStore(baseProfile, enabled);
 +        settings.setMouseGestures(activeProfileFile, mouseGestures);
 +        overlay.setProfile(effectiveProfile());
-+        Toast.makeText(activity, mouseGesturesHint(activity, enabled,
-+                MouseGesturesTransform.style(baseProfile) == MouseGesturesTransform.Style.TOUCHPAD),
++        Toast.makeText(activity, mouseGesturesHint(activity, enabled, MouseGesturesTransform.style(baseProfile)),
 +                Toast.LENGTH_LONG).show();
 +    }
 +
 +    /** Krótki opis, co robi przełącznik w danym profilu (menu w grze i biblioteka). */
-+    static String mouseGesturesHint(Context context, boolean enabled, boolean touchpadStyle) {
-+        if (!enabled) {
-+            return context.getString(touchpadStyle ? R.string.thumbcast_mouse_gestures_off_touchpad
-+                    : R.string.thumbcast_mouse_gestures_off_camera);
++    static String mouseGesturesHint(Context context, boolean enabled, MouseGesturesTransform.Style style) {
++        switch (style) {
++            case AT_POINT:
++                return context.getString(enabled ? R.string.thumbcast_mouse_gestures_on_camera
++                        : R.string.thumbcast_mouse_gestures_off_camera);
++            case TOUCHPAD:
++                return context.getString(enabled ? R.string.thumbcast_mouse_gestures_on_touchpad
++                        : R.string.thumbcast_mouse_gestures_off_touchpad);
++            default:
++                return context.getString(enabled ? R.string.thumbcast_mouse_gestures_on_direct
++                        : R.string.thumbcast_mouse_gestures_off_direct);
 +        }
-+        return context.getString(touchpadStyle ? R.string.thumbcast_mouse_gestures_on_touchpad
-+                : R.string.thumbcast_mouse_gestures_on_camera);
 +    }
 +
 +    private void applyScale(int percent) {
@@ -4272,10 +4276,10 @@ index 00000000..d0fa4d92
 +</LinearLayout>
 diff --git a/app/src/main/res/values-pl/thumbcast_strings.xml b/app/src/main/res/values-pl/thumbcast_strings.xml
 new file mode 100644
-index 00000000..2e8d768f
+index 00000000..d0a50deb
 --- /dev/null
 +++ b/app/src/main/res/values-pl/thumbcast_strings.xml
-@@ -0,0 +1,144 @@
+@@ -0,0 +1,146 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -4417,7 +4421,9 @@ index 00000000..2e8d768f
 +    <string name="thumbcast_menu_mouse_gestures_off">Gesty myszy: wył.</string>
 +    <string name="thumbcast_mouse_gestures_on_touchpad">Gesty myszy wł.: przeciągnij w pustym miejscu = kursor, dotknij = lewy klik, dotknij dwoma palcami = prawy klik, przeciągnij dwoma palcami = przewijanie, przytrzymaj i przeciągnij = przeciąganie.</string>
 +    <string name="thumbcast_mouse_gestures_off_touchpad">Gesty myszy wył.: dotyk w pustym miejscu nic nie wysyła. Przeciągnięcie w dół od górnej krawędzi nadal otwiera menu.</string>
-+    <string name="thumbcast_mouse_gestures_on_camera">Gesty myszy wł.: dotknij = lewy klik w tym miejscu, przytrzymaj = prawy klik, szczypanie = kółko myszy. Przeciąganie nadal obraca kamerę.</string>
++    <string name="thumbcast_mouse_gestures_on_direct">Gesty myszy wł.: dotknij pustego miejsca = kursor skacze tam i klika lewym, dotknij dwoma palcami = prawy klik w tym miejscu, przeciągnij jednym palcem = przewijanie w tym miejscu (góra/dół i na boki).</string>
++    <string name="thumbcast_mouse_gestures_off_direct">Gesty myszy wył.: dotyk w pustym miejscu nic nie wysyła. Przeciągnięcie w dół od górnej krawędzi nadal otwiera menu.</string>
++    <string name="thumbcast_mouse_gestures_on_camera">Gesty myszy wł.: dotknij = lewy klik w tym miejscu, dotknij dwoma palcami albo przytrzymaj = prawy klik, szczypanie = kółko myszy. Przeciąganie nadal obraca kamerę.</string>
 +    <string name="thumbcast_mouse_gestures_off_camera">Gesty myszy wył.: dotknięcia i szczypanie nic nie wysyłają. Przeciąganie nadal obraca kamerę.</string>
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_arrays.xml b/app/src/main/res/values/thumbcast_arrays.xml
@@ -4457,10 +4463,10 @@ index 00000000..1e5e7040
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_strings.xml b/app/src/main/res/values/thumbcast_strings.xml
 new file mode 100644
-index 00000000..f93c4684
+index 00000000..cc52f2ed
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_strings.xml
-@@ -0,0 +1,146 @@
+@@ -0,0 +1,148 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -4604,7 +4610,9 @@ index 00000000..f93c4684
 +    <string name="thumbcast_menu_mouse_gestures_off">Mouse gestures: off</string>
 +    <string name="thumbcast_mouse_gestures_on_touchpad">Mouse gestures on: drag in an empty area moves the cursor, tap = left click, two-finger tap = right click, two-finger drag = scroll, hold then drag = drag.</string>
 +    <string name="thumbcast_mouse_gestures_off_touchpad">Mouse gestures off: touching an empty area sends nothing. Swiping down from the top edge still opens the menu.</string>
-+    <string name="thumbcast_mouse_gestures_on_camera">Mouse gestures on: tap = left click at that spot, long press = right click, pinch = mouse wheel. Dragging still turns the camera.</string>
++    <string name="thumbcast_mouse_gestures_on_direct">Mouse gestures on: tap an empty area = cursor jumps there and left-clicks, two-finger tap = right click there, drag with one finger = scroll there (up/down and sideways).</string>
++    <string name="thumbcast_mouse_gestures_off_direct">Mouse gestures off: touching an empty area sends nothing. Swiping down from the top edge still opens the menu.</string>
++    <string name="thumbcast_mouse_gestures_on_camera">Mouse gestures on: tap = left click at that spot, two-finger tap or long press = right click, pinch = mouse wheel. Dragging still turns the camera.</string>
 +    <string name="thumbcast_mouse_gestures_off_camera">Mouse gestures off: tapping and pinching send nothing. Dragging still turns the camera.</string>
 +</resources>
 diff --git a/app/src/main/res/xml/preferences.xml b/app/src/main/res/xml/preferences.xml

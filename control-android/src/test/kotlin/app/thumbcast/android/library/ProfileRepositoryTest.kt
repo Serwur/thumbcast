@@ -1,6 +1,7 @@
 package app.thumbcast.android.library
 
 import app.thumbcast.android.library.ProfileRepository.Reason
+import app.thumbcast.model.MouseGesturesTransform
 import app.thumbcast.model.ProfileCodec
 import app.thumbcast.model.ProfileMode
 import org.junit.Assert.assertEquals
@@ -73,10 +74,12 @@ class ProfileRepositoryTest {
         val byFile = list.associateBy { it.fileName }
         assertFalse(byFile.getValue("gamepad-playstation.thumbcast.json").mouseGesturesDefault)
         assertFalse(byFile.getValue("gamepad-xbox.thumbcast.json").mouseGesturesDefault)
-        assertTrue(byFile.getValue("gamepad-xbox.thumbcast.json").mouseGesturesTouchpad)
+        assertEquals(MouseGesturesTransform.Style.DIRECT, byFile.getValue("gamepad-xbox.thumbcast.json").mouseGesturesStyle)
         assertTrue(byFile.getValue("mmo-pad-plus.thumbcast.json").mouseGesturesDefault)
-        assertFalse(byFile.getValue("mmo-pad-plus.thumbcast.json").mouseGesturesTouchpad)
+        assertEquals(MouseGesturesTransform.Style.AT_POINT, byFile.getValue("mmo-pad-plus.thumbcast.json").mouseGesturesStyle)
         assertTrue(byFile.getValue("big-picture.thumbcast.json").mouseGesturesDefault)
+        assertEquals(MouseGesturesTransform.Style.DIRECT, byFile.getValue("big-picture.thumbcast.json").mouseGesturesStyle)
+        assertEquals(MouseGesturesTransform.Style.TOUCHPAD, byFile.getValue("desktop-touchpad.thumbcast.json").mouseGesturesStyle)
     }
 
     @Test

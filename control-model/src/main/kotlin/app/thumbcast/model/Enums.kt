@@ -68,11 +68,14 @@ enum class GestureZone {
 // CAMERA: tabela gestów Pad+ (kamera z cameraDrag, tap, long-press, pinch, edge swipe).
 // TOUCHPAD: tabela gestów touchpada (ruch kursora, kliknięcia w miejscu kursora, przewijanie dwoma palcami).
 // NONE (12.11.2026): wolna strefa nic nie wysyła do hosta; działa tylko edgeSwipeTop (menu), jeśli włączony.
+// DIRECT (12.11.2026): mysz bezpośrednia: tap = kursor w punkcie dotyku + lewy klik, tap dwoma palcami = prawy klik
+// w punkcie pierwszego palca, przeciągnięcie jednym palcem = przewijanie (pion i poziom) w punkcie dotyku.
 @Serializable
 enum class FreeZoneMode {
     @SerialName("camera") CAMERA,
     @SerialName("touchpad") TOUCHPAD,
     @SerialName("none") NONE,
+    @SerialName("direct") DIRECT,
 }
 
 // Wyjście gestu przeciągania kamery.

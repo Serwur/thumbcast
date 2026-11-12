@@ -79,10 +79,11 @@ class ProfileCodecTest {
     }
 
     @Test
-    fun bigPicturePresetHasFullPadAndTouchpad() {
+    fun bigPicturePresetHasFullPadAndDirectMouse() {
         val p = ProfileCodec.decode(TestFixtures.readPreset("big-picture.thumbcast.json")).getOrThrow()
         assertEquals(ProfileMode.PAD_PLUS, p.mode)
-        assertEquals(FreeZoneMode.TOUCHPAD, p.gestures.freeZone)
+        // Od 12.11.2026 mysz bezpośrednia (tap = klik w punkcie, przeciągnięcie = przewijanie), nie gładzik.
+        assertEquals(FreeZoneMode.DIRECT, p.gestures.freeZone)
         val sticks = p.controls.filterIsInstance<StickControl>()
         assertEquals(setOf(PadStick.LEFT, PadStick.RIGHT), sticks.map { (it.output as Output.Stick).stick }.toSet())
         assertTrue(sticks.none { it.floating }, "obie gałki widoczne (stałe)")
@@ -202,6 +203,20 @@ class ProfileCodecTest {
         assertEquals(FreeZoneMode.NONE, p.gestures.freeZone)
         val text = ProfileCodec.encode(p)
         assertTrue(text.contains("\"freeZone\": \"none\""), text)
+        assertEquals(p, ProfileCodec.decode(text).getOrThrow())
+    }
+
+    @Test
+    fun directFreeZoneDecodesAndRoundTrips() {
+        val json = TestFixtures.MINIMAL_JSON.replace(
+            "\"mode\": \"pad_plus\",",
+            "\"mode\": \"pad_plus\", \"gestures\": { \"freeZone\": \"direct\", \"touchpad\": { \"scrollPxPerNotch\": 30 } },",
+        )
+        val p = ProfileCodec.decode(json).getOrThrow()
+        assertEquals(FreeZoneMode.DIRECT, p.gestures.freeZone)
+        assertEquals(30f, p.gestures.touchpad.scrollPxPerNotch)
+        val text = ProfileCodec.encode(p)
+        assertTrue(text.contains("\"freeZone\": \"direct\""), text)
         assertEquals(p, ProfileCodec.decode(text).getOrThrow())
     }
 

@@ -7,7 +7,9 @@ import app.thumbcast.model.FreeZoneMode
  * (`gestures.freeZone`), więc jedno przeciągnięcie nigdy nie daje naraz kamery i ruchu myszy:
  * - [GestureArbiter]: tabela Pad+ (kamera, tap i long-press w punkcie, pinch, edge swipe),
  * - [TouchpadGestures]: tabela touchpada (kursor, kliki w miejscu kursora, przewijanie dwoma palcami, edge swipe),
- * - [EdgeSwipeOnlyGestures]: wolna strefa wyłączona (`none`), działa tylko edge swipe (menu).
+ * - [EdgeSwipeOnlyGestures]: wolna strefa wyłączona (`none`), działa tylko edge swipe (menu),
+ * - [DirectMouseGestures]: mysz bezpośrednia (`direct`): tap = klik w punkcie, tap dwoma palcami = PPM w punkcie,
+ *   przeciągnięcie = przewijanie w punkcie, edge swipe.
  *
  * Implementacje produkują wyłącznie intencje przez [IntentEmitter] (ActionPolicy) i działają tylko w wywołaniach
  * z cyklu dotyku albo ticka aktywnego palca. Tick ([onMove] z `isTick = true`) może co najwyżej rozpoznać gest
@@ -31,6 +33,7 @@ interface FreeZoneGestures {
                 FreeZoneMode.CAMERA -> GestureArbiter(config, viewport, screen, emitter)
                 FreeZoneMode.TOUCHPAD -> TouchpadGestures(config, screen, emitter)
                 FreeZoneMode.NONE -> EdgeSwipeOnlyGestures(config, screen, emitter)
+                FreeZoneMode.DIRECT -> DirectMouseGestures(config, viewport, screen, emitter)
             }
     }
 }

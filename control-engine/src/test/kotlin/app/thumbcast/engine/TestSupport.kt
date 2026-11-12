@@ -175,6 +175,26 @@ fun noFreeZoneProfile(
     )
 }
 
+/**
+ * Profil z myszą bezpośrednią (`gestures.freeZone = direct`, 12.11.2026): tap = klik w punkcie, tap dwoma palcami =
+ * PPM w punkcie, przeciągnięcie = przewijanie. `rightStick` jak w [touchpadProfile]. Long-press i pinch zostają
+ * włączone w polach profilu, żeby testy pokazały, że tryb `direct` ich nie używa.
+ */
+fun directProfile(
+    mode: ProfileMode = ProfileMode.PAD_PLUS,
+    scrollPxPerNotch: Float = 24f,
+    rightStick: Boolean = false,
+    tapEnabled: Boolean = true
+): Profile {
+    val base = touchpadProfile(mode = mode, scrollPxPerNotch = scrollPxPerNotch, rightStick = rightStick)
+    return base.copy(
+        gestures = base.gestures.copy(
+            freeZone = FreeZoneMode.DIRECT,
+            tapTarget = base.gestures.tapTarget.copy(enabled = tapEnabled)
+        )
+    )
+}
+
 /** Uchwyt testowy: silnik + fałszywy sink + zegar + wygodne zdarzenia. Pozycje palców są pamiętane. */
 class Rig(profile: Profile = testProfile(), config: EngineConfig? = null) {
     val sink: FakeInputSink = FakeInputSink()

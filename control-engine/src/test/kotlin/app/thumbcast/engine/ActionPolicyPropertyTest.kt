@@ -2,6 +2,7 @@ package app.thumbcast.engine
 
 import app.thumbcast.model.Control
 import app.thumbcast.model.FreeZoneMode
+import app.thumbcast.model.MouseBtn
 import app.thumbcast.model.MouseGesturesTransform
 import app.thumbcast.model.Output
 import app.thumbcast.model.PadStick
@@ -102,17 +103,38 @@ class ActionPolicyPropertyTest {
         }
     }
 
+    /** Mysz bezpośrednia (freeZone = direct, 12.11.2026), poprawne strumienie. */
+    @Test
+    fun directValidStreams(): Unit = runBlocking<Unit> {
+        checkAll(iterations, Arb.long()) { seed ->
+            Scenario(seed, directFor(seed), chaotic = false, slide = false, touchpad = true, direct = true).run()
+        }
+    }
+
+    /**
+     * Mysz bezpośrednia: chaos wielu palców (pary, wspólny ruch, CANCEL, podwójny DOWN, zmiana viewportu z letterboxem).
+     * Poza zwykłymi właściwościami: bez ruchu względnego, LPM tylko z tapu, PPM tylko z tapu dwoma palcami, kółka
+     * tylko z przewijania.
+     */
+    @Test
+    fun directMultiFingerChaoticStreams(): Unit = runBlocking<Unit> {
+        checkAll(iterations, Arb.long()) { seed ->
+            Scenario(seed, directFor(seed), chaotic = true, slide = false, touchpad = true, direct = true).run()
+        }
+    }
+
     /**
      * Przełącznik „Gesty myszy” (12.11.2026): profil efektywny z [MouseGesturesTransform] (kamera z gestami albo bez,
-     * touchpad, none; Pad+ albo KBM; z prawą gałką albo bez; wł. albo wył.) przechodzi walidator, ma żądany stan
-     * przełącznika i spełnia te same właściwości polityki przy chaosie wielu palców. Wynik `none` dodatkowo bez myszy.
+     * touchpad, direct, none; Pad+ albo KBM; z prawą gałką albo bez; wł. albo wył.) przechodzi walidator, ma żądany
+     * stan przełącznika i spełnia te same właściwości polityki przy chaosie wielu palców. Wynik `none` dodatkowo bez
+     * myszy, wynik `direct` z tymi samymi sprawdzeniami co [directMultiFingerChaoticStreams].
      */
     @Test
     fun mouseGesturesSwitchChaoticStreams(): Unit = runBlocking<Unit> {
         checkAll(iterations, Arb.long()) { seed ->
             val r = Random(seed xor MOUSE_SALT)
             val mode = if (r.nextInt(4) == 0) ProfileMode.KEYBOARD_MOUSE else ProfileMode.PAD_PLUS
-            val base = when (r.nextInt(3)) {
+            val base = when (r.nextInt(4)) {
                 0 -> testProfile(mode = mode).let {
                     it.copy(gestures = it.gestures.copy(
                         tapTarget = it.gestures.tapTarget.copy(enabled = r.nextBoolean()),
@@ -121,6 +143,7 @@ class ActionPolicyPropertyTest {
                     ))
                 }
                 1 -> touchpadProfile(mode = mode, rightStick = r.nextBoolean())
+                2 -> directProfile(mode = mode, rightStick = r.nextBoolean(), tapEnabled = r.nextBoolean())
                 else -> noFreeZoneProfile(mode = mode, rightStick = r.nextBoolean())
             }
             val want = r.nextBoolean()
@@ -129,7 +152,7 @@ class ActionPolicyPropertyTest {
             assertEquals(want, MouseGesturesTransform.isEnabled(p), "seed=$seed")
             val zone = p.gestures.freeZone
             Scenario(seed, p, chaotic = true, slide = false, touchpad = zone != FreeZoneMode.CAMERA,
-                noFreeZone = zone == FreeZoneMode.NONE).run()
+                noFreeZone = zone == FreeZoneMode.NONE, direct = zone == FreeZoneMode.DIRECT).run()
         }
     }
 
@@ -139,7 +162,11 @@ class ActionPolicyPropertyTest {
             val rnd = Random(seed)
             val sink = FakeInputSink()
             val clock = FakeClock(rnd.nextInt(100000).toLong())
-            val profile = if (rnd.nextBoolean()) testProfile() else touchpadProfile()
+            val profile = when (rnd.nextInt(3)) {
+                0 -> testProfile()
+                1 -> touchpadProfile()
+                else -> directProfile()
+            }
             val engine = InputEngine(profile, sink, clock, testViewport())
             for (i in 0 until 50) {
                 clock.advance(rnd.nextInt(1000).toLong())
@@ -181,11 +208,25 @@ class ActionPolicyPropertyTest {
         return withSprintLock(p, seed)
     }
 
+    /** Profil myszy bezpośredniej z ziarna (osobna sól): Pad+ albo KBM, prawa gałka, długość ząbka, tap wł./wył. */
+    private fun directFor(seed: Long): Profile {
+        val r = Random(seed xor DIRECT_SALT)
+        val mode = if (r.nextInt(4) == 0) ProfileMode.KEYBOARD_MOUSE else ProfileMode.PAD_PLUS
+        val p = directProfile(
+            mode = mode,
+            scrollPxPerNotch = (4 + r.nextInt(60)).toFloat(),
+            rightStick = r.nextBoolean(),
+            tapEnabled = r.nextInt(5) != 0
+        )
+        return withSprintLock(p, seed)
+    }
+
     private companion object {
         const val SPRINT_SALT: Long = 0x5EED_5B1A7L
         const val TOUCHPAD_SALT: Long = 0x70C4_9AD5L
         const val NONE_SALT: Long = 0x0F2E_E20EL
         const val MOUSE_SALT: Long = 0x3A05_E6E5L
+        const val DIRECT_SALT: Long = 0x0D12_EC75L
     }
 
     /** Jeden strumień zdarzeń i jego sprawdzenia. */
@@ -195,7 +236,8 @@ class ActionPolicyPropertyTest {
         private val chaotic: Boolean,
         private val slide: Boolean,
         private val touchpad: Boolean = false,
-        private val noFreeZone: Boolean = false
+        private val noFreeZone: Boolean = false,
+        private val direct: Boolean = false
     ) {
         private val hasRightStickControl: Boolean =
             profile.controls.any { it is StickControl && (it.output as? Output.Stick)?.stick == PadStick.RIGHT }
@@ -234,6 +276,7 @@ class ActionPolicyPropertyTest {
             val steps = 20 + rnd.nextInt(80)
             for (i in 0 until steps) step()
             if (noFreeZone) checkNoFreeZoneOutput()
+            if (direct) checkDirectOutput()
             // Na koniec: releaseAll i zegar bez dotyku.
             engine.releaseAll()
             live.clear()
@@ -261,6 +304,34 @@ class ActionPolicyPropertyTest {
                 val binding = rec.cause?.bindingId ?: ""
                 if (rec.call == SinkCall.APP && binding.startsWith("gesture:")) {
                     check(rec.app == "menu" && binding == "gesture:edge", "gest inny niż edge swipe: $rec")
+                }
+            }
+        }
+
+        /**
+         * freeZone = direct: bez ruchu względnego (kamery nie ma, joystick KBM daje klawisze); LPM tylko z tapu, PPM
+         * tylko z tapu dwoma palcami, kółka tylko z przewijania jednym palcem, pozycja tylko z tych trzech gestów.
+         */
+        private fun checkDirectOutput() {
+            for (rec in sink.records) {
+                val binding = rec.cause?.bindingId ?: ""
+                val zero = binding.startsWith("policy:")
+                check(rec.call != SinkCall.MOVE, "direct dał ruch względny: $rec")
+                when (rec.call) {
+                    SinkCall.BUTTON -> if (!zero) {
+                        val want = if (rec.mouse == MouseBtn.LEFT) "gesture:tap" else "gesture:tap2"
+                        check(binding == want, "przycisk myszy z innego gestu: $rec")
+                    }
+                    SinkCall.WHEEL, SinkCall.HWHEEL -> check(binding == "gesture:scroll", "kółko z innego gestu: $rec")
+                    SinkCall.POSITION -> check(
+                        binding == "gesture:tap" || binding == "gesture:tap2" || binding == "gesture:scroll",
+                        "pozycja z innego gestu: $rec"
+                    )
+                    SinkCall.PAD -> if (!hasRightStickControl) {
+                        check(rec.rx.toInt() == 0 && rec.ry.toInt() == 0, "prawa gałka bez kontrolki (kamera?): $rec")
+                    }
+                    else -> {
+                    }
                 }
             }
         }

@@ -8,7 +8,14 @@ import kotlin.math.hypot
 
 /**
  * Przydział palców wolnej strefy do gestów. Stan palca:
- * PENDING (jeszcze nic nie wysłał) -> CAMERA | LONG_PRESS | PINCH | CONSUMED; tap i edge swipe kończą się od razu.
+ * PENDING (jeszcze nic nie wysłał) -> CAMERA | LONG_PRESS | PINCH | TWO_TAP | CONSUMED; tap i edge swipe kończą się
+ * od razu.
+ *
+ * Tap dwoma palcami (12.11.2026, gdy `tap.enabled`): drugi palec dotyka, gdy pierwszy jeszcze nic nie wysłał
+ * (PENDING, bez ruchu); oba bez ruchu i bez kółka z pinchu, od pierwszego DOWN do ostatniego UP najwyżej
+ * tap.maxMs + twoFingerTapExtraMs -> RMB w punkcie DOWN pierwszego palca, w cyklu UP ostatniego palca pary.
+ * Przy włączonym pinchu para i tak jest pinchem (PINCH), a tap dwoma palcami jest śledzony obok; bez pinchu para
+ * ma stan TWO_TAP (ruch pary nic nie daje). Żaden z palców pary nie da tapu LMB ani long-pressu.
  */
 class GestureArbiter(
     private val config: EngineConfig,
@@ -16,7 +23,7 @@ class GestureArbiter(
     screen: PxRect,
     private val emitter: IntentEmitter
 ) : FreeZoneGestures {
-    enum class State { PENDING, CAMERA, LONG_PRESS, PINCH, CONSUMED }
+    enum class State { PENDING, CAMERA, LONG_PRESS, PINCH, TWO_TAP, CONSUMED }
 
     private class G(val fromEdge: Boolean) {
         var state: State = State.PENDING
@@ -33,36 +40,54 @@ class GestureArbiter(
     private val states: LinkedHashMap<Int, G> = LinkedHashMap()
     private val midX: Float = screen.centerX
     private val cameraRightSide: Boolean = CameraZones.isRightSide(config.camera.zone, config.leftHanded)
+    private val slop: Float = config.tap.maxMovePx
+
+    // Tap dwoma palcami: para (pierwszy, drugi palec), start = DOWN pierwszego, punkt kliknięcia = DOWN pierwszego.
+    private var pairA: Int = -1
+    private var pairB: Int = -1
+    private var pairStartMs: Long = 0L
+    private var pairTapValid: Boolean = false
+    private var pairX: Float = 0f
+    private var pairY: Float = 0f
 
     fun stateOf(pointerId: Int): State? = states[pointerId]?.state
 
     override fun onDown(p: TrackedPointer, tracker: PointerTracker) {
         val g = G(edge.isCandidate(p.downY))
         states[p.id] = g
-        // Drugi palec wolnej strefy -> szczypanie (jeśli pierwszy jeszcze nie dał wejścia jednorazowego).
-        if (pinch.enabled && !pinch.isActive()) {
-            var other: TrackedPointer? = null
-            var count = 0
-            for ((id, og) in states) {
-                if (id == p.id) continue
-                if (og.state == State.PENDING || og.state == State.CAMERA) {
-                    val tp = tracker.get(id)
-                    if (tp != null) {
-                        other = tp
-                        count += 1
-                    }
+        // Każdy kolejny palec przy trwającej parze unieważnia tap dwoma palcami.
+        if (pairA != -1) pairTapValid = false
+        var other: TrackedPointer? = null
+        var count = 0
+        for ((id, og) in states) {
+            if (id == p.id) continue
+            if (og.state == State.PENDING || og.state == State.CAMERA) {
+                val tp = tracker.get(id)
+                if (tp != null) {
+                    other = tp
+                    count += 1
                 }
             }
-            val first = other
-            if (count == 1 && first != null) {
-                val fg = states[first.id]
-                if (fg != null) {
-                    if (fg.state == State.CAMERA) camera.end(first.id)
-                    fg.state = State.PINCH
-                    g.state = State.PINCH
-                    pinch.begin(first, p)
-                    return
-                }
+        }
+        val first = if (count == 1) other else null
+        val fg = if (first != null) states[first.id] else null
+        if (first != null && fg != null) {
+            // Drugi palec wolnej strefy, gdy pierwszy jeszcze nic nie wysłał: możliwy tap dwoma palcami (PPM).
+            val tapPair = config.tap.enabled && pairA == -1 && fg.state == State.PENDING && fg.maxMove <= slop
+            if (pinch.enabled && !pinch.isActive()) {
+                // Drugi palec wolnej strefy -> szczypanie (jeśli pierwszy jeszcze nie dał wejścia jednorazowego).
+                if (fg.state == State.CAMERA) camera.end(first.id)
+                fg.state = State.PINCH
+                g.state = State.PINCH
+                pinch.begin(first, p)
+                if (tapPair) beginPair(first, p)
+                return
+            }
+            if (tapPair) {
+                fg.state = State.TWO_TAP
+                g.state = State.TWO_TAP
+                beginPair(first, p)
+                return
             }
         }
         if (pinch.isActive()) g.state = State.CONSUMED
@@ -102,10 +127,21 @@ class GestureArbiter(
             }
             State.PINCH -> {
                 if (isTick) return
+                if (g.maxMove > slop) pairTapValid = false
                 // Przy ruchu dowolnego z dwóch palców; kotwica odległości zapobiega podwójnemu liczeniu.
                 val pa = tracker.get(pinch.firstId) ?: return
                 val pb = tracker.get(pinch.secondId) ?: return
-                pinch.move(pa, pb, p.id)
+                if (pinch.move(pa, pb, p.id)) pairTapValid = false
+            }
+            State.TWO_TAP -> {
+                if (isTick || g.maxMove <= slop) return
+                // Ruch pary bez pinchu: nic (ani PPM, ani kamera). Oba palce kończą bez wyjścia. Tylko palce w stanie
+                // TWO_TAP: id podniesionego palca pary mógł już dostać nowy palec (np. kamera), którego nie ruszamy.
+                for (id in intArrayOf(pairA, pairB)) {
+                    val pg = states[id]
+                    if (pg != null && pg.state == State.TWO_TAP) pg.state = State.CONSUMED
+                }
+                endPair()
             }
             State.LONG_PRESS, State.CONSUMED -> {
             }
@@ -134,8 +170,26 @@ class GestureArbiter(
             State.PINCH -> {
                 val otherId = if (p.id == pinch.firstId) pinch.secondId else pinch.firstId
                 pinch.end()
+                if (!fire || g.maxMove > slop) pairTapValid = false
                 val og = states[otherId]
-                if (og != null) og.state = State.CONSUMED
+                // Drugi palec pary czeka na swój UP jako TWO_TAP (możliwy PPM), inaczej nic już nie zrobi.
+                val waits = og != null && pairTapValid && isPair(p.id, otherId)
+                if (og != null) og.state = if (waits) State.TWO_TAP else State.CONSUMED
+                if (!waits) endPair()
+            }
+            State.TWO_TAP -> {
+                val otherId = if (p.id == pairA) pairB else pairA
+                val og = states[otherId]
+                if (og != null && og.state == State.TWO_TAP) {
+                    // Pierwszy palec pary w górę: czekamy na drugi.
+                    if (!fire || g.maxMove > slop) pairTapValid = false
+                } else {
+                    val maxMs = config.tap.maxMs + config.tuning.twoFingerTapExtraMs
+                    if (fire && pairTapValid && config.tap.enabled && g.maxMove <= slop && t - pairStartMs <= maxMs) {
+                        tap.fireRight(p.id, pairX, pairY)
+                    }
+                    endPair()
+                }
             }
             State.CONSUMED -> {
             }
@@ -146,6 +200,25 @@ class GestureArbiter(
         states.clear()
         camera.reset()
         pinch.end()
+        endPair()
+    }
+
+    private fun beginPair(first: TrackedPointer, second: TrackedPointer) {
+        pairA = first.id
+        pairB = second.id
+        pairStartMs = first.downTimeMs
+        pairTapValid = true
+        pairX = first.downX
+        pairY = first.downY
+    }
+
+    private fun isPair(a: Int, b: Int): Boolean =
+        pairA != -1 && ((a == pairA && b == pairB) || (a == pairB && b == pairA))
+
+    private fun endPair() {
+        pairA = -1
+        pairB = -1
+        pairTapValid = false
     }
 }
 
