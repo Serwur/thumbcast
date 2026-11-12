@@ -1,8 +1,8 @@
 diff --git a/app/build.gradle b/app/build.gradle
-index c9cc3e47..532f1a26 100644
+index c9cc3e47..106d71e5 100644
 --- a/app/build.gradle
 +++ b/app/build.gradle
-@@ -8,7 +8,8 @@ android {
+@@ -8,11 +8,14 @@ android {
      namespace 'com.limelight'
  
      defaultConfig {
@@ -11,8 +11,16 @@ index c9cc3e47..532f1a26 100644
 +        minSdk 26
          targetSdk 36
  
-         versionName "12.2"
-@@ -26,21 +27,7 @@ android {
+-        versionName "12.2"
+-        versionCode = 315
++        // THUMBCAST: własna numeracja (Google Play, 12.11.2026). versionCode = major * 1000000 + minor * 1000 + patch,
++        // więc rośnie razem z versionName i jest większy od przejętego z upstreamu 315.
++        versionName "0.1.0"
++        versionCode = 1000
+ 
+         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
+         ndk.debugSymbolLevel = 'FULL'
+@@ -26,21 +29,7 @@ android {
      }
  
      productFlavors {
@@ -35,7 +43,7 @@ index c9cc3e47..532f1a26 100644
  
          nonRoot {
              externalNativeBuild {
-@@ -49,7 +36,8 @@ android {
+@@ -49,7 +38,8 @@ android {
                  }
              }
  
@@ -45,7 +53,20 @@ index c9cc3e47..532f1a26 100644
              dimension "root"
              buildConfigField "boolean", "ROOT_BUILD", "false"
          }
-@@ -81,46 +69,32 @@ android {
+@@ -67,6 +57,12 @@ android {
+         lintConfig file('lint.xml')
+     }
+ 
++    // THUMBCAST: tylko angielski i polski (12.11.2026). Pozostałe tłumaczenia upstreamu mają teksty o GeForce
++    // Experience, SHIELD i Moonlight, więc nie trafiają do APK ani AAB (dotyczy też zasobów bibliotek).
++    androidResources {
++        localeFilters += ["en", "pl"]
++    }
++
+     bundle {
+         language {
+             // Avoid splitting by language, since we allow users
+@@ -81,46 +77,32 @@ android {
          }
      }
  
@@ -113,7 +134,7 @@ index c9cc3e47..532f1a26 100644
  
              minifyEnabled true
              proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-@@ -133,6 +107,14 @@ android {
+@@ -133,6 +115,14 @@ android {
          }
      }
  
@@ -128,7 +149,7 @@ index c9cc3e47..532f1a26 100644
      packaging {
          resources {
              // BouncyCastle includes duplicate LICENSE.md files
-@@ -141,6 +123,14 @@ android {
+@@ -141,6 +131,14 @@ android {
      }
  }
  
@@ -143,7 +164,7 @@ index c9cc3e47..532f1a26 100644
  dependencies {
      implementation 'org.bouncycastle:bcprov-jdk18on:1.85.2'
      implementation 'org.bouncycastle:bcpkix-jdk18on:1.85'
-@@ -150,4 +140,11 @@ dependencies {
+@@ -150,4 +148,11 @@ dependencies {
      implementation 'com.github.cgutman:ShieldControllerExtensions:1.0.1'
  
      coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
@@ -156,7 +177,7 @@ index c9cc3e47..532f1a26 100644
 +    implementation project(':control-ui')
  }
 diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
-index d916899e..32d2bee5 100644
+index d916899e..0942e68b 100644
 --- a/app/src/main/AndroidManifest.xml
 +++ b/app/src/main/AndroidManifest.xml
 @@ -42,6 +42,8 @@
@@ -168,9 +189,12 @@ index d916899e..32d2bee5 100644
      <application
          android:allowBackup="true"
          android:fullBackupContent="@xml/backup_rules"
-@@ -55,7 +57,8 @@
+@@ -53,9 +55,10 @@
+         android:icon="@mipmap/ic_launcher"
+         android:installLocation="auto"
          android:gwpAsanMode="always"
-         android:localeConfig="@xml/locales_config"
+-        android:localeConfig="@xml/locales_config"
++        android:localeConfig="@xml/thumbcast_locales_config"
          android:enableOnBackInvokedCallback="false"
 -        android:theme="@style/AppTheme">
 +        android:theme="@style/Theme.Thumbcast">
@@ -10177,10 +10201,10 @@ index 00000000..779c8fd7
 +</resources>
 diff --git a/app/src/main/res/values-pl/thumbcast_strings_settings.xml b/app/src/main/res/values-pl/thumbcast_strings_settings.xml
 new file mode 100644
-index 00000000..24215e37
+index 00000000..2f16d32e
 --- /dev/null
 +++ b/app/src/main/res/values-pl/thumbcast_strings_settings.xml
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,84 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- Ekran ustawień Thumbcast (pakiet P3, xml/thumbcast_preferences.xml, StreamSettings), polski. Słownik: docs/ui-audit.md, D7. -->
 +<resources>
@@ -10231,6 +10255,7 @@ index 00000000..24215e37
 +    <!-- Aplikacja -->
 +    <string name="thumbcast_set_language_title">Język</string>
 +    <string name="thumbcast_set_language_summary">Język menu i komunikatów</string>
++    <string name="thumbcast_set_language_system">Język telefonu</string>
 +    <string name="thumbcast_set_small_icons_title">Małe kafelki gier</string>
 +    <string name="thumbcast_set_small_icons_summary">Na ekranie mieści się więcej gier</string>
 +    <string name="thumbcast_set_pip_title">Obraz w obrazie</string>
@@ -10266,10 +10291,10 @@ index 00000000..24215e37
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_arrays.xml b/app/src/main/res/values/thumbcast_arrays.xml
 new file mode 100644
-index 00000000..1e5e7040
+index 00000000..e1bb2704
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_arrays.xml
-@@ -0,0 +1,29 @@
+@@ -0,0 +1,42 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: tablice preferencji warstwy sterowania (patches/preferences.patch.md, pkt 2). -->
 +<resources>
@@ -10297,6 +10322,19 @@ index 00000000..1e5e7040
 +        <item>100</item>
 +        <item>115</item>
 +        <item>130</item>
++    </string-array>
++
++    <!-- Języki aplikacji (od 12.11.2026 tylko angielski i polski, docs/play-release.md). Wartości jak w upstreamowym
++         language_values; ta sama lista jest w xml/thumbcast_locales_config.xml i w localeFilters (app/build.gradle). -->
++    <string-array name="thumbcast_language_names" translatable="false">
++        <item>@string/thumbcast_set_language_system</item>
++        <item>English</item>
++        <item>Polski</item>
++    </string-array>
++    <string-array name="thumbcast_language_values" translatable="false">
++        <item>default</item>
++        <item>en</item>
++        <item>pl</item>
 +    </string-array>
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_colors.xml b/app/src/main/res/values/thumbcast_colors.xml
@@ -10771,10 +10809,10 @@ index 00000000..a2634838
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_strings_settings.xml b/app/src/main/res/values/thumbcast_strings_settings.xml
 new file mode 100644
-index 00000000..b27f3d75
+index 00000000..b743d973
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_strings_settings.xml
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,84 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- Thumbcast settings screen (package P3, xml/thumbcast_preferences.xml, StreamSettings), English. Polish: values-pl. -->
 +<resources>
@@ -10825,6 +10863,7 @@ index 00000000..b27f3d75
 +    <!-- App -->
 +    <string name="thumbcast_set_language_title">Language</string>
 +    <string name="thumbcast_set_language_summary">Language of menus and messages</string>
++    <string name="thumbcast_set_language_system">Phone language</string>
 +    <string name="thumbcast_set_small_icons_title">Small game tiles</string>
 +    <string name="thumbcast_set_small_icons_summary">More games fit on the screen</string>
 +    <string name="thumbcast_set_pip_title">Picture-in-picture</string>
@@ -11132,9 +11171,22 @@ index 5b09082b..48c28874 100644
      <PreferenceCategory android:title="@string/category_on_screen_controls_settings"
          android:key="category_onscreen_controls">
          <CheckBoxPreference
+diff --git a/app/src/main/res/xml/thumbcast_locales_config.xml b/app/src/main/res/xml/thumbcast_locales_config.xml
+new file mode 100644
+index 00000000..a5973120
+--- /dev/null
++++ b/app/src/main/res/xml/thumbcast_locales_config.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- THUMBCAST: języki aplikacji w ustawieniach systemu (Android 13+). Tylko angielski i polski (12.11.2026), jak
++     localeFilters w app/build.gradle i thumbcast_language_values. Upstreamowy locales_config.xml zostaje bez zmian. -->
++<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
++    <locale android:name="en"/>
++    <locale android:name="pl"/>
++</locale-config>
 diff --git a/app/src/main/res/xml/thumbcast_preferences.xml b/app/src/main/res/xml/thumbcast_preferences.xml
 new file mode 100644
-index 00000000..07777a47
+index 00000000..01697321
 --- /dev/null
 +++ b/app/src/main/res/xml/thumbcast_preferences.xml
 @@ -0,0 +1,420 @@
@@ -11299,8 +11351,8 @@ index 00000000..07777a47
 +            android:key="list_languages"
 +            android:icon="@drawable/thumbcast_ic_language"
 +            android:title="@string/thumbcast_set_language_title"
-+            android:entries="@array/language_names"
-+            android:entryValues="@array/language_values"
++            android:entries="@array/thumbcast_language_names"
++            android:entryValues="@array/thumbcast_language_values"
 +            android:summary="@string/thumbcast_set_language_summary"
 +            android:defaultValue="default" />
 +        <com.limelight.preferences.SmallIconCheckboxPreference

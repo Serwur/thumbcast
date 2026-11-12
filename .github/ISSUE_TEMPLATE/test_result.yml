@@ -1,31 +1,31 @@
-name: Wynik testu w grze
-description: Zgłoś wynik scenariusza z docs/test-plan.md (np. T-03)
+name: In-game test result
+description: Report the result of a scenario from docs/test-plan.md (e.g. T-03)
 labels: ["test-result"]
 body:
   - type: dropdown
     id: scenario
     attributes:
-      label: Scenariusz
-      options: ["T-01", "T-02", "T-03", "T-04", "T-05", "T-06", "T-07", "T-08", "T-09"]
+      label: Scenario
+      options: ["T-01", "T-02", "T-03", "T-04", "T-05", "T-06", "T-07", "T-08", "T-09", "T-10"]
     validations:
       required: true
   - type: dropdown
     id: result
     attributes:
-      label: Wynik
-      options: ["OK", "FAIL", "częściowo"]
+      label: Result
+      options: ["OK", "FAIL", "Partial"]
     validations:
       required: true
   - type: input
     id: setup
     attributes:
-      label: Telefon / host / sieć / wersja Sunshine / wersja gry
+      label: Phone / host / network / Sunshine version / game version
     validations:
       required: true
   - type: textarea
     id: table
     attributes:
-      label: Tabela wyników
-      description: Wklej wypełnioną tabelę z docs/test-plan.md (dla T-03 sekcja 4.4).
+      label: Results table
+      description: Paste the filled-in table from docs/test-plan.md (for T-03, section 4.4).
     validations:
       required: true

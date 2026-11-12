@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thumbcast</title>
+  <meta name="description" content="Thumbcast streams games from your Windows PC to your Android phone, with touch controls or a gamepad.">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="alternate" hreflang="pl" href="pl/">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header>
+    <img src="icon-192.png" alt="">
+    <div>
+      <h1>Thumbcast</h1>
+      <p>Play your PC games on your phone.</p>
+    </div>
+    <a class="lang" href="pl/" hreflang="pl" lang="pl">Polski</a>
+  </header>
+
+  <h2>What it does</h2>
+  <p>Thumbcast streams games from your Windows PC to your Android phone. The game runs on your PC; your phone shows the picture and sends your input back.</p>
+  <ul>
+    <li>On-screen buttons in an Xbox or PlayStation layout, or mouse and keyboard controls.</li>
+    <li>Works with a gamepad connected to your phone; the on-screen buttons hide while you use it.</li>
+    <li>A layout editor and control profiles, saved per game.</li>
+    <li>An in-game menu for quality, stats, controls and closing the game.</li>
+    <li>Play away from home through Tailscale, without opening ports on your router.</li>
+    <li>Fair play: one touch is one input. No macros, turbo or timed presses.</li>
+  </ul>
+
+  <h2>What you need</h2>
+  <div class="card">
+    <h3>On your PC (Windows)</h3>
+    <ul>
+      <li><strong>Sunshine</strong>: a free, open-source program that streams the picture from your PC. <a href="https://github.com/SunshineStream/Sunshine/releases/latest">Download</a></li>
+      <li><strong>ViGEmBus</strong>: the gamepad driver you need to play with a gamepad. With it, games see your phone as a regular Xbox gamepad. <a href="https://github.com/nefarius/ViGEmBus/releases/latest">Download</a>. Paid alternatives exist (for example LizardByte Virtual HID Driver), but ViGEmBus is all you need.</li>
+      <li><strong>Tailscale</strong> (optional): to play away from home. <a href="https://tailscale.com/download">Download</a></li>
+    </ul>
+    <h3>On your phone</h3>
+    <ul>
+      <li>Android 8.0 or newer.</li>
+      <li>The same Wi-Fi network as your PC (or Tailscale when away from home).</li>
+    </ul>
+  </div>
+
+  <h2>Setup</h2>
+  <ol>
+    <li>Install Sunshine on your PC. Open <code>https://localhost:47990</code> in a browser and set a username and password. The browser warns that the connection is not private; that is normal for Sunshine.</li>
+    <li>Install the ViGEmBus driver and restart the PC if asked. In Sunshine, open Configuration → Input and pick the Xbox 360 gamepad.</li>
+    <li>Install Thumbcast on your phone. The setup wizard walks you through the same steps.</li>
+    <li>Pick your PC in Thumbcast. Your phone shows a PIN; enter it in Sunshine on the PIN tab.</li>
+    <li>Add games in Sunshine (Applications → Add New), then pick a game in Thumbcast and play.</li>
+  </ol>
+  <p class="muted">The full guide is always in the app: “How to connect a PC” on the home screen and in Settings → Help.</p>
+
+  <h2 id="privacy">Privacy policy</h2>
+  <p class="muted">Effective 12 November 2026.</p>
+  <p>Thumbcast has no account, no ads and no analytics. The developer does not collect, receive or sell any personal data.</p>
+  <h3>Data stored on your phone</h3>
+  <p>The list of your PCs and their addresses, the pairing certificate, your settings and control profiles. This data never leaves your phone, except as described below. It is deleted when you clear the app's data or uninstall it.</p>
+  <h3>Network connections</h3>
+  <ul>
+    <li><strong>Your PC</strong>: video, audio and your input go directly between your phone and your PC (on your local network or through the Tailscale address you add).</li>
+    <li><strong>Moonlight project servers</strong>: Thumbcast is based on the open-source Moonlight client and uses two of its public helper servers. <code>stun.moonlight-stream.org</code> tells the app your network's public address when it finds a PC, so you can reach it later. <code>android.conntest.moonlight-stream.org</code> is used to test your connection after a stream fails to start or when you add a PC by its address. These servers see your IP address. They are run by the Moonlight project, not by the Thumbcast developer.</li>
+    <li><strong>Links</strong>: download pages (GitHub, Tailscale) open in your browser only when you tap them. “Send link” uses Android's share menu and only sends what you choose.</li>
+  </ul>
+  <h3>Permissions</h3>
+  <ul>
+    <li>Internet, network state and Wi-Fi state: to find PCs on your local network and connect to them.</li>
+    <li>Vibration: gamepad rumble on the phone.</li>
+    <li>Wake lock: keeps the screen on while you stream.</li>
+  </ul>
+  <h3>Children</h3>
+  <p>Thumbcast is not directed at children.</p>
+  <h3>Changes and contact</h3>
+  <p>Changes to this policy are published on this page. Questions: <a href="https://github.com/Serwur/thumbcast/issues">GitHub issues</a>.</p>
+
+  <h2>Open source</h2>
+  <p>Thumbcast is free software under the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU GPL v3</a>. Source code: <a href="https://github.com/Serwur/thumbcast">github.com/Serwur/thumbcast</a>. It is based on Moonlight for Android (GPLv3) and is not affiliated with the Moonlight or Sunshine projects.</p>
+
+  <footer>
+    <p>Xbox and PlayStation are trademarks of their respective owners. Thumbcast is not affiliated with or endorsed by them or by any game publisher.</p>
+  </footer>
+</main>
+</body>
+</html>

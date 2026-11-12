@@ -159,8 +159,8 @@
             android:key="list_languages"
             android:icon="@drawable/thumbcast_ic_language"
             android:title="@string/thumbcast_set_language_title"
-            android:entries="@array/language_names"
-            android:entryValues="@array/language_values"
+            android:entries="@array/thumbcast_language_names"
+            android:entryValues="@array/thumbcast_language_values"
             android:summary="@string/thumbcast_set_language_summary"
             android:defaultValue="default" />
         <com.limelight.preferences.SmallIconCheckboxPreference

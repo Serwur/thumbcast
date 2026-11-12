@@ -55,7 +55,7 @@
         android:icon="@mipmap/ic_launcher"
         android:installLocation="auto"
         android:gwpAsanMode="always"
-        android:localeConfig="@xml/locales_config"
+        android:localeConfig="@xml/thumbcast_locales_config"
         android:enableOnBackInvokedCallback="false"
         android:theme="@style/Theme.Thumbcast">
         <!-- THUMBCAST END -->

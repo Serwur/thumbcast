@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Sunshine + fork Moonlight). Dokumenty po polsku, identyfikatory kodu po angielsku.
+Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Sunshine + fork Moonlight). Dokumenty deweloperskie po polsku, identyfikatory kodu po angielsku. Dokumenty publiczne (README, FAIR_PLAY, CONTRIBUTING, SECURITY, szablony GitHub, `site/`) po angielsku, z wersją polską `*.pl.md` (od 12.11.2026); zmieniaj obie.
 
 ## Moduły
 - `control-model` (JVM): profil JSON, walidacja, migracje. Zakazane typy: sequence, macro, repeat, turbo, delay, toggle_auto. Wolna strefa `gestures.freeZone`: `camera` | `touchpad` | `none` (od 12.11.2026, tylko gest menu; presety Pad – Xbox/PlayStation) | `direct` (od 12.11.2026, mysz bezpośrednia: tap = klik w punkcie, 2 palce = PPM, przeciągnięcie = przewijanie; Big Picture i „Gesty myszy” na padach).
@@ -26,6 +26,7 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 - `docs/DECISIONS.md` (10.11.2026) **ma pierwszeństwo przed PLAN.md**. Skrót: host = Sunshine (GPLv3) lub forki Apollo/Vibepollo; pad w Windows = ViGEmBus 1.17+ (darmowy, zarchiwizowany) albo płatny LizardByte Virtual HID Driver; klient wysyła standardowe pakiety pada niezależnie od sterownika hosta; własnego streamingu ani sterownika nie robimy; zdalnie przez Tailscale/ZeroTier (nie port forwarding, nie tunele HTTP); tryb Klawiatura+Mysz to plan awaryjny dla hostów bez pada.
 - Repo: `Serwur/thumbcast` (nazwa zmieniona 11.11.2026, dawniej `wow-portable`). Agent nie zmienia ustawień repo. Stan i następne kroki: `docs/HANDOFF.md`.
 - Otwarte decyzje: landscape lock (DECISIONS.md, pkt h). Rozstrzygnięte 11.11.2026 (pkt j): repo = scalona historia upstreamu v12.2 (remote `upstream`), `applicationId` `io.github.serwur.thumbcast`.
+- Google Play (12.11.2026): wersja 0.1.0 (`versionCode` 1000), tylko EN i PL (`localeFilters`), AAB w `release.yml`, strona i polityka prywatności w `site/` (GitHub Pages, `pages.yml`), grafiki sklepu w `store/` (`tools/render_store_assets.py`). Kroki: `docs/play-release.md`.
 - Konfiguracja hosta i testy: `docs/host-setup.md`, aplikacje w Sunshine i zmiana rozdzielczości PC: `docs/host-apps.md`, `docs/test-plan.md` (hosty H1 Virtual HID, H2 ViGEmBus, H3 bez pada, H4 macOS; scenariusz T-10 dla trybu bez pada).
 
 ## Uwagi
