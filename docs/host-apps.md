@@ -20,15 +20,27 @@ Web UI Sunshine (`https://localhost:47990`) → **Applications** → **Add New**
 |---|---|---|---|---|
 | Pulpit | `Desktop` | (puste) | (puste) | `desktop.png` |
 | Steam Big Picture | `Steam Big Picture` | `steam://open/bigpicture` | Undo: `steam://close/bigpicture` | `steam.png` |
-| Gra ze Steam | nazwa gry | `steam://rungameid/<id gry>` | (puste) | dowolny |
-| WoW: Forever przez Battle.net | np. `WoW Forever` | `"C:\Program Files (x86)\Battle.net\Battle.net.exe" --exec="launch WoWF"` | (puste) | dowolny |
-| WoW (retail) przez Battle.net | np. `World of Warcraft` | `"C:\Program Files (x86)\Battle.net\Battle.net.exe" --exec="launch WoW"` | (puste) | dowolny |
+| Gra ze Steam | nazwa gry | `steam://rungameid/<id gry>` | Undo: `taskkill /IM <plik gry>.exe` (sekcja 2a) | dowolny |
+| WoW: Forever przez Battle.net | np. `WoW Forever` | `"C:\Program Files (x86)\Battle.net\Battle.net.exe" --exec="launch WoWF"` | Undo: `taskkill /IM <plik gry>.exe` (sekcja 2a) | dowolny |
+| WoW (retail) przez Battle.net | np. `World of Warcraft` | `"C:\Program Files (x86)\Battle.net\Battle.net.exe" --exec="launch WoW"` | Undo: `taskkill /IM Wow.exe` (sekcja 2a) | dowolny |
 
 Uwagi:
-- **Detached Commands** (a nie Command), bo Steam i Battle.net uruchamiają grę w innym procesie i same zostają w tle. Sunshine traktuje wtedy aplikację jako uruchomioną, dopóki nie wybierzesz w Thumbcast **Zakończ sesję…** (menu w grze ☰) albo **Zakończenie sesji** (przytrzymanie aplikacji albo PC). **Rozłącz (gra działa dalej)** zostawia grę uruchomioną; ponowne wejście to wznowienie. Różnice i powrót rozdzielczości: sekcja 3c.
+- **Detached Commands** (a nie Command), bo Steam i Battle.net uruchamiają grę w innym procesie i same zostają w tle. Sunshine traktuje wtedy aplikację jako uruchomioną, dopóki nie wybierzesz w Thumbcast **Zamknij grę na PC** (menu w grze ☰; samą grę zamyka dopiero Undo z sekcji 2a) albo **Zakończenie sesji** (przytrzymanie aplikacji albo PC). **Rozłącz (gra działa dalej)** zostawia grę uruchomioną; ponowne wejście to wznowienie. Różnice i powrót rozdzielczości: sekcja 3c.
 - Kody produktów Battle.net (`WoW`, `WoWF`) podał właściciel; `WoWF` dla WoW: Forever **[?]**. Sprawdź: skrót gry utworzony przez Battle.net (Właściwości → Cel) albo uruchom polecenie ręcznie w `cmd`. Ścieżka do `Battle.net.exe` może być inna. Battle.net musi być zalogowany; przy pierwszym uruchomieniu może pokazać okno launchera przed grą.
 - Inne launchery: Epic (w Command URI `com.epicgames.launcher://apps/<id>?action=launch&silent=true` albo ścieżka do `.exe` gry w Command z Working Directory), gra bez launchera: ścieżka do `.exe` w **Command**. Zasada jest ta sama: launcher w Detached Commands, zwykły program w Command.
 - **Nie zmieniaj nazwy ani obrazka aplikacji bez potrzeby.** Sunshine liczy id aplikacji jako CRC32 z nazwy i skrótu SHA-256 obrazka (`src/process.cpp`, `calculate_app_id`; przy kolizji dokłada indeks). Zmiana obrazka zmienia id: Thumbcast znajdzie ustawienia po nazwie. Zmiana nazwy zmienia i id, i nazwę: ustawienia trzeba przypisać ponownie.
+
+### 2a. Zamykanie gry z launchera („Zamknij grę na PC”)
+
+Zgłoszenie właściciela 12.11.2026: po „Zamknij grę na PC” WoW: Forever dalej działał na PC. Przyczyna: `/cancel` woła `proc::proc.terminate()`, które zamyka tylko proces uruchomiony z **Command**. Detached Commands (Battle.net, Steam) uruchamiają launcher, a ten grę w osobnym procesie, którego Sunshine nie śledzi. Sunshine po `terminate()` wykonuje natomiast polecenia **Undo** z Command Preparations tej aplikacji (w odwrotnej kolejności), więc tam dopisuje się zamknięcie gry:
+
+1. Uruchom grę na PC, otwórz Menedżer zadań → **Szczegóły** i odczytaj nazwę pliku gry (np. `Wow.exe` dla WoW retail, `WowClassic.exe` dla Classic; nazwa dla WoW: Forever **[?]**, sprawdź tak samo).
+2. Web UI Sunshine → **Applications** → **Edit** przy grze → **Command Preparations** → **Add**. Do: puste, Undo: `taskkill /IM <plik gry>.exe`. **Run as administrator** zostaw wyłączone (gra działa na koncie użytkownika). Zapisz.
+3. `taskkill` bez `/F` prosi grę o zamknięcie jak przycisk X okna (gra może zapisać ustawienia). Jeśli gra to ignoruje, użyj `taskkill /IM <plik gry>.exe /F` (zamknięcie siłowe, jak „Zakończ zadanie”).
+
+Steam Big Picture: `steam://close/bigpicture` zamyka tylko Big Picture, gra uruchomiona z niego zostaje. Grę ze Steam zamyka się tak samo, przez `taskkill` jej pliku.
+
+Thumbcast nie widzi procesów na PC, więc po `/cancel` nie wie, czy gra się zamknęła. Dlatego menu w grze pokazuje „Zakończono sesję na PC”, a potwierdzenie (menu w grze i lista gier) mówi wprost, że gra z launchera zamknie się tylko z poleceniem Undo. Ten sam opis jest w poradniku w aplikacji (Dodaj gry, punkt 6; Nie działa?, punkt 5).
 
 ## 3. Zmiana rozdzielczości ekranu PC (Windows)
 
@@ -77,7 +89,7 @@ Sprawdzone 12.11.2026 w kodzie Sunshine (`master`): `src/nvhttp.cpp` (`cancel`, 
 | Co robi telefon | Gra na PC | Ekran PC (przy `dd_configuration_option` ≠ `disabled`) |
 |---|---|---|
 | **Rozłącz (gra działa dalej)**: menu w grze ☰ → pierwsza pozycja; w trybie legacy też systemowe Wstecz i Ctrl+Alt+Shift+Q | działa dalej, można wznowić z listy | zostaje w rozdzielczości strumienia. Wyjątek: przywraca, gdy `dd_config_revert_on_disconnect` = `enabled` albo gdy aplikacja na PC już się sama zakończyła |
-| **Zakończ sesję…** (menu w grze, z potwierdzeniem) albo **Zakończenie sesji** (przytrzymaj aplikację lub PC na liście) | zamknięta (`/cancel`) | przywrócona zawsze (po `dd_config_revert_delay`, domyślnie 3 s) |
+| **Zamknij grę na PC** (menu w grze, z potwierdzeniem; dawniej „Zakończ sesję…”) albo **Zamknij grę na PC** na liście (przytrzymaj aplikację lub PC) | `/cancel`: zamknięta, jeśli uruchomiona z Command; gra z launchera (Detached) tylko z Undo z sekcji 2a | przywrócona zawsze (po `dd_config_revert_delay`, domyślnie 3 s) |
 | Zerwane połączenie (sieć) | działa dalej | jak przy „Rozłącz” |
 | Błąd startu aplikacji (`/launch`) | – | przywrócona |
 

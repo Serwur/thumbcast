@@ -23,6 +23,10 @@ do hosta i nie zmienia wejścia.
   Rozmiar przycisków, Chowaj przyciski, gdy gram padem); Obraz (Statystyki: Wył. / Podstawowe / Szczegółowe);
   Wyjście (Wstrzymaj i wyjdź, Zamknij grę na PC). Profile w sekcjach „Wbudowane” i „Moje”. Potwierdzenie
   zamknięcia gry: ikona ostrzeżenia, tytuł, akapit, „Anuluj” (domyślne zaznaczenie), „Zamknij grę”.
+  Od 12.11.2026 akapit mówi wprost, że gra z launchera (Battle.net, Steam) zamknie się tylko z poleceniem Undo
+  w Sunshine (`docs/host-apps.md`, sekcja 2a), a komunikat po `/cancel` to „Zakończono sesję na PC” (Thumbcast nie
+  widzi procesów PC). To samo w potwierdzeniu na liście: `applist_quit_confirmation` nadpisane w
+  `app/src/nonRoot/res/values{,-pl}/thumbcast_overrides.xml`.
 - `thumbcast/ThumbcastMenuView.java`: przepisany widok. Panel przy krawędzi END z rogami 28 dp od strony wideo,
   wjazd 150 ms, scrim i kolory z `thumbcast_colors.xml`. Stały nagłówek, przewijana treść, stopka „A Wybierz · B Wstecz”
   w trybie zaznaczenia. Przełącznik rysowany (tor i gałka), segmenty, stepper z ikonami w kółkach i wartością

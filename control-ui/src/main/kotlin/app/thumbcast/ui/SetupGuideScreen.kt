@@ -134,7 +134,10 @@ internal val GUIDE_SECTIONS_UI: List<GuideSectionUi> by lazy {
             title = R.string.ui_guide_apps_title,
             intro = null,
             steps = R.array.ui_guide_apps_steps,
-            stepIcons = listOf(UiIcons.Apps, UiIcons.VideogameAsset, UiIcons.PlayArrow, UiIcons.Smartphone, UiIcons.DesktopWindows),
+            stepIcons = listOf(
+                UiIcons.Apps, UiIcons.VideogameAsset, UiIcons.PlayArrow, UiIcons.Smartphone, UiIcons.DesktopWindows,
+                UiIcons.PowerSettingsNew,
+            ),
         ),
         GuideSectionUi(
             id = UiContract.SECTION_REMOTE,
@@ -153,8 +156,8 @@ internal val GUIDE_SECTIONS_UI: List<GuideSectionUi> by lazy {
             title = R.string.ui_guide_troubleshoot_title,
             intro = null,
             steps = R.array.ui_guide_troubleshoot_steps,
-            stepIcons = listOf(UiIcons.WifiOff, UiIcons.SportsEsports, UiIcons.Speed, UiIcons.VpnKey),
-            jumps = listOf(UiContract.SECTION_GAMEPAD, UiContract.SECTION_REMOTE),
+            stepIcons = listOf(UiIcons.WifiOff, UiIcons.SportsEsports, UiIcons.Speed, UiIcons.VpnKey, UiIcons.PowerSettingsNew),
+            jumps = listOf(UiContract.SECTION_GAMEPAD, UiContract.SECTION_APPS, UiContract.SECTION_REMOTE),
         ),
     ).also { list -> check(list.map { it.id } == SetupGuideModel.SECTIONS) }
 }

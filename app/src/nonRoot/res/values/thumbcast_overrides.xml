@@ -10,4 +10,5 @@
     <string name="searching_pc">Searching for computers on your local network…\n\nMake sure Sunshine is running on your PC and that the phone and the PC are on the same Wi-Fi.</string>
     <string name="error_404">The PC returned an HTTP 404 error. Make sure Sunshine is up to date and running. Remote desktop software can also cause this error. Try restarting the PC or reinstalling Sunshine.</string>
     <string name="summary_checkbox_enable_sops">Sunshine receives the phone\'s resolution and FPS. Without it the PC will not change its screen resolution.</string>
+    <string name="applist_quit_confirmation">Close the game on the PC? Sunshine closes it if Sunshine started it. A game started by a launcher (Battle.net, Steam) only closes with a close command set in Sunshine (guide → Add games). Unsaved progress will be lost.</string>
 </resources>

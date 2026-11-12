@@ -44,11 +44,11 @@
 
     <!-- Potwierdzenie zamknięcia gry na PC -->
     <string name="thumbcast_game_quit_title">Zamknąć grę na PC?</string>
-    <string name="thumbcast_game_quit_body">Gra się zamknie, a niezapisane postępy przepadną. Ekran PC wróci do zwykłej rozdzielczości.</string>
+    <string name="thumbcast_game_quit_body">Sunshine zakończy sesję i zamknie grę, jeśli sam ją uruchomił. Gra z launchera (Battle.net, Steam) zamknie się tylko wtedy, gdy w Sunshine ustawisz dla niej polecenie zamykania (poradnik „Jak podłączyć PC” → Dodaj gry). Inaczej wyjdź z gry w jej menu. Niezapisane postępy przepadną.</string>
     <string name="thumbcast_game_quit_cancel">Anuluj</string>
     <string name="thumbcast_game_quit_confirm">Zamknij grę</string>
-    <string name="thumbcast_game_quit_progress">Zamykam grę na PC…</string>
-    <string name="thumbcast_game_quit_done">Gra na PC zamknięta</string>
+    <string name="thumbcast_game_quit_progress">Kończę sesję na PC…</string>
+    <string name="thumbcast_game_quit_done">Zakończono sesję na PC</string>
     <string name="thumbcast_game_quit_failed">Nie udało się zamknąć gry na PC. Spróbuj z listy gier: przytrzymaj grę.</string>
     <string name="thumbcast_game_quit_not_owner">Grę uruchomiono z innego urządzenia. Zamknij ją tam albo na PC.</string>
 

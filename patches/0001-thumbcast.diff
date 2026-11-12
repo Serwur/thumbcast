@@ -7624,6 +7624,46 @@ index 00000000..d57bc8e0
 +            android:pathData="m313-440 196 196q12 12 11.5 28T508-188q-12 11-28 11.5T452-188L188-452q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l264-264q11-11 27.5-11t28.5 11q12 12 12 28.5T508-715L313-520h447q17 0 28.5 11.5T800-480q0 17-11.5 28.5T760-440H313Z" />
 +    </group>
 +</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_aspect_ratio.xml b/app/src/main/res/drawable/thumbcast_ic_aspect_ratio.xml
+new file mode 100644
+index 00000000..d61c66de
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_aspect_ratio.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: aspect_ratio (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M680-360h-80q-17 0-28.5 11.5T560-320q0 17 11.5 28.5T600-280h120q17 0 28.5-11.5T760-320v-120q0-17-11.5-28.5T720-480q-17 0-28.5 11.5T680-440v80ZM280-600h80q17 0 28.5-11.5T400-640q0-17-11.5-28.5T360-680H240q-17 0-28.5 11.5T200-640v120q0 17 11.5 28.5T240-480q17 0 28.5-11.5T280-520v-80ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z" />
++    </group>
++</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_auto_fix_high.xml b/app/src/main/res/drawable/thumbcast_ic_auto_fix_high.xml
+new file mode 100644
+index 00000000..b81bec92
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_auto_fix_high.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: auto_fix_high (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="m20 7-.95-2.05L17 4l2.05-.95L20 1l.95 2.05L23 4l-2.05.95ZM8.5 7l-.95-2.05L5.5 4l2.05-.95L8.5 1l.95 2.05L11.5 4l-2.05.95ZM20 18.5l-.95-2.05L17 15.5l2.05-.95.95-2.05.95 2.05 2.05.95-2.05.95ZM5.1 21.7l-2.8-2.8q-.3-.3-.3-.725t.3-.725L13.45 6.3q.3-.3.725-.3t.725.3l2.8 2.8q.3.3.3.725t-.3.725L6.55 21.7q-.3.3-.725.3t-.725-.3Zm.75-2.1L13 12.4 11.6 11l-7.2 7.15Z" />
++    </group>
++</vector>
 diff --git a/app/src/main/res/drawable/thumbcast_ic_check.xml b/app/src/main/res/drawable/thumbcast_ic_check.xml
 new file mode 100644
 index 00000000..4d4f9edb
@@ -7765,6 +7805,26 @@ index 00000000..881e214c
 +            android:pathData="M200-200h57l391-391-57-57-391 391v57Zm-40 80q-17 0-28.5-11.5T120-160v-97q0-16 6-30.5t17-25.5l505-504q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L313-143q-11 11-25.5 17t-30.5 6h-97Zm600-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
 +    </group>
 +</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_fit_screen.xml b/app/src/main/res/drawable/thumbcast_ic_fit_screen.xml
+new file mode 100644
+index 00000000..54c6be38
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_fit_screen.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: fit_screen (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M800-640v-80h-80q-17 0-28.5-11.5T680-760q0-17 11.5-28.5T720-800h80q33 0 56.5 23.5T880-720v80q0 17-11.5 28.5T840-600q-17 0-28.5-11.5T800-640Zm-720 0v-80q0-33 23.5-56.5T160-800h80q17 0 28.5 11.5T280-760q0 17-11.5 28.5T240-720h-80v80q0 17-11.5 28.5T120-600q-17 0-28.5-11.5T80-640Zm720 480h-80q-17 0-28.5-11.5T680-200q0-17 11.5-28.5T720-240h80v-80q0-17 11.5-28.5T840-360q17 0 28.5 11.5T880-320v80q0 33-23.5 56.5T800-160Zm-640 0q-33 0-56.5-23.5T80-240v-80q0-17 11.5-28.5T120-360q17 0 28.5 11.5T160-320v80h80q17 0 28.5 11.5T280-200q0 17-11.5 28.5T240-160h-80Zm80-240v-160q0-33 23.5-56.5T320-640h320q33 0 56.5 23.5T720-560v160q0 33-23.5 56.5T640-320H320q-33 0-56.5-23.5T240-400Zm80 0h320v-160H320v160Zm0 0v-160 160Z" />
++    </group>
++</vector>
 diff --git a/app/src/main/res/drawable/thumbcast_ic_format_size.xml b/app/src/main/res/drawable/thumbcast_ic_format_size.xml
 new file mode 100644
 index 00000000..6934756e
@@ -7783,6 +7843,26 @@ index 00000000..6934756e
 +        <path
 +            android:fillColor="@android:color/white"
 +            android:pathData="M560-680H420q-25 0-42.5-17.5T360-740q0-25 17.5-42.5T420-800h400q25 0 42.5 17.5T880-740q0 25-17.5 42.5T820-680H680v460q0 25-17.5 42.5T620-160q-25 0-42.5-17.5T560-220v-460ZM200-480h-60q-25 0-42.5-17.5T80-540q0-25 17.5-42.5T140-600h240q25 0 42.5 17.5T440-540q0 25-17.5 42.5T380-480h-60v260q0 25-17.5 42.5T260-160q-25 0-42.5-17.5T200-220v-260Z" />
++    </group>
++</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_fps_select.xml b/app/src/main/res/drawable/thumbcast_ic_fps_select.xml
+new file mode 100644
+index 00000000..1ecede38
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_fps_select.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: 60fps_select (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M240-400q-33 0-56.5-23.5T160-480v-240q0-33 23.5-56.5T240-800h160q17 0 28.5 11.5T440-760q0 17-11.5 28.5T400-720H240v80h120q33 0 56.5 23.5T440-560v80q0 33-23.5 56.5T360-400H240Zm0-80h120v-80H240v80Zm360 80q-33 0-56.5-23.5T520-480v-240q0-33 23.5-56.5T600-800h120q33 0 56.5 23.5T800-720v240q0 33-23.5 56.5T720-400H600Zm0-80h120v-240H600v240ZM160-80q-17 0-28.5-11.5T120-120v-120q0-17 11.5-28.5T160-280q17 0 28.5 11.5T200-240v120q0 17-11.5 28.5T160-80Zm160 0q-17 0-28.5-11.5T280-120v-120q0-17 11.5-28.5T320-280q17 0 28.5 11.5T360-240v120q0 17-11.5 28.5T320-80Zm160 0q-17 0-28.5-11.5T440-120v-120q0-17 11.5-28.5T480-280q17 0 28.5 11.5T520-240v120q0 17-11.5 28.5T480-80Zm160 0q-17 0-28.5-11.5T600-120v-120q0-17 11.5-28.5T640-280h160q17 0 28.5 11.5T840-240v120q0 17-11.5 28.5T800-80H640Z" />
 +    </group>
 +</vector>
 diff --git a/app/src/main/res/drawable/thumbcast_ic_game_menu.xml b/app/src/main/res/drawable/thumbcast_ic_game_menu.xml
@@ -7826,6 +7906,46 @@ index 00000000..ef33ce2e
 +            android:pathData="M480-654Zm174 174Zm-348 0Zm174 174Zm-28-262-80-80q-6-6-9-13.5t-3-15.5v-163q0-17 11.5-28.5T400-880h160q17 0 28.5 11.5T600-840v163q0 8-3 15.5t-9 13.5l-80 80q-6 6-13 8.5t-15 2.5q-8 0-15-2.5t-13-8.5Zm116 116q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l80-80q6-6 13.5-9t15.5-3h163q17 0 28.5 11.5T880-560v160q0 17-11.5 28.5T840-360H677q-8 0-15.5-3t-13.5-9l-80-80ZM80-400v-160q0-17 11.5-28.5T120-600h163q8 0 15.5 3t13.5 9l80 80q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13l-80 80q-6 6-13.5 9t-15.5 3H120q-17 0-28.5-11.5T80-400Zm280 280v-163q0-8 3-15.5t9-13.5l80-80q6-6 13-8.5t15-2.5q8 0 15 2.5t13 8.5l80 80q6 6 9 13.5t3 15.5v163q0 17-11.5 28.5T560-80H400q-17 0-28.5-11.5T360-120Zm120-534 40-40v-106h-80v106l40 40ZM160-440h106l40-40-40-40H160v80Zm280 280h80v-106l-40-40-40 40v106Zm254-280h106v-80H694l-40 40 40 40Z" />
 +    </group>
 +</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_graphic_eq.xml b/app/src/main/res/drawable/thumbcast_ic_graphic_eq.xml
+new file mode 100644
+index 00000000..091268af
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_graphic_eq.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: graphic_eq (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M280-280v-400q0-17 11.5-28.5T320-720q17 0 28.5 11.5T360-680v400q0 17-11.5 28.5T320-240q-17 0-28.5-11.5T280-280Zm160 160v-720q0-17 11.5-28.5T480-880q17 0 28.5 11.5T520-840v720q0 17-11.5 28.5T480-80q-17 0-28.5-11.5T440-120ZM120-440v-80q0-17 11.5-28.5T160-560q17 0 28.5 11.5T200-520v80q0 17-11.5 28.5T160-400q-17 0-28.5-11.5T120-440Zm480 160v-400q0-17 11.5-28.5T640-720q17 0 28.5 11.5T680-680v400q0 17-11.5 28.5T640-240q-17 0-28.5-11.5T600-280Zm160-160v-80q0-17 11.5-28.5T800-560q17 0 28.5 11.5T840-520v80q0 17-11.5 28.5T800-400q-17 0-28.5-11.5T760-440Z" />
++    </group>
++</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_grid_view.xml b/app/src/main/res/drawable/thumbcast_ic_grid_view.xml
+new file mode 100644
+index 00000000..a148dc2f
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_grid_view.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: grid_view (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M200-520q-33 0-56.5-23.5T120-600v-160q0-33 23.5-56.5T200-840h160q33 0 56.5 23.5T440-760v160q0 33-23.5 56.5T360-520H200Zm0 400q-33 0-56.5-23.5T120-200v-160q0-33 23.5-56.5T200-440h160q33 0 56.5 23.5T440-360v160q0 33-23.5 56.5T360-120H200Zm400-400q-33 0-56.5-23.5T520-600v-160q0-33 23.5-56.5T600-840h160q33 0 56.5 23.5T840-760v160q0 33-23.5 56.5T760-520H600Zm0 400q-33 0-56.5-23.5T520-200v-160q0-33 23.5-56.5T600-440h160q33 0 56.5 23.5T840-360v160q0 33-23.5 56.5T760-120H600ZM200-600h160v-160H200v160Zm400 0h160v-160H600v160Zm0 400h160v-160H600v160Zm-400 0h160v-160H200v160Zm400-400Zm0 240Zm-240 0Zm0-240Z" />
++    </group>
++</vector>
 diff --git a/app/src/main/res/drawable/thumbcast_ic_help.xml b/app/src/main/res/drawable/thumbcast_ic_help.xml
 new file mode 100644
 index 00000000..176f0f60
@@ -7844,6 +7964,26 @@ index 00000000..176f0f60
 +        <path
 +            android:fillColor="@android:color/white"
 +            android:pathData="M513.5-254.5Q528-269 528-290t-14.5-35.5Q499-340 478-340t-35.5 14.5Q428-311 428-290t14.5 35.5Q457-240 478-240t35.5-14.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Zm4-172q25 0 43.5 16t18.5 40q0 22-13.5 39T502-525q-23 20-40.5 44T444-427q0 14 10.5 23.5T479-394q15 0 25.5-10t13.5-25q4-21 18-37.5t30-31.5q23-22 39.5-48t16.5-58q0-51-41.5-83.5T484-720q-38 0-72.5 16T359-655q-7 12-4.5 25.5T368-609q14 8 29 5t25-17q11-15 27.5-23t34.5-8Z" />
++    </group>
++</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_high_quality.xml b/app/src/main/res/drawable/thumbcast_ic_high_quality.xml
+new file mode 100644
+index 00000000..bf60f6fa
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_high_quality.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: high_quality (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M590-360v30q0 13 8.5 21.5T620-300q13 0 21.5-8.5T650-330v-30h30q17 0 28.5-11.5T720-400v-160q0-17-11.5-28.5T680-600H560q-17 0-28.5 11.5T520-560v160q0 17 11.5 28.5T560-360h30Zm-290-80h80v50q0 13 8.5 21.5T410-360q13 0 21.5-8.5T440-390v-180q0-13-8.5-21.5T410-600q-13 0-21.5 8.5T380-570v70h-80v-70q0-13-8.5-21.5T270-600q-13 0-21.5 8.5T240-570v180q0 13 8.5 21.5T270-360q13 0 21.5-8.5T300-390v-50Zm280 20v-120h80v120h-80ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z" />
 +    </group>
 +</vector>
 diff --git a/app/src/main/res/drawable/thumbcast_ic_info.xml b/app/src/main/res/drawable/thumbcast_ic_info.xml
@@ -7884,6 +8024,26 @@ index 00000000..541f29f2
 +        <path
 +            android:fillColor="@android:color/white"
 +            android:pathData="M160-200q-33 0-56.5-23.5T80-280v-400q0-33 23.5-56.5T160-760h640q33 0 56.5 23.5T880-680v400q0 33-23.5 56.5T800-200H160Zm0-80h640v-400H160v400Zm200-40h240q17 0 28.5-11.5T640-360q0-17-11.5-28.5T600-400H360q-17 0-28.5 11.5T320-360q0 17 11.5 28.5T360-320Zm-200 40v-400 400Zm108.5-291.5Q280-583 280-600t-11.5-28.5Q257-640 240-640t-28.5 11.5Q200-617 200-600t11.5 28.5Q223-560 240-560t28.5-11.5Zm120 0Q400-583 400-600t-11.5-28.5Q377-640 360-640t-28.5 11.5Q320-617 320-600t11.5 28.5Q343-560 360-560t28.5-11.5Zm120 0Q520-583 520-600t-11.5-28.5Q497-640 480-640t-28.5 11.5Q440-617 440-600t11.5 28.5Q463-560 480-560t28.5-11.5Zm120 0Q640-583 640-600t-11.5-28.5Q617-640 600-640t-28.5 11.5Q560-617 560-600t11.5 28.5Q583-560 600-560t28.5-11.5Zm120 0Q760-583 760-600t-11.5-28.5Q737-640 720-640t-28.5 11.5Q680-617 680-600t11.5 28.5Q703-560 720-560t28.5-11.5Zm-480 120Q280-463 280-480t-11.5-28.5Q257-520 240-520t-28.5 11.5Q200-497 200-480t11.5 28.5Q223-440 240-440t28.5-11.5Zm120 0Q400-463 400-480t-11.5-28.5Q377-520 360-520t-28.5 11.5Q320-497 320-480t11.5 28.5Q343-440 360-440t28.5-11.5Zm120 0Q520-463 520-480t-11.5-28.5Q497-520 480-520t-28.5 11.5Q440-497 440-480t11.5 28.5Q463-440 480-440t28.5-11.5Zm120 0Q640-463 640-480t-11.5-28.5Q617-520 600-520t-28.5 11.5Q560-497 560-480t11.5 28.5Q583-440 600-440t28.5-11.5Zm120 0Q760-463 760-480t-11.5-28.5Q737-520 720-520t-28.5 11.5Q680-497 680-480t11.5 28.5Q703-440 720-440t28.5-11.5Z" />
++    </group>
++</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_language.xml b/app/src/main/res/drawable/thumbcast_ic_language.xml
+new file mode 100644
+index 00000000..497d7669
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_language.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: language (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-155.5t86-127Q252-817 325-848.5T480-880q83 0 155.5 31.5t127 86q54.5 54.5 86 127T880-480q0 82-31.5 155t-86 127.5q-54.5 54.5-127 86T480-80Zm0-82q26-36 45-75t31-83H404q12 44 31 83t45 75Zm-104-16q-18-33-31.5-68.5T322-320H204q29 50 72.5 87t99.5 55Zm208 0q56-18 99.5-55t72.5-87H638q-9 38-22.5 73.5T584-178ZM170-400h136q-3-20-4.5-39.5T300-480q0-21 1.5-40.5T306-560H170q-5 20-7.5 39.5T160-480q0 21 2.5 40.5T170-400Zm216 0h188q3-20 4.5-39.5T580-480q0-21-1.5-40.5T574-560H386q-3 20-4.5 39.5T380-480q0 21 1.5 40.5T386-400Zm268 0h136q5-20 7.5-39.5T800-480q0-21-2.5-40.5T790-560H654q3 20 4.5 39.5T660-480q0 21-1.5 40.5T654-400Zm-16-240h118q-29-50-72.5-87T584-782q18 33 31.5 68.5T638-640Zm-234 0h152q-12-44-31-83t-45-75q-26 36-45 75t-31 83Zm-200 0h118q9-38 22.5-73.5T376-782q-56 18-99.5 55T204-640Z" />
 +    </group>
 +</vector>
 diff --git a/app/src/main/res/drawable/thumbcast_ic_lock.xml b/app/src/main/res/drawable/thumbcast_ic_lock.xml
@@ -7988,6 +8148,26 @@ index 00000000..7717f6ad
 +            android:pathData="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h240q17 0 28.5 11.5T480-800q0 17-11.5 28.5T440-760H200v560h560v-240q0-17 11.5-28.5T800-480q17 0 28.5 11.5T840-440v240q0 33-23.5 56.5T760-120H200Zm560-584L416-360q-11 11-28 11t-28-11q-11-11-11-28t11-28l344-344H600q-17 0-28.5-11.5T560-800q0-17 11.5-28.5T600-840h200q17 0 28.5 11.5T840-800v200q0 17-11.5 28.5T800-560q-17 0-28.5-11.5T760-600v-104Z" />
 +    </group>
 +</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_picture_in_picture_alt.xml b/app/src/main/res/drawable/thumbcast_ic_picture_in_picture_alt.xml
+new file mode 100644
+index 00000000..b9dea011
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_picture_in_picture_alt.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: picture_in_picture_alt (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Zm320-40h240q17 0 28.5-11.5T760-320v-160q0-17-11.5-28.5T720-520H480q-17 0-28.5 11.5T440-480v160q0 17 11.5 28.5T480-280Zm40-80v-80h160v80H520Z" />
++    </group>
++</vector>
 diff --git a/app/src/main/res/drawable/thumbcast_ic_play_arrow.xml b/app/src/main/res/drawable/thumbcast_ic_play_arrow.xml
 new file mode 100644
 index 00000000..aee3321b
@@ -8028,6 +8208,26 @@ index 00000000..76ee567e
 +            android:pathData="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-73 24.5-138.5T172-736q11-14 26.5-13t26.5 11q11 10 14.5 26T229-679q-32 41-50.5 91.5T160-480q0 134 93 227t227 93q134 0 227-93t93-227q0-57-18.5-107.5T731-679q-14-17-10.5-33t14.5-26q11-10 26.5-11t26.5 13q43 52 67.5 117.5T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm-28.5-371.5Q440-463 440-480v-360q0-17 11.5-28.5T480-880q17 0 28.5 11.5T520-840v360q0 17-11.5 28.5T480-440q-17 0-28.5-11.5Z" />
 +    </group>
 +</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_query_stats.xml b/app/src/main/res/drawable/thumbcast_ic_query_stats.xml
+new file mode 100644
+index 00000000..15809b90
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_query_stats.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: query_stats (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M70-258q-13-9-15.5-24.5T60-312l151-242q11-17 30.5-18.5T275-559l85 99 127-207q11-19 33.5-19t34.5 18l41 62q11 17 6.5 32.5T585-550q-13 8-28.5 6.5T530-562l-7-10-123 200q-11 17-31 19t-34-14l-85-99-122 197q-9 15-26.5 18.5T70-258Zm573 121q-75 0-127.5-52.5T463-317q0-75 52.5-127.5T643-497q75 0 127.5 52.5T823-317q0 26-7 50.5T795-221l96 96q12 12 12.5 28T892-69q-12 12-28.5 12T835-69l-97-96q-20 14-44.5 21t-50.5 7Zm0-80q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29Zm49-331q-13-8-18-23t6-32l152-241q9-14 26-18t31 7q13 9 16 24.5t-5 29.5L747-561q-11 17-26.5 19t-28.5-6Z" />
++    </group>
++</vector>
 diff --git a/app/src/main/res/drawable/thumbcast_ic_remove.xml b/app/src/main/res/drawable/thumbcast_ic_remove.xml
 new file mode 100644
 index 00000000..e2b0f558
@@ -8046,6 +8246,26 @@ index 00000000..e2b0f558
 +        <path
 +            android:fillColor="@android:color/white"
 +            android:pathData="M240-440q-17 0-28.5-11.5T200-480q0-17 11.5-28.5T240-520h480q17 0 28.5 11.5T760-480q0 17-11.5 28.5T720-440H240Z" />
++    </group>
++</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_restart_alt.xml b/app/src/main/res/drawable/thumbcast_ic_restart_alt.xml
+new file mode 100644
+index 00000000..c1684d83
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_restart_alt.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: restart_alt (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M393-132q-103-29-168-113.5T160-440q0-57 19-108.5t54-94.5q11-12 27-12.5t29 12.5q11 11 11.5 27T290-586q-24 31-37 68t-13 78q0 81 47.5 144.5T410-209q13 4 21.5 15t8.5 24q0 20-14 31.5t-33 6.5Zm174 0q-19 5-33-7t-14-32q0-12 8.5-23t21.5-15q75-24 122.5-87T720-440q0-100-70-170t-170-70h-3l16 16q11 11 11 28t-11 28q-11 11-28 11t-28-11l-84-84q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l84-84q11-11 28-11t28 11q11 11 11 28t-11 28l-16 16h3q134 0 227 93t93 227q0 109-65 194T567-132Z" />
 +    </group>
 +</vector>
 diff --git a/app/src/main/res/drawable/thumbcast_ic_settings.xml b/app/src/main/res/drawable/thumbcast_ic_settings.xml
@@ -8168,6 +8388,26 @@ index 00000000..a1277d40
 +            android:pathData="M480-269 314-169q-11 7-23 6t-21-8q-9-7-14-17.5t-2-23.5l44-189-147-127q-10-9-12.5-20.5T140-571q4-11 12-18t22-9l194-17 75-178q5-12 15.5-18t21.5-6q11 0 21.5 6t15.5 18l75 178 194 17q14 2 22 9t12 18q4 11 1.5 22.5T809-528L662-401l44 189q3 13-2 23.5T690-171q-9 7-21 8t-23-6L480-269Z" />
 +    </group>
 +</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_surround_sound.xml b/app/src/main/res/drawable/thumbcast_ic_surround_sound.xml
+new file mode 100644
+index 00000000..4510b1e2
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_surround_sound.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: surround_sound (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M480-360q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35Zm200-120q0 30-8 58t-25 53q-9 14-8.5 31t11.5 28q12 12 28 11.5t26-13.5q27-36 41.5-79t14.5-89q0-46-14.5-89T704-648q-10-13-26-13.5T650-650q-11 11-11.5 28t8.5 31q17 25 25 53t8 58Zm-400 0q0-30 8-58t25-53q9-14 8.5-31T310-650q-12-12-28-11.5T256-648q-27 36-41.5 79T200-480q0 46 14.5 89t41.5 79q10 13 26 13.5t28-11.5q11-11 11.5-28t-8.5-31q-17-25-25-53t-8-58ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z" />
++    </group>
++</vector>
 diff --git a/app/src/main/res/drawable/thumbcast_ic_touch_app.xml b/app/src/main/res/drawable/thumbcast_ic_touch_app.xml
 new file mode 100644
 index 00000000..8399d220
@@ -8228,6 +8468,26 @@ index 00000000..2acece2d
 +            android:pathData="M240-160q-33 0-56.5-23.5T160-240v-80q0-17 11.5-28.5T200-360q17 0 28.5 11.5T240-320v80h480v-80q0-17 11.5-28.5T760-360q17 0 28.5 11.5T800-320v80q0 33-23.5 56.5T720-160H240Zm200-486-75 75q-12 12-28.5 11.5T308-572q-11-12-11.5-28t11.5-28l144-144q6-6 13-8.5t15-2.5q8 0 15 2.5t13 8.5l144 144q12 12 11.5 28T652-572q-12 12-28.5 12.5T595-571l-75-75v286q0 17-11.5 28.5T480-320q-17 0-28.5-11.5T440-360v-286Z" />
 +    </group>
 +</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_vibration.xml b/app/src/main/res/drawable/thumbcast_ic_vibration.xml
+new file mode 100644
+index 00000000..58875b55
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_vibration.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: vibration (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M40-600q17 0 28.5 11.5T80-560v160q0 17-11.5 28.5T40-360q-17 0-28.5-11.5T0-400v-160q0-17 11.5-28.5T40-600Zm120-80q17 0 28.5 11.5T200-640v320q0 17-11.5 28.5T160-280q-17 0-28.5-11.5T120-320v-320q0-17 11.5-28.5T160-680Zm760 80q17 0 28.5 11.5T960-560v160q0 17-11.5 28.5T920-360q-17 0-28.5-11.5T880-400v-160q0-17 11.5-28.5T920-600Zm-120-80q17 0 28.5 11.5T840-640v320q0 17-11.5 28.5T800-280q-17 0-28.5-11.5T760-320v-320q0-17 11.5-28.5T800-680ZM320-120q-33 0-56.5-23.5T240-200v-560q0-33 23.5-56.5T320-840h320q33 0 56.5 23.5T720-760v560q0 33-23.5 56.5T640-120H320Zm0-80h320v-560H320v560Zm0 0v-560 560Z" />
++    </group>
++</vector>
 diff --git a/app/src/main/res/drawable/thumbcast_ic_visibility.xml b/app/src/main/res/drawable/thumbcast_ic_visibility.xml
 new file mode 100644
 index 00000000..7724d2cb
@@ -8266,6 +8526,26 @@ index 00000000..f0f61319
 +        <path
 +            android:fillColor="@android:color/white"
 +            android:pathData="M607-627q29 29 42.5 66t9.5 76q0 15-11 25.5T622-449q-15 0-25.5-10.5T586-485q5-26-3-50t-25-41q-17-17-41-26t-51-4q-15 0-25.5-11T430-643q0-15 10.5-25.5T466-679q38-4 75 9.5t66 42.5Zm-127-93q-19 0-37 1.5t-36 5.5q-17 3-30.5-5T358-742q-5-16 3.5-31t24.5-18q23-5 46.5-7t47.5-2q137 0 250.5 72T904-534q4 8 6 16.5t2 17.5q0 9-1.5 17.5T905-466q-18 40-44.5 75T802-327q-12 11-28 9t-26-16q-10-14-8.5-30.5T753-392q24-23 44-50t35-58q-50-101-144.5-160.5T480-720Zm0 520q-134 0-245-72.5T60-463q-5-8-7.5-17.5T50-500q0-10 2-19t7-18q20-40 46.5-76.5T166-680l-83-84q-11-12-10.5-28.5T84-820q11-11 28-11t28 11l680 680q11 11 11.5 27.5T820-84q-11 11-28 11t-28-11L624-222q-35 11-71 16.5t-73 5.5ZM222-624q-29 26-53 57t-41 67q50 101 144.5 160.5T480-280q20 0 39-2.5t39-5.5l-36-38q-11 3-21 4.5t-21 1.5q-75 0-127.5-52.5T300-500q0-11 1.5-21t4.5-21l-84-82Zm319 93Zm-151 75Z" />
++    </group>
++</vector>
+diff --git a/app/src/main/res/drawable/thumbcast_ic_volume_up.xml b/app/src/main/res/drawable/thumbcast_ic_volume_up.xml
+new file mode 100644
+index 00000000..a7a9a893
+--- /dev/null
++++ b/app/src/main/res/drawable/thumbcast_ic_volume_up.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Material Symbols Rounded: volume_up (Google, Apache-2.0, patrz NOTICE). Kolor z motywu albo android:tint widoku. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="960"
++    android:viewportHeight="960"
++    android:tint="?android:attr/textColorPrimary">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M760-481q0-83-44-151.5T598-735q-15-7-22-21.5t-2-29.5q6-16 21.5-23t31.5 0q97 43 155 131.5T840-481q0 108-58 196.5T627-153q-16 7-31.5 0T574-176q-5-15 2-29.5t22-21.5q74-34 118-102.5T760-481ZM280-360H160q-17 0-28.5-11.5T120-400v-160q0-17 11.5-28.5T160-600h120l132-132q19-19 43.5-8.5T480-703v446q0 27-24.5 37.5T412-228L280-360Zm380-120q0 42-19 79.5T591-339q-10 6-20.5.5T560-356v-250q0-12 10.5-17.5t20.5.5q31 25 50 63t19 80ZM400-606l-86 86H200v80h114l86 86v-252ZM300-480Z" />
 +    </group>
 +</vector>
 diff --git a/app/src/main/res/drawable/thumbcast_ic_vpn_key.xml b/app/src/main/res/drawable/thumbcast_ic_vpn_key.xml
@@ -9693,7 +9973,7 @@ index 00000000..a75e297f
 +</resources>
 diff --git a/app/src/main/res/values-pl/thumbcast_strings_game.xml b/app/src/main/res/values-pl/thumbcast_strings_game.xml
 new file mode 100644
-index 00000000..8adbb089
+index 00000000..ab09ede0
 --- /dev/null
 +++ b/app/src/main/res/values-pl/thumbcast_strings_game.xml
 @@ -0,0 +1,75 @@
@@ -9743,11 +10023,11 @@ index 00000000..8adbb089
 +
 +    <!-- Potwierdzenie zamknięcia gry na PC -->
 +    <string name="thumbcast_game_quit_title">Zamknąć grę na PC?</string>
-+    <string name="thumbcast_game_quit_body">Gra się zamknie, a niezapisane postępy przepadną. Ekran PC wróci do zwykłej rozdzielczości.</string>
++    <string name="thumbcast_game_quit_body">Sunshine zakończy sesję i zamknie grę, jeśli sam ją uruchomił. Gra z launchera (Battle.net, Steam) zamknie się tylko wtedy, gdy w Sunshine ustawisz dla niej polecenie zamykania (poradnik „Jak podłączyć PC” → Dodaj gry). Inaczej wyjdź z gry w jej menu. Niezapisane postępy przepadną.</string>
 +    <string name="thumbcast_game_quit_cancel">Anuluj</string>
 +    <string name="thumbcast_game_quit_confirm">Zamknij grę</string>
-+    <string name="thumbcast_game_quit_progress">Zamykam grę na PC…</string>
-+    <string name="thumbcast_game_quit_done">Gra na PC zamknięta</string>
++    <string name="thumbcast_game_quit_progress">Kończę sesję na PC…</string>
++    <string name="thumbcast_game_quit_done">Zakończono sesję na PC</string>
 +    <string name="thumbcast_game_quit_failed">Nie udało się zamknąć gry na PC. Spróbuj z listy gier: przytrzymaj grę.</string>
 +    <string name="thumbcast_game_quit_not_owner">Grę uruchomiono z innego urządzenia. Zamknij ją tam albo na PC.</string>
 +
@@ -10276,7 +10556,7 @@ index 00000000..4bdf20fb
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_strings_game.xml b/app/src/main/res/values/thumbcast_strings_game.xml
 new file mode 100644
-index 00000000..9b08c97a
+index 00000000..df4a539d
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_strings_game.xml
 @@ -0,0 +1,80 @@
@@ -10331,11 +10611,11 @@ index 00000000..9b08c97a
 +
 +    <!-- Potwierdzenie zamknięcia gry na PC -->
 +    <string name="thumbcast_game_quit_title">Close the game on the PC?</string>
-+    <string name="thumbcast_game_quit_body">The game will close and unsaved progress will be lost. The PC screen goes back to its usual resolution.</string>
++    <string name="thumbcast_game_quit_body">Sunshine ends the session and closes the game if Sunshine started it. A game started by a launcher (Battle.net, Steam) only closes if you set a close command for it in Sunshine (guide “How to connect a PC” → Add games). Otherwise, quit from the game\'s own menu. Unsaved progress will be lost.</string>
 +    <string name="thumbcast_game_quit_cancel">Cancel</string>
 +    <string name="thumbcast_game_quit_confirm">Close game</string>
-+    <string name="thumbcast_game_quit_progress">Closing the game on the PC…</string>
-+    <string name="thumbcast_game_quit_done">Game closed on the PC</string>
++    <string name="thumbcast_game_quit_progress">Ending the session on the PC…</string>
++    <string name="thumbcast_game_quit_done">Session on the PC ended</string>
 +    <string name="thumbcast_game_quit_failed">Couldn\'t close the game on the PC. Try from the game list: press and hold the game.</string>
 +    <string name="thumbcast_game_quit_not_owner">This game was started from another device. Close it there or on the PC.</string>
 +
@@ -10854,10 +11134,10 @@ index 5b09082b..48c28874 100644
          <CheckBoxPreference
 diff --git a/app/src/main/res/xml/thumbcast_preferences.xml b/app/src/main/res/xml/thumbcast_preferences.xml
 new file mode 100644
-index 00000000..d3be9181
+index 00000000..07777a47
 --- /dev/null
 +++ b/app/src/main/res/xml/thumbcast_preferences.xml
-@@ -0,0 +1,419 @@
+@@ -0,0 +1,420 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!--
 +    THUMBCAST: ekran ustawień (docs/ui-audit.md, U4, U5, D3, D7; opis w patches/ui-p3.patch.md).
@@ -10874,7 +11154,8 @@ index 00000000..d3be9181
 +    - checkbox_vibrate_osc jest w „Sterowanie” (działa też w trybie Thumbcast); usuwa go blok THUMBCAST w StreamSettings.
 +    - Stare przyciski ekranowe (category_onscreen_controls, za list_control_layer i checkbox_thumbcast_debug) są widoczne
 +      tylko przy rodzaju sterowania „legacy”; ukrywa je blok THUMBCAST w StreamSettings.
-+    - Pozycje bez ikony mają iconSpaceReserved, żeby tytuły były w jednej linii z pozycjami z ikonami.
++    - Każda pozycja ekranu głównego ma ikonę thumbcast_ic_* (prośba właściciela 12.11.2026); ekran Zaawansowane
++      zostaje bez ikon.
 +-->
 +<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
 +    xmlns:seekbar="http://schemas.moonlight-stream.com/apk/res/seekbar">
@@ -10913,7 +11194,7 @@ index 00000000..d3be9181
 +             checkbox_show_onscreen_controls zdejmuje StreamSettings w trybie Thumbcast. -->
 +        <CheckBoxPreference
 +            android:key="checkbox_vibrate_osc"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_vibration"
 +            android:dependency="checkbox_show_onscreen_controls"
 +            android:title="@string/thumbcast_set_vibration_title"
 +            android:summary="@string/thumbcast_set_vibration_summary"
@@ -10927,7 +11208,7 @@ index 00000000..d3be9181
 +
 +        <ListPreference
 +            android:key="list_resolution"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_aspect_ratio"
 +            android:title="@string/thumbcast_set_resolution_title"
 +            android:summary="@string/thumbcast_set_resolution_summary"
 +            android:entries="@array/resolution_names"
@@ -10935,7 +11216,7 @@ index 00000000..d3be9181
 +            android:defaultValue="1280x720" />
 +        <ListPreference
 +            android:key="list_fps"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_fps_select"
 +            android:title="@string/thumbcast_set_fps_title"
 +            android:summary="@string/thumbcast_set_fps_summary"
 +            android:entries="@array/fps_names"
@@ -10943,7 +11224,7 @@ index 00000000..d3be9181
 +            android:defaultValue="60" />
 +        <com.limelight.preferences.SeekBarPreference
 +            android:key="seekbar_bitrate_kbps"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_high_quality"
 +            android:dialogMessage="@string/thumbcast_set_quality_summary"
 +            seekbar:min="500"
 +            android:max="150000"
@@ -10955,13 +11236,13 @@ index 00000000..d3be9181
 +            android:title="@string/thumbcast_set_quality_title" />
 +        <CheckBoxPreference
 +            android:key="checkbox_stretch_video"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_fit_screen"
 +            android:title="@string/thumbcast_set_stretch_title"
 +            android:summary="@string/thumbcast_set_stretch_summary"
 +            android:defaultValue="false" />
 +        <CheckBoxPreference
 +            android:key="checkbox_enable_sops"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_auto_fix_high"
 +            android:title="@string/thumbcast_set_sops_title"
 +            android:summary="@string/thumbcast_set_sops_summary"
 +            android:defaultValue="true" />
@@ -10975,7 +11256,7 @@ index 00000000..d3be9181
 +            android:defaultValue="false" />
 +        <CheckBoxPreference
 +            android:key="checkbox_thumbcast_perf_advanced"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_query_stats"
 +            android:dependency="checkbox_enable_perf_overlay"
 +            android:title="@string/thumbcast_set_stats_detailed_title"
 +            android:summary="@string/thumbcast_set_stats_detailed_summary"
@@ -10989,7 +11270,7 @@ index 00000000..d3be9181
 +
 +        <ListPreference
 +            android:key="list_audio_config"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_surround_sound"
 +            android:title="@string/thumbcast_set_audio_channels_title"
 +            android:summary="%s"
 +            android:entries="@array/audio_config_names"
@@ -10997,13 +11278,13 @@ index 00000000..d3be9181
 +            android:defaultValue="2" />
 +        <CheckBoxPreference
 +            android:key="checkbox_host_audio"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_volume_up"
 +            android:title="@string/thumbcast_set_host_audio_title"
 +            android:summary="@string/thumbcast_set_host_audio_summary"
 +            android:defaultValue="false" />
 +        <CheckBoxPreference
 +            android:key="checkbox_enable_audiofx"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_graphic_eq"
 +            android:title="@string/thumbcast_set_audiofx_title"
 +            android:summary="@string/thumbcast_set_audiofx_summary"
 +            android:defaultValue="false" />
@@ -11016,7 +11297,7 @@ index 00000000..d3be9181
 +
 +        <com.limelight.preferences.LanguagePreference
 +            android:key="list_languages"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_language"
 +            android:title="@string/thumbcast_set_language_title"
 +            android:entries="@array/language_names"
 +            android:entryValues="@array/language_values"
@@ -11024,12 +11305,12 @@ index 00000000..d3be9181
 +            android:defaultValue="default" />
 +        <com.limelight.preferences.SmallIconCheckboxPreference
 +            android:key="checkbox_small_icon_mode"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_grid_view"
 +            android:title="@string/thumbcast_set_small_icons_title"
 +            android:summary="@string/thumbcast_set_small_icons_summary" />
 +        <CheckBoxPreference
 +            android:key="checkbox_enable_pip"
-+            android:iconSpaceReserved="true"
++            android:icon="@drawable/thumbcast_ic_picture_in_picture_alt"
 +            android:title="@string/thumbcast_set_pip_title"
 +            android:summary="@string/thumbcast_set_pip_summary"
 +            android:defaultValue="false" />
@@ -11054,7 +11335,7 @@ index 00000000..d3be9181
 +            android:persistent="false" />
 +        <Preference
 +            android:key="thumbcast_help_onboarding"
-+            android:icon="@drawable/thumbcast_ic_play_arrow"
++            android:icon="@drawable/thumbcast_ic_restart_alt"
 +            android:title="@string/thumbcast_set_onboarding_title"
 +            android:summary="@string/thumbcast_set_onboarding_summary"
 +            android:persistent="false" />
@@ -11941,10 +12222,10 @@ index 00000000..b8196458
 +</resources>
 diff --git a/app/src/nonRoot/res/values-pl/thumbcast_overrides.xml b/app/src/nonRoot/res/values-pl/thumbcast_overrides.xml
 new file mode 100644
-index 00000000..dd4e0f82
+index 00000000..436c5f78
 --- /dev/null
 +++ b/app/src/nonRoot/res/values-pl/thumbcast_overrides.xml
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,15 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!--
 +    THUMBCAST: polskie nadpisania upstreamowych tekstów z „GFE”, „GeForce Experience” i „SHIELD” (docs/ui-audit.md,
@@ -11958,6 +12239,7 @@ index 00000000..dd4e0f82
 +    <string name="error_404">PC zwrócił błąd HTTP 404. Upewnij się, że Sunshine jest aktualny i uruchomiony. Ten błąd może też powodować oprogramowanie pulpitu zdalnego. Uruchom ponownie PC albo zainstaluj ponownie Sunshine.</string>
 +    <string name="summary_checkbox_enable_sops">Sunshine dostaje rozdzielczość i FPS z telefonu. Bez tego PC nie zmieni rozdzielczości ekranu.</string>
 +    <string name="local_network_rationale">Thumbcast potrzebuje dostępu do sieci lokalnej, żeby znaleźć komputery w pobliżu i się z nimi połączyć</string>
++    <string name="applist_quit_confirmation">Zamknąć grę na PC? Sunshine zamknie ją, jeśli sam ją uruchomił. Gra z launchera (Battle.net, Steam) zamknie się tylko z poleceniem zamykania ustawionym w Sunshine (poradnik → Dodaj gry). Niezapisane postępy przepadną.</string>
 +</resources>
 diff --git a/app/src/nonRoot/res/values-pt-rBR/strings_branding.xml b/app/src/nonRoot/res/values-pt-rBR/strings_branding.xml
 new file mode 100644
@@ -12262,10 +12544,10 @@ index 00000000..5b087568
 +</resources>
 diff --git a/app/src/nonRoot/res/values/thumbcast_overrides.xml b/app/src/nonRoot/res/values/thumbcast_overrides.xml
 new file mode 100644
-index 00000000..74bce1bd
+index 00000000..27afddcc
 --- /dev/null
 +++ b/app/src/nonRoot/res/values/thumbcast_overrides.xml
-@@ -0,0 +1,13 @@
+@@ -0,0 +1,14 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!--
 +    THUMBCAST: nadpisania upstreamowych tekstów z „GFE”, „GeForce Experience” i „SHIELD” (docs/ui-audit.md, U6 i D4;
@@ -12278,4 +12560,5 @@ index 00000000..74bce1bd
 +    <string name="searching_pc">Searching for computers on your local network…\n\nMake sure Sunshine is running on your PC and that the phone and the PC are on the same Wi-Fi.</string>
 +    <string name="error_404">The PC returned an HTTP 404 error. Make sure Sunshine is up to date and running. Remote desktop software can also cause this error. Try restarting the PC or reinstalling Sunshine.</string>
 +    <string name="summary_checkbox_enable_sops">Sunshine receives the phone\'s resolution and FPS. Without it the PC will not change its screen resolution.</string>
++    <string name="applist_quit_confirmation">Close the game on the PC? Sunshine closes it if Sunshine started it. A game started by a launcher (Battle.net, Steam) only closes with a close command set in Sunshine (guide → Add games). Unsaved progress will be lost.</string>
 +</resources>

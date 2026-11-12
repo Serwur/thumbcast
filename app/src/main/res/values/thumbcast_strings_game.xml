@@ -49,11 +49,11 @@
 
     <!-- Potwierdzenie zamknięcia gry na PC -->
     <string name="thumbcast_game_quit_title">Close the game on the PC?</string>
-    <string name="thumbcast_game_quit_body">The game will close and unsaved progress will be lost. The PC screen goes back to its usual resolution.</string>
+    <string name="thumbcast_game_quit_body">Sunshine ends the session and closes the game if Sunshine started it. A game started by a launcher (Battle.net, Steam) only closes if you set a close command for it in Sunshine (guide “How to connect a PC” → Add games). Otherwise, quit from the game\'s own menu. Unsaved progress will be lost.</string>
     <string name="thumbcast_game_quit_cancel">Cancel</string>
     <string name="thumbcast_game_quit_confirm">Close game</string>
-    <string name="thumbcast_game_quit_progress">Closing the game on the PC…</string>
-    <string name="thumbcast_game_quit_done">Game closed on the PC</string>
+    <string name="thumbcast_game_quit_progress">Ending the session on the PC…</string>
+    <string name="thumbcast_game_quit_done">Session on the PC ended</string>
     <string name="thumbcast_game_quit_failed">Couldn\'t close the game on the PC. Try from the game list: press and hold the game.</string>
     <string name="thumbcast_game_quit_not_owner">This game was started from another device. Close it there or on the PC.</string>
 

@@ -14,7 +14,8 @@
     - checkbox_vibrate_osc jest w „Sterowanie” (działa też w trybie Thumbcast); usuwa go blok THUMBCAST w StreamSettings.
     - Stare przyciski ekranowe (category_onscreen_controls, za list_control_layer i checkbox_thumbcast_debug) są widoczne
       tylko przy rodzaju sterowania „legacy”; ukrywa je blok THUMBCAST w StreamSettings.
-    - Pozycje bez ikony mają iconSpaceReserved, żeby tytuły były w jednej linii z pozycjami z ikonami.
+    - Każda pozycja ekranu głównego ma ikonę thumbcast_ic_* (prośba właściciela 12.11.2026); ekran Zaawansowane
+      zostaje bez ikon.
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:seekbar="http://schemas.moonlight-stream.com/apk/res/seekbar">
@@ -53,7 +54,7 @@
              checkbox_show_onscreen_controls zdejmuje StreamSettings w trybie Thumbcast. -->
         <CheckBoxPreference
             android:key="checkbox_vibrate_osc"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_vibration"
             android:dependency="checkbox_show_onscreen_controls"
             android:title="@string/thumbcast_set_vibration_title"
             android:summary="@string/thumbcast_set_vibration_summary"
@@ -67,7 +68,7 @@
 
         <ListPreference
             android:key="list_resolution"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_aspect_ratio"
             android:title="@string/thumbcast_set_resolution_title"
             android:summary="@string/thumbcast_set_resolution_summary"
             android:entries="@array/resolution_names"
@@ -75,7 +76,7 @@
             android:defaultValue="1280x720" />
         <ListPreference
             android:key="list_fps"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_fps_select"
             android:title="@string/thumbcast_set_fps_title"
             android:summary="@string/thumbcast_set_fps_summary"
             android:entries="@array/fps_names"
@@ -83,7 +84,7 @@
             android:defaultValue="60" />
         <com.limelight.preferences.SeekBarPreference
             android:key="seekbar_bitrate_kbps"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_high_quality"
             android:dialogMessage="@string/thumbcast_set_quality_summary"
             seekbar:min="500"
             android:max="150000"
@@ -95,13 +96,13 @@
             android:title="@string/thumbcast_set_quality_title" />
         <CheckBoxPreference
             android:key="checkbox_stretch_video"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_fit_screen"
             android:title="@string/thumbcast_set_stretch_title"
             android:summary="@string/thumbcast_set_stretch_summary"
             android:defaultValue="false" />
         <CheckBoxPreference
             android:key="checkbox_enable_sops"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_auto_fix_high"
             android:title="@string/thumbcast_set_sops_title"
             android:summary="@string/thumbcast_set_sops_summary"
             android:defaultValue="true" />
@@ -115,7 +116,7 @@
             android:defaultValue="false" />
         <CheckBoxPreference
             android:key="checkbox_thumbcast_perf_advanced"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_query_stats"
             android:dependency="checkbox_enable_perf_overlay"
             android:title="@string/thumbcast_set_stats_detailed_title"
             android:summary="@string/thumbcast_set_stats_detailed_summary"
@@ -129,7 +130,7 @@
 
         <ListPreference
             android:key="list_audio_config"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_surround_sound"
             android:title="@string/thumbcast_set_audio_channels_title"
             android:summary="%s"
             android:entries="@array/audio_config_names"
@@ -137,13 +138,13 @@
             android:defaultValue="2" />
         <CheckBoxPreference
             android:key="checkbox_host_audio"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_volume_up"
             android:title="@string/thumbcast_set_host_audio_title"
             android:summary="@string/thumbcast_set_host_audio_summary"
             android:defaultValue="false" />
         <CheckBoxPreference
             android:key="checkbox_enable_audiofx"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_graphic_eq"
             android:title="@string/thumbcast_set_audiofx_title"
             android:summary="@string/thumbcast_set_audiofx_summary"
             android:defaultValue="false" />
@@ -156,7 +157,7 @@
 
         <com.limelight.preferences.LanguagePreference
             android:key="list_languages"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_language"
             android:title="@string/thumbcast_set_language_title"
             android:entries="@array/language_names"
             android:entryValues="@array/language_values"
@@ -164,12 +165,12 @@
             android:defaultValue="default" />
         <com.limelight.preferences.SmallIconCheckboxPreference
             android:key="checkbox_small_icon_mode"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_grid_view"
             android:title="@string/thumbcast_set_small_icons_title"
             android:summary="@string/thumbcast_set_small_icons_summary" />
         <CheckBoxPreference
             android:key="checkbox_enable_pip"
-            android:iconSpaceReserved="true"
+            android:icon="@drawable/thumbcast_ic_picture_in_picture_alt"
             android:title="@string/thumbcast_set_pip_title"
             android:summary="@string/thumbcast_set_pip_summary"
             android:defaultValue="false" />
@@ -194,7 +195,7 @@
             android:persistent="false" />
         <Preference
             android:key="thumbcast_help_onboarding"
-            android:icon="@drawable/thumbcast_ic_play_arrow"
+            android:icon="@drawable/thumbcast_ic_restart_alt"
             android:title="@string/thumbcast_set_onboarding_title"
             android:summary="@string/thumbcast_set_onboarding_summary"
             android:persistent="false" />

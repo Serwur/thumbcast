@@ -80,8 +80,11 @@ system sam odtworzy okno po odtworzeniu aktywności (rzadkie; aktywność obsłu
   | Pad podłączony do telefonu (`category_gamepad_settings`) | martwa strefa, wiele padów, sterownik USB (+ wszystkie pady), emulacja myszy padem (+ przewijanie gałką), wibracje telefonu zamiast pada (+ siła), zamiana A/B/X/Y, touchpad pada jako mysz, czujniki ruchu (+ emulacja) |
   | Mysz i ekran dotykowy (`category_input_settings`) | `checkbox_touchscreen_trackpad`, `checkbox_mouse_nav_buttons`, `checkbox_absolute_mouse_mode` |
 
-  Ikony (`android:icon`, wspólne `thumbcast_ic_*` z P0): profil, pad, rozmiar, statystyki, pomoc, zaawansowane. Pozycje
-  bez ikony na ekranie głównym mają `android:iconSpaceReserved="true"` (API 26), żeby tytuły stały w jednej linii.
+  Ikony (`android:icon`, wspólne `thumbcast_ic_*` z P0): profil, pad, rozmiar, statystyki, pomoc, zaawansowane.
+  Od 12.11.2026 (prośba właściciela) ikonę ma każda pozycja ekranu głównego: wibracje, rozdzielczość, FPS, jakość,
+  rozciąganie, optymalizacja gry, szczegóły statystyk, kanały dźwięku, dźwięk na PC, efekty dźwięku, język, małe
+  ikony, obraz w obrazie (14 nowych `thumbcast_ic_*`, „Konfiguracja od nowa” ma `restart_alt`). Ekran Zaawansowane
+  zostaje bez ikon.
 - `res/layout/thumbcast_settings_header.xml`: nagłówek listy ustawień i okna „Zaawansowane”.
 - `res/values/thumbcast_strings_settings.xml`, `res/values-pl/thumbcast_strings_settings.xml` (D5, słownik D7).
   Część tytułów i podpisów z upstreamu zostaje (np. HDR, opcje pada, myszy, podpisy techniczne w „Zaawansowane”).

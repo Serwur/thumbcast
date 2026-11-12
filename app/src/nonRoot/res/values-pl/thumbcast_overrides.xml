@@ -11,4 +11,5 @@
     <string name="error_404">PC zwrócił błąd HTTP 404. Upewnij się, że Sunshine jest aktualny i uruchomiony. Ten błąd może też powodować oprogramowanie pulpitu zdalnego. Uruchom ponownie PC albo zainstaluj ponownie Sunshine.</string>
     <string name="summary_checkbox_enable_sops">Sunshine dostaje rozdzielczość i FPS z telefonu. Bez tego PC nie zmieni rozdzielczości ekranu.</string>
     <string name="local_network_rationale">Thumbcast potrzebuje dostępu do sieci lokalnej, żeby znaleźć komputery w pobliżu i się z nimi połączyć</string>
+    <string name="applist_quit_confirmation">Zamknąć grę na PC? Sunshine zamknie ją, jeśli sam ją uruchomił. Gra z launchera (Battle.net, Steam) zamknie się tylko z poleceniem zamykania ustawionym w Sunshine (poradnik → Dodaj gry). Niezapisane postępy przepadną.</string>
 </resources>

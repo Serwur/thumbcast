@@ -160,6 +160,7 @@
         <item>Gry z launchera (Steam, Battle.net) wpisuj w Detached Commands, a zwykły program w Command.</item>
         <item>Rozdzielczość i sterowanie dla jednej gry ustawisz w Thumbcast: przytrzymaj grę na liście → Ustawienia gry.</item>
         <item>Chcesz, żeby PC też zmieniał rozdzielczość? W Sunshine: Configuration → Audio/Video → Device configuration (`verify_only`).</item>
+        <item>Gra z launchera (Battle.net, Steam) nie zamknie się sama po „Zamknij grę na PC”, bo Sunshine jej nie uruchomił. W Sunshine w tej grze: Command Preparations → Add, w polu Undo wpisz `taskkill /IM NazwaGry.exe` (nazwa pliku z Menedżera zadań → Szczegóły). Gra się nie zamyka? Dopisz `/F`.</item>
     </string-array>
 
     <!-- Poradnik, 5: poza domem -->
@@ -180,5 +181,6 @@
         <item>Pad nie działa w grze: zainstaluj sterownik pada (punkt 2) i uruchom Sunshine ponownie.</item>
         <item>Obraz się tnie: w Ustawieniach obniż Jakość obrazu. Poza domem wybierz 720p.</item>
         <item>Poza domem nie łączy: sprawdź, czy Tailscale jest włączony na PC i na telefonie.</item>
+        <item>Gra zostaje na PC po „Zamknij grę na PC”: ustaw w Sunshine polecenie zamykania (punkt 4).</item>
     </string-array>
 </resources>

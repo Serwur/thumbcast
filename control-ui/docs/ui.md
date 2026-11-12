@@ -122,7 +122,8 @@ rozwijanych kart w kolejności `UiContract.GUIDE_SECTIONS` (sekcja 4 audytu): in
 (`string-array` + `GuideSectionUi.stepIcons`, ta sama kolejność), kod (`https://localhost:47990`, `100.x.y.z`,
 nazwy plików) czcionką o stałej szerokości, dopiski z ikonami (`notes`). Sekcje Sunshine i sterownika prowadzą
 przez GitHub krok po kroku (Assets, nazwa pliku, ostrzeżenia Windows i przeglądarki); sterownik nie jest
-opisany jako darmowy, płatne zamienniki są w dopisku.
+opisany jako darmowy, płatne zamienniki są w dopisku. „Dodaj gry” i „Nie działa?” opisują zamykanie gry z launchera
+(Undo `taskkill` w Sunshine, `docs/host-apps.md` sekcja 2a); „Nie działa?” ma skok do „Dodaj gry”.
 
 - Strony pobierania (`guide/GuideLinks`): Sunshine `https://github.com/SunshineStream/Sunshine/releases/latest`,
   ViGEmBus `https://github.com/nefarius/ViGEmBus/releases/latest` (od razu strona jednego wydania z Assets),

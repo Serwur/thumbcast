@@ -159,6 +159,7 @@
         <item>Put games started by a launcher (Steam, Battle.net) in Detached Commands, and a regular program in Command.</item>
         <item>Set resolution and controls for one game in Thumbcast: long-press the game on the list → Game settings.</item>
         <item>Want the PC to switch its resolution too? In Sunshine: Configuration → Audio/Video → Device configuration (`verify_only`).</item>
+        <item>A game started by a launcher (Battle.net, Steam) does not close on its own after “Close the game on the PC”, because Sunshine did not start it. In Sunshine, in that game: Command Preparations → Add, and in Undo enter `taskkill /IM GameName.exe` (file name from Task Manager → Details). Game still running? Add `/F`.</item>
     </string-array>
 
     <!-- Guide, 5: away from home -->
@@ -179,5 +180,6 @@
         <item>Gamepad does not work in the game: install the gamepad driver (part 2) and restart Sunshine.</item>
         <item>Video stutters: lower Image quality in Settings. Away from home, choose 720p.</item>
         <item>Can\'t connect away from home: check that Tailscale is on, on both the PC and your phone.</item>
+        <item>The game stays open on the PC after “Close the game on the PC”: set a close command in Sunshine (part 4).</item>
     </string-array>
 </resources>
