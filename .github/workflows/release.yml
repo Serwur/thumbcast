@@ -142,7 +142,7 @@ jobs:
           TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
-          notes="Wydanie $TAG. Pre-alpha, niezatwierdzone przez Blizzard. Sumy SHA-256 w SHA256SUMS.txt. Zasady: FAIR_PLAY.md."
+          notes="Thumbcast $TAG (early access). APK for direct install, AAB for Google Play. SHA-256 checksums in SHA256SUMS.txt. Not approved by any game publisher; rules: FAIR_PLAY.md."
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber
           else

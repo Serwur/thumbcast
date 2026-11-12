@@ -1,62 +1,62 @@
-name: Błąd
-description: Zgłoś błąd w działaniu aplikacji
+name: Bug report
+description: Report something that does not work (you can write in English or Polish)
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Podatności bezpieczeństwa zgłaszaj prywatnie (SECURITY.md), nie tutaj.
+        Report security vulnerabilities privately (SECURITY.md), not here.
   - type: textarea
     id: what
     attributes:
-      label: Co się stało?
-      description: Opis błędu i oczekiwane zachowanie.
+      label: What happened?
+      description: Describe the bug and what you expected instead.
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Kroki odtworzenia
+      label: Steps to reproduce
       placeholder: |
-        1. Profil ...
-        2. Dotknij ...
+        1. Profile ...
+        2. Tap ...
         3. ...
     validations:
       required: true
   - type: dropdown
     id: mode
     attributes:
-      label: Tryb sterowania
-      options: ["Pad+", "Klawiatura+Mysz", "legacy (OSC upstreamu)", "nie dotyczy"]
+      label: Control profile
+      options: ["Pad – PlayStation / Xbox", "MMO – Pad+", "MMO – Keyboard", "Desktop – Touchpad", "Big Picture", "Own profile", "Legacy (upstream on-screen controls)", "Not relevant"]
     validations:
       required: true
   - type: input
     id: device
     attributes:
-      label: Telefon i wersja Androida
+      label: Phone and Android version
     validations:
       required: true
   - type: input
     id: host
     attributes:
-      label: Host (system, wersja Sunshine, gamepad_driver)
-      placeholder: "Windows 11, Sunshine v2026.914, vigembus"
+      label: Host (OS, Sunshine version, gamepad driver)
+      placeholder: "Windows 11, Sunshine v2026.914, ViGEmBus 1.22"
   - type: input
     id: version
     attributes:
-      label: Wersja Thumbcast (lub commit)
+      label: Thumbcast version (or commit)
     validations:
       required: true
   - type: checkboxes
     id: input-issue
     attributes:
-      label: Problem z wejściem
+      label: Input problem
       options:
-        - label: Wejście „zawieszone” po oderwaniu palca (stuck input)
-        - label: Wejście bez dotyku (ghost input) - to możliwe naruszenie zasady 1 dotyk = 1 wejście
+        - label: Input stays “stuck” after lifting the finger
+        - label: Input without a touch (ghost input) - a possible violation of the one touch = one input rule
   - type: textarea
     id: logs
     attributes:
-      label: Logi
-      description: Eksport logu z aplikacji lub `adb logcat`. Usuń adresy IP i nazwy hostów, jeśli chcesz.
+      label: Logs
+      description: Log export from the app or `adb logcat`. Remove IP addresses and host names if you prefer.
       render: text

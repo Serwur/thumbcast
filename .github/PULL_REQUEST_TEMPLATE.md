@@ -1,34 +1,34 @@
-## Opis
+## Description
 
-<!-- Co zmienia ten PR i dlaczego. Link do issue: Closes #... -->
+<!-- What this PR changes and why. Link the issue: Closes #... -->
 
-## Rodzaj zmiany
+## Type of change
 
-- [ ] Poprawka błędu
-- [ ] Nowa funkcja
-- [ ] Dokumentacja / CI
-- [ ] Zmiana w kodzie upstreamu (`:app` / `patches/`)
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Documentation / CI
+- [ ] Change in upstream code (`:app` / `patches/`)
 
-## Checklista fair-play (wymagana)
+## Fair-play checklist (required)
 
-Zasady: [FAIR_PLAY.md](../FAIR_PLAY.md). PR, który nie spełnia którejkolwiek z nich, zostanie zamknięty.
+Rules: [FAIR_PLAY.md](../FAIR_PLAY.md). A PR that breaks any of them will be closed.
 
-- [ ] Każdy dotyk daje co najwyżej jedno wejście logiczne (1 dotyk = 1 wejście).
-- [ ] Brak makr, sekwencji, combo, turbo, auto-repeat po stronie aplikacji.
-- [ ] Brak timerów, opóźnień i wątków generujących naciśnięcia bez dotyku.
-- [ ] Brak analizy obrazu strumienia (odczyt pikseli, OCR, CV).
-- [ ] Brak czytania pamięci/plików gry i wymagań addonów.
-- [ ] Brak nowych typów wyjść w schemacie profilu poza dozwolonymi (jeśli są: uzasadnienie poniżej).
-- [ ] Zmiany wejścia są objęte testami właściwości polityki (`*Policy*` w `:control-engine`).
-- [ ] Brak znaków towarowych gier i nazwy „Moonlight” w nazwach, zasobach, ikonach i metadanych.
-- [ ] Brak Firebase / Crashlytics / Play Services.
+- [ ] Each touch produces at most one logical input (one touch = one input).
+- [ ] No macros, sequences, combos, turbo or auto-repeat in the app.
+- [ ] No timers, delays or threads that generate presses without a touch.
+- [ ] No analysis of the stream image (reading pixels, OCR, CV).
+- [ ] No reading of game memory or files, no add-on requirements.
+- [ ] No new output types in the profile schema beyond the allowed ones (if any: justification below).
+- [ ] Input changes are covered by the policy property tests (`*Policy*` in `:control-engine`).
+- [ ] No game trademarks and no “Moonlight” in names, resources, icons or metadata.
+- [ ] No Firebase / Crashlytics / Play Services.
 
-## Testy
+## Tests
 
-- [ ] `./gradlew :control-model:test :control-engine:test` lokalnie
-- [ ] Testy polityki z `-Pthumbcast.policy.iterations=100000`
-- [ ] Scenariusze z `docs/test-plan.md` (jeśli zmiana działa w grze): <!-- np. T-01, T-03 + wynik -->
+- [ ] `./gradlew :control-model:test :control-engine:test` locally
+- [ ] Policy tests with `-Pthumbcast.policy.iterations=100000`
+- [ ] Scenarios from `docs/test-plan.md` (if the change affects gameplay): <!-- e.g. T-01, T-03 + result -->
 
-## Licencja
+## License
 
-- [ ] Commity mają `Signed-off-by:` (DCO, `git commit -s`); wkład na GPL-3.0-or-later.
+- [ ] Commits have `Signed-off-by:` (DCO, `git commit -s`); the contribution is GPL-3.0-or-later.

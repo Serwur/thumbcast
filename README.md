@@ -1,83 +1,98 @@
-# Thumbcast
+<p align="center"><img src="store/icon-512.png" alt="" width="96"></p>
 
-> **Start: [URUCHOMIENIE.md](URUCHOMIENIE.md)**. Plan: [docs/PLAN.md](docs/PLAN.md), decyzje (mają pierwszeństwo): [docs/DECISIONS.md](docs/DECISIONS.md).
+<h1 align="center">Thumbcast</h1>
 
-> Repozytorium: https://github.com/Serwur/thumbcast (dawniej `wow-portable`; GitHub przekierowuje stare linki).
+<p align="center">Play your PC games on your Android phone, with touch controls or a gamepad.</p>
 
-> **Status: pre-alpha.** Projekt nie jest zatwierdzony, wspierany ani sponsorowany przez Blizzard Entertainment ani przez projekt Moonlight. Na tym etapie repo zawiera szkielet modułów, dokumentację i CI. Aplikacji nie da się jeszcze zainstalować.
+<p align="center"><b>English</b> · <a href="README.pl.md">Polski</a></p>
 
-Thumbcast to klient streamingu gier z własnego PC na telefon z Androidem z konfigurowalnym sterowaniem dotykowym. Jest przeznaczony dla gier z natywną obsługą pada, w tym dla MMO z trybem gamepada (np. World of Warcraft: Forever; nazwa gry pojawia się tu tylko jako opis zgodności). Obraz idzie z Twojego komputera, a telefon wysyła dotyk jako wirtualny pad Xbox, klawiaturę lub mysz.
+---
 
-Bazuje na [Moonlight](https://github.com/moonlight-stream/moonlight-android) (GPLv3). Nie jest oficjalnym projektem Moonlight.
+Thumbcast streams games from your own Windows PC to your Android phone. The game runs on your PC; the phone shows the picture and sends your input back as a virtual Xbox gamepad, a keyboard or a mouse. It is built for games with native gamepad support, including MMOs with a gamepad mode (for example World of Warcraft: Forever; game names here only describe compatibility).
 
-## Zasada nadrzędna: 1 dotyk = 1 wejście
+Thumbcast is based on [Moonlight for Android](https://github.com/moonlight-stream/moonlight-android) (GPLv3). It is not an official Moonlight project.
 
-Każda kontrolka wysyła dokładnie jedno wejście. W aplikacji nie ma makr, sekwencji, turbo, opóźnień ani analizy obrazu. Zasady są egzekwowane w kodzie i w CI. Szczegóły i uczciwy opis ryzyka: [FAIR_PLAY.md](FAIR_PLAY.md).
+**Status: early access (0.1.0).** It works end to end on a real phone and PC. Website and privacy policy: <https://serwur.github.io/thumbcast/>.
 
-## Architektura
+## Features
+
+- On-screen buttons in an Xbox or PlayStation layout, mouse and keyboard controls, a desktop touchpad and a Steam Big Picture layout.
+- Use a physical gamepad with your phone; on-screen buttons hide while you play with it.
+- Layout editor and control profiles, saved per game and per PC app, with import and export.
+- In-game menu: image quality, stats overlay, controls, button size and closing the game.
+- First-run setup wizard and an offline “How to connect a PC” guide, always one tap away.
+- Play away from home through Tailscale or ZeroTier, without port forwarding.
+- English and Polish.
+
+## Fair play: one touch = one input
+
+Every control sends exactly one input. There are no macros, sequences, turbo, timers or image analysis. The rules are enforced in code and in CI. Details and an honest look at the risks: [FAIR_PLAY.md](FAIR_PLAY.md).
+
+## What you need
+
+**On your PC (Windows):**
+- [Sunshine](https://github.com/SunshineStream/Sunshine/releases/latest), a free, open-source streaming host (Apollo and Vibepollo forks also work).
+- [ViGEmBus](https://github.com/nefarius/ViGEmBus/releases/latest), the gamepad driver you need to play with a gamepad. Paid alternatives exist (LizardByte Virtual HID Driver), but ViGEmBus is enough. Without a gamepad driver, use the mouse and keyboard controls.
+- Optional: [Tailscale](https://tailscale.com/download) to play away from home.
+
+**On your phone:** Android 8.0 or newer, on the same Wi-Fi as the PC (or Tailscale).
+
+The app's setup wizard walks you through installing and pairing. The same steps are on the [website](https://serwur.github.io/thumbcast/).
+
+## How it works
 
 ```
-PC (Windows / macOS)                         Telefon (Android)
+PC (Windows / macOS)                         Phone (Android)
 ┌───────────────────────────┐               ┌───────────────────────────────────┐
-│ Gra                       │               │ Thumbcast (fork moonlight-android)│
-│   ▲ pad / klawiatura / mysz               │                                   │
-│ Sunshine (LizardByte)     │  wideo/audio  │  nvstream + dekoder (bez zmian)   │
-│   libvirtualhid / ViGEm / │ ────────────► │  ThumbcastOverlay (1 View)        │
-│   Win32                   │ ◄──────────── │   → InputEngine + ActionPolicy    │
-└───────────────────────────┘    wejście    │   → InputSink (pad / klaw. / mysz)│
-            LAN albo Tailscale (direct)     └───────────────────────────────────┘
+│ Game                      │               │ Thumbcast (moonlight-android fork)│
+│   ▲ gamepad / keyboard / mouse            │                                   │
+│ Sunshine                  │  video/audio  │  nvstream + decoder (unchanged)   │
+│   ViGEmBus / Virtual HID  │ ────────────► │  ThumbcastOverlay (one View)      │
+│   / Win32                 │ ◄──────────── │   → InputEngine + ActionPolicy    │
+└───────────────────────────┘     input     │   → InputSink (pad / keys / mouse)│
+            LAN or Tailscale (direct)       └───────────────────────────────────┘
 ```
 
-- **Host:** [Sunshine](https://github.com/SunshineStream/Sunshine) (GPLv3) albo jego forki Apollo i Vibepollo, zgodne z GameStream. Pad wirtualny w Windows: darmowy ViGEmBus 1.17+ (projekt zarchiwizowany) albo płatny Virtual HID Driver od LizardByte. Konfiguracja: [docs/host-setup.md](docs/host-setup.md), uzasadnienie: [docs/DECISIONS.md](docs/DECISIONS.md).
-- **Klient:** fork upstreamu `moonlight-stream/moonlight-android`. Warstwa streamingu zostaje bez zmian. Wejście dotykowe zastępuje nowa warstwa w Kotlinie:
-
-| Moduł | Typ | Rola |
+| Module | Type | Role |
 |---|---|---|
-| `:control-model` | Kotlin/JVM | Profil sterowania (JSON, schemat v1), walidacja, migracje. Schemat nie zna makr ani sekwencji. |
-| `:control-engine` | Kotlin/JVM | Silnik wejścia: śledzenie wskaźników, rozpoznawanie gestów, `ActionPolicy`, mapowanie wyjść. Testy właściwości. |
-| `:control-android` | biblioteka Androida | `ThumbcastOverlay` (jeden View, do 10 palców), adaptery do upstreamu. |
-| `presets/` | JSON | Profile wbudowane: „Pad – PlayStation” (domyślny od 12.11.2026; użytkownik może ustawić inny w bibliotece) i „Pad – Xbox” (pełny standardowy pad: dwie gałki, D-pad, romb, LB/RB, LT/RT, View/Menu, L3/R3, Guide; te same wyjścia, inne etykiety; wolna strefa wyłączona, `freeZone = none`: dotyk poza kontrolkami nic nie wysyła, gest z górnej krawędzi otwiera menu; przełącznik „Gesty myszy” w bibliotece i w menu w grze włącza tam mysz bezpośrednią: tap = klik w punkcie, dwa palce = prawy klik, przeciągnięcie = przewijanie), „MMO – Pad+”, „MMO – Klawiatura”, „Pulpit – Touchpad” (pulpit, sama mysz, gładzik), „Big Picture” (dwie gałki, pełny układ pada, mysz bezpośrednia w wolnej strefie, `freeZone = direct`). |
-| `patches/` | diff | Minimalne hooki w `Game.java` upstreamu. |
-| `:app` | upstream | Dochodzi po forku: [docs/NEXT-STEPS.md](docs/NEXT-STEPS.md). |
+| `:app` | Android app | The Moonlight for Android v12.2 client with Thumbcast hooks (`THUMBCAST` blocks, full diff in `patches/0001-thumbcast.diff`). |
+| `:control-model` | Kotlin/JVM | Control profile (JSON schema v1), validation, migrations. The schema has no macros or sequences. |
+| `:control-engine` | Kotlin/JVM | Input engine: pointer tracking, gestures, `ActionPolicy`, output mapping. Property-tested. |
+| `:control-android` | Android library | `ThumbcastOverlay`, profile library, in-game menu and stats, host addresses, per-app settings. |
+| `:control-editor` | Compose | Layout editor. |
+| `:control-ui` | Compose | Theme, setup wizard, “How to connect a PC” guide. |
+| `presets/` | JSON | Built-in profiles: Pad – PlayStation (default), Pad – Xbox, MMO – Pad+, MMO – Keyboard, Desktop – Touchpad, Big Picture. |
 
-Tryby sterowania:
-- **Pad+** (domyślny): ruch, kamera i umiejętności jako wirtualny pad Xbox, a tap, szczypanie i klik w interfejs jako mysz. Wymaga sterownika pada po stronie PC (ViGEmBus albo Virtual HID Driver).
-- **Klawiatura+Mysz**: działa na każdym hoście, także na macOS i na Windows bez sterownika pada (plan awaryjny i tryb domyślny dla hostów bez pada).
+## Building
 
-## Budowanie
-
-Wymagania: JDK 17, Android Studio ze wsparciem AGP 9.5, Android SDK (compileSdk 37), NDK 29.0.14206865 (dla `:app` z upstreamu).
+Requirements: JDK 17+ (the JetBrains Runtime bundled with Android Studio works), Android SDK with compileSdk 37, NDK 29.0.14206865.
 
 ```bash
-git clone --recurse-submodules <adres-repo>
+git clone --recurse-submodules https://github.com/Serwur/thumbcast.git
 cd thumbcast
-./gradlew :control-model:test :control-engine:test
+./gradlew :app:assembleNonRootDebug
 ```
 
-Do czasu forka repo nie zawiera `gradlew`. Użyj Gradle 9.7.1 z systemu (`gradle :control-model:test`) albo wygeneruj wrapper: `gradle wrapper --gradle-version 9.7.1`. Pełny build APK będzie możliwy po wpięciu `:app` (instrukcja w [docs/NEXT-STEPS.md](docs/NEXT-STEPS.md)).
-
-Testy właściwości polityki z pełną liczbą iteracji (tak jak w CI):
+Tests (the policy property tests run with full iterations in CI):
 
 ```bash
+./gradlew :control-model:test :control-engine:test :control-android:testDebugUnitTest
 ./gradlew :control-engine:test --tests '*Policy*' -Pthumbcast.policy.iterations=100000
 ```
 
-## Dokumentacja
+Releases are built by `.github/workflows/release.yml` from a `v*` tag: a signed APK for GitHub and an AAB for Google Play.
 
-- [docs/PLAN.md](docs/PLAN.md): plan techniczny (wygenerowany 8.11.2026)
-- [docs/DECISIONS.md](docs/DECISIONS.md): decyzje projektowe z 10.11.2026 (pierwszeństwo przed planem)
-- [FAIR_PLAY.md](FAIR_PLAY.md): zasady i ryzyko
-- [CONTRIBUTING.md](CONTRIBUTING.md): jak współtworzyć
-- [SECURITY.md](SECURITY.md): zgłaszanie podatności
-- [docs/host-setup.md](docs/host-setup.md): konfiguracja PC (Sunshine, sterowniki pada, ustawienia gry)
-- [docs/tailscale.md](docs/tailscale.md): granie poza domem
-- [docs/test-plan.md](docs/test-plan.md): plan testów (w tym T-03)
-- [docs/distribution.md](docs/distribution.md): GitHub, F-Droid, Google Play
-- [docs/naming.md](docs/naming.md): nazwy i znaki towarowe
-- [docs/NEXT-STEPS.md](docs/NEXT-STEPS.md): fork upstreamu i pierwszy test
+## Documentation
 
-## Licencja
+Public documents come in English and Polish. Developer documentation in `docs/` and in the modules is written in Polish.
 
-GPL-3.0-or-later, tak jak upstream. Szczegóły w [LICENSE](LICENSE) i [NOTICE](NOTICE).
+- [FAIR_PLAY.md](FAIR_PLAY.md): rules and risks
+- [CONTRIBUTING.md](CONTRIBUTING.md): how to contribute
+- [SECURITY.md](SECURITY.md): reporting vulnerabilities
+- [docs/host-setup.md](docs/host-setup.md), [docs/host-apps.md](docs/host-apps.md), [docs/tailscale.md](docs/tailscale.md): PC setup, games in Sunshine, remote play (Polish)
 
-World of Warcraft i Blizzard są znakami towarowymi Blizzard Entertainment, Inc. Moonlight jest projektem jego autorów. Xbox jest znakiem towarowym Microsoft. Nazwy są użyte wyłącznie do opisu zgodności.
+## License
+
+GPL-3.0-or-later, like upstream. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
+World of Warcraft and Blizzard are trademarks of Blizzard Entertainment, Inc. Xbox is a trademark of Microsoft; PlayStation is a trademark of Sony Interactive Entertainment. Moonlight belongs to its authors. Names are used only to describe compatibility; Thumbcast is not affiliated with or endorsed by any of them.

@@ -1,41 +1,40 @@
-name: Propozycja funkcji
-description: Zaproponuj nową funkcję lub zmianę
+name: Feature request
+description: Suggest a new feature or a change (you can write in English or Polish)
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Przeczytaj FAIR_PLAY.md i CONTRIBUTING.md. Propozycje makr, sekwencji, turbo, auto-repeat,
-        timerów generujących naciśnięcia, analizy obrazu i multiboxingu są zamykane.
+        Please read FAIR_PLAY.md and CONTRIBUTING.md. Requests for macros, sequences, chords, turbo, auto-repeat,
+        timers that generate presses, image analysis and multiboxing are closed.
   - type: textarea
     id: problem
     attributes:
-      label: Jaki problem rozwiązuje?
+      label: What problem does it solve?
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
-      label: Propozycja
-      description: Jak ma działać z punktu widzenia gracza?
+      label: Proposal
+      description: How should it work from the player's point of view?
     validations:
       required: true
   - type: textarea
     id: inputs
     attributes:
-      label: Jakie wejścia wysyła?
-      description: Dla każdego dotyku/gestu opisz, jakie dokładnie wejście (przycisk pada, klawisz, mysz) trafia do hosta.
+      label: Which inputs does it send?
+      description: For each touch or gesture, describe exactly which input (gamepad button, key, mouse) reaches the host.
     validations:
       required: true
   - type: checkboxes
     id: fairplay
     attributes:
-      label: Checklista fair-play
+      label: Fair-play checklist
       options:
-        - label: Każdy dotyk daje co najwyżej jedno wejście.
+        - label: Each touch produces at most one input.
           required: true
-        - label: Funkcja nie generuje wejść bez dotyku (timery, opóźnienia, powtórzenia).
+        - label: The feature does not generate input without a touch (timers, delays, repeats).
           required: true
-        - label: Funkcja nie analizuje obrazu gry ani nie czyta jej pamięci/plików.
+        - label: The feature does not analyze the game image or read its memory or files.
           required: true
-        - label: Funkcja może być akordem (2 wejścia naraz) - wymaga ostrzeżenia, domyślnie wyłączona.

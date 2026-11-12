@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Sunshine + fork Moonlight). Dokumenty po polsku, identyfikatory kodu po angielsku.
+Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Sunshine + fork Moonlight). Dokumenty deweloperskie po polsku, identyfikatory kodu po angielsku. Dokumenty publiczne (README, FAIR_PLAY, CONTRIBUTING, SECURITY, szablony GitHub, `site/`) po angielsku, z wersją polską `*.pl.md` (od 12.11.2026); zmieniaj obie.
 
 ## Moduły
 - `control-model` (JVM): profil JSON, walidacja, migracje. Zakazane typy: sequence, macro, repeat, turbo, delay, toggle_auto. Wolna strefa `gestures.freeZone`: `camera` | `touchpad` | `none` (od 12.11.2026, tylko gest menu; presety Pad – Xbox/PlayStation) | `direct` (od 12.11.2026, mysz bezpośrednia: tap = klik w punkcie, 2 palce = PPM, przeciągnięcie = przewijanie; Big Picture i „Gesty myszy” na padach).
