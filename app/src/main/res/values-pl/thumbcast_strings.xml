@@ -5,7 +5,7 @@
     <string name="title_control_layer">Warstwa sterowania</string>
     <string name="control_layer_thumbcast">Thumbcast (multitouch, profile)</string>
     <string name="control_layer_legacy">Klasyczny kontroler ekranowy</string>
-    <string name="title_thumbcast_profile">Profil sterowania</string>
+    <string name="title_thumbcast_profile">Profile sterowania</string>
     <string name="title_thumbcast_debug">Nakładka debug wejścia</string>
     <string name="summary_thumbcast_debug">Pokazuje aktywne wskaźniki, wysłane flagi pada i opóźnienie dotyk→wysyłka</string>
     <string name="thumbcast_profile_error">Nie udało się wczytać profilu, używam klasycznego kontrolera: %1$s</string>
@@ -27,8 +27,8 @@
         <item quantity="other">%d kontrolki</item>
     </plurals>
     <string name="thumbcast_library_invalid">Niepoprawny profil: %1$s</string>
-    <string name="thumbcast_library_active_description">%1$s, aktywny</string>
-    <string name="thumbcast_library_action_select">Użyj tego profilu</string>
+    <string name="thumbcast_library_active_description">%1$s, domyślny</string>
+    <string name="thumbcast_library_action_select">Ustaw jako domyślny</string>
     <string name="thumbcast_library_action_edit">Edytuj układ</string>
     <string name="thumbcast_library_action_duplicate">Duplikuj</string>
     <string name="thumbcast_library_action_rename">Zmień nazwę</string>
@@ -36,13 +36,12 @@
     <string name="thumbcast_library_action_share">Udostępnij</string>
     <string name="thumbcast_library_action_delete">Usuń</string>
     <string name="thumbcast_library_copy_suffix">" (kopia)"</string>
-    <string name="thumbcast_library_selected">Aktywny profil: %1$s</string>
     <string name="thumbcast_library_duplicated">Utworzono kopię: %1$s</string>
     <string name="thumbcast_library_rename_title">Zmień nazwę profilu</string>
     <string name="thumbcast_library_delete_title">Usunąć profil?</string>
     <string name="thumbcast_library_delete_message">Profil „%1$s” zostanie usunięty. Tego nie da się cofnąć.</string>
     <string name="thumbcast_library_deleted">Profil usunięty</string>
-    <string name="thumbcast_library_deleted_active">Profil usunięty. Aktywny jest teraz domyślny preset.</string>
+    <string name="thumbcast_library_deleted_active">Profil usunięty. Profil domyślny to teraz „%1$s”.</string>
     <string name="thumbcast_library_editor_unavailable">Edytor układu nie jest jeszcze dostępny w tej wersji.</string>
     <string name="thumbcast_library_saved">Profil zapisany</string>
     <string name="thumbcast_library_edit_failed">Nie zapisano edytowanego profilu</string>
@@ -55,7 +54,7 @@
     <string name="thumbcast_library_import_details">Nazwa: %1$s\nKontrolki: %2$d\nTryb: %3$s</string>
     <string name="thumbcast_library_import_new_id">Zostanie zapisany jako nowy profil, bo jego identyfikator jest już zajęty.</string>
     <string name="thumbcast_library_import_confirm">Importuj</string>
-    <string name="thumbcast_library_import_confirm_use">Importuj i użyj</string>
+    <string name="thumbcast_library_import_confirm_use">Importuj jako domyślny</string>
     <string name="thumbcast_library_imported">Zaimportowano profil: %1$s</string>
     <string name="thumbcast_library_import_failed">Import nie powiódł się</string>
     <string name="thumbcast_library_error">Operacja nie powiodła się</string>
@@ -83,7 +82,7 @@
     <string name="thumbcast_menu_scale_decrease">Mniejsze kontrolki</string>
     <string name="thumbcast_menu_scale_increase">Większe kontrolki</string>
     <string name="thumbcast_menu_profile">Profil: %1$s</string>
-    <string name="thumbcast_menu_profiles_title">Profil sterowania</string>
+    <string name="thumbcast_menu_profiles_title">Profil domyślny</string>
     <string name="thumbcast_menu_back">‹ Wstecz</string>
     <string name="thumbcast_menu_profile_switch_error">Nie udało się wczytać profilu: %1$s</string>
     <!-- THUMBCAST: adresy połączenia PC (LAN + Tailscale/ZeroTier), menu PC w PcView -->
@@ -126,4 +125,20 @@
     <string name="thumbcast_app_settings_cleared">%1$s używa ustawień globalnych</string>
     <string name="thumbcast_app_profile_missing">Profil sterowania wybrany dla tej aplikacji nie istnieje albo jest niepoprawny. Używam profilu domyślnego.</string>
     <string name="thumbcast_menu_profile_session_only">Profil w tej sesji: %1$s (ustawienie aplikacji bez zmian)</string>
+    <!-- Profil domyślny i gesty myszy (12.11.2026). -->
+    <string name="thumbcast_profile_summary">Domyślny: %1$s</string>
+    <string name="thumbcast_library_default_set">Profil domyślny: %1$s</string>
+    <string name="thumbcast_library_default_marker">%1$s  ★ Domyślny</string>
+    <string name="thumbcast_library_default_hint">★ Profil domyślny działa w każdym strumieniu, chyba że aplikacja na PC ma własny profil (przytrzymaj aplikację na liście aplikacji).</string>
+    <string name="thumbcast_default_profile_missing">Profil domyślny nie istnieje albo jest niepoprawny. Używam „%1$s”.</string>
+    <string name="thumbcast_menu_profiles_title_session">Profil w tej sesji</string>
+    <string name="thumbcast_library_action_mouse_gestures_on">Gesty myszy: wł.</string>
+    <string name="thumbcast_library_action_mouse_gestures_off">Gesty myszy: wył.</string>
+    <string name="thumbcast_library_mouse_gestures_tag">gesty myszy</string>
+    <string name="thumbcast_menu_mouse_gestures_on">Gesty myszy: wł.</string>
+    <string name="thumbcast_menu_mouse_gestures_off">Gesty myszy: wył.</string>
+    <string name="thumbcast_mouse_gestures_on_touchpad">Gesty myszy wł.: przeciągnij w pustym miejscu = kursor, dotknij = lewy klik, dotknij dwoma palcami = prawy klik, przeciągnij dwoma palcami = przewijanie, przytrzymaj i przeciągnij = przeciąganie.</string>
+    <string name="thumbcast_mouse_gestures_off_touchpad">Gesty myszy wył.: dotyk w pustym miejscu nic nie wysyła. Przeciągnięcie w dół od górnej krawędzi nadal otwiera menu.</string>
+    <string name="thumbcast_mouse_gestures_on_camera">Gesty myszy wł.: dotknij = lewy klik w tym miejscu, przytrzymaj = prawy klik, szczypanie = kółko myszy. Przeciąganie nadal obraca kamerę.</string>
+    <string name="thumbcast_mouse_gestures_off_camera">Gesty myszy wył.: dotknięcia i szczypanie nic nie wysyłają. Przeciąganie nadal obraca kamerę.</string>
 </resources>

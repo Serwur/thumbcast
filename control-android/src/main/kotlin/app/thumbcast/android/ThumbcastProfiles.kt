@@ -16,7 +16,12 @@ object ThumbcastProfiles {
 
     const val PROFILES_DIR: String = "profiles"
     const val ASSET_PRESETS_DIR: String = "presets"
-    const val DEFAULT_PRESET: String = "gamepad-xbox.thumbcast.json"
+    /**
+     * Profil domyślny dostarczany z aplikacją (od 12.11.2026 „Pad – PlayStation”, wcześniej „Pad – Xbox”).
+     * Działa, dopóki użytkownik nie wybierze innego w bibliotece (preferencja `list_thumbcast_profile` niezapisana),
+     * i jest zapasowym, gdy wybrany profil domyślny zniknie.
+     */
+    const val DEFAULT_PRESET: String = "gamepad-playstation.thumbcast.json"
 
     /** Wynik jako `Result`, żeby Game mogło pokazać błąd walidacji i wrócić do trybu legacy. */
     @JvmStatic

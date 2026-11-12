@@ -6,7 +6,6 @@ package com.limelight.thumbcast;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.preference.PreferenceManager;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -55,8 +54,7 @@ public final class ThumbcastAppSettingsDialog {
 
         // ---- profil ----
         ProfileRepository repo = ProfileRepository.create(activity);
-        String globalFile = PreferenceManager.getDefaultSharedPreferences(activity)
-                .getString(ProfileLibraryActivity.PREF_PROFILE, ProfileRepository.DEFAULT_PRESET);
+        String globalFile = ProfileLibraryActivity.defaultProfileFile(activity);
         String globalName = globalFile;
         List<Choice<String>> profiles = new ArrayList<>();
         int profileIndex = 0;

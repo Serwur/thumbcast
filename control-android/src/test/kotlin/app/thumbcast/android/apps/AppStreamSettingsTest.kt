@@ -10,7 +10,7 @@ import org.junit.Test
 /** Ustawienia aplikacji hosta: klucze, dopasowanie, zapis i odczyt, nadpisanie strumienia, wybór profilu. */
 class AppStreamSettingsTest {
 
-    private val pad = "gamepad-xbox.thumbcast.json"
+    private val pad = "gamepad-playstation.thumbcast.json"
     private val mmo = "mmo-pad.thumbcast.json"
     private val r720 = StreamResolution(1280, 720)
 
@@ -199,5 +199,34 @@ class AppStreamSettingsTest {
         assertNull(sel.value)
         assertEquals("also-gone.thumbcast.json", sel.fileName)
         assertTrue(sel.appProfileFailed)
+    }
+
+    @Test
+    fun missingDefaultProfileFallsBackToShippedDefaultWithFlag() {
+        // Profil domyślny użytkownika usunięty poza biblioteką: profil dostarczany z aplikacją i komunikat.
+        val sel = AppStreamOverrides.selectProfile(null, "deleted.thumbcast.json", load, pad)
+        assertEquals(pad, sel.fileName)
+        assertEquals("PAD", sel.value)
+        assertTrue(sel.defaultProfileFailed)
+        assertFalse(sel.appProfileFailed)
+        // Profil aplikacji i domyślny usunięte: nadal profil dostarczany z aplikacją, oba komunikaty.
+        val both = AppStreamOverrides.selectProfile("gone.thumbcast.json", "deleted.thumbcast.json", load, pad)
+        assertEquals(pad, both.fileName)
+        assertTrue(both.appProfileFailed)
+        assertTrue(both.defaultProfileFailed)
+    }
+
+    @Test
+    fun existingDefaultProfileDoesNotTouchShippedDefault() {
+        val sel = AppStreamOverrides.selectProfile(null, mmo, load, pad)
+        assertEquals(mmo, sel.fileName)
+        assertFalse(sel.defaultProfileFailed)
+        assertEquals(listOf(mmo), loads)
+        // Domyślny = dostarczany i uszkodzony: bez drugiej próby, wartość null (sesja pokaże błąd).
+        loads.clear()
+        val broken = AppStreamOverrides.selectProfile(null, "x.thumbcast.json", load, "x.thumbcast.json")
+        assertNull(broken.value)
+        assertFalse(broken.defaultProfileFailed)
+        assertEquals(listOf("x.thumbcast.json"), loads)
     }
 }

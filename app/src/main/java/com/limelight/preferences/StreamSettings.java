@@ -266,13 +266,14 @@ public class StreamSettings extends Activity {
                     .apply();
         }
 
-        // THUMBCAST: podsumowanie = nazwa aktywnego profilu (odświeżane po powrocie z biblioteki).
+        // THUMBCAST: podsumowanie = nazwa profilu domyślnego (odświeżane po powrocie z biblioteki).
         @Override
         public void onResume() {
             super.onResume();
             Preference thumbcastProfile = findPreference("list_thumbcast_profile");
             if (thumbcastProfile != null) {
-                thumbcastProfile.setSummary(ProfileLibraryActivity.activeProfileName(getActivity()));
+                thumbcastProfile.setSummary(getString(R.string.thumbcast_profile_summary,
+                        ProfileLibraryActivity.defaultProfileName(getActivity())));
             }
         }
         // THUMBCAST END

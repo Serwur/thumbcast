@@ -77,4 +77,39 @@ public final class ThumbcastSettings {
     public void setHideOnGamepad(boolean hide) {
         prefs.edit().putBoolean(KEY_HIDE_ON_GAMEPAD, hide).apply();
     }
+
+    // ---------- Gesty myszy (12.11.2026): przełącznik na profil, MouseGesturesTransform ----------
+
+    /**
+     * Klucz = prefiks + nazwa pliku profilu (wartość list_thumbcast_profile), więc działa także dla presetów
+     * tylko do odczytu. Brak wpisu = zachowanie zapisane w profilu (MouseGesturesTransform.isEnabled).
+     */
+    static final String KEY_MOUSE_GESTURES_PREFIX = "thumbcast_mouse_gestures:";
+
+    /** Zapisany wybór dla pliku profilu albo null (profil działa tak, jak go zapisano). */
+    public Boolean getMouseGestures(String profileFile) {
+        String key = KEY_MOUSE_GESTURES_PREFIX + profileFile;
+        if (profileFile == null || !prefs.contains(key)) {
+            return null;
+        }
+        return prefs.getBoolean(key, false);
+    }
+
+    /** {@code value} = MouseGesturesTransform.toStore(...): null usuwa wpis (wartość równa domyślnej profilu). */
+    public void setMouseGestures(String profileFile, Boolean value) {
+        if (profileFile == null) {
+            return;
+        }
+        String key = KEY_MOUSE_GESTURES_PREFIX + profileFile;
+        if (value == null) {
+            prefs.edit().remove(key).apply();
+        } else {
+            prefs.edit().putBoolean(key, value).apply();
+        }
+    }
+
+    /** Przeniesienie wyboru na kopię profilu (Duplikuj, edycja presetu). */
+    public void copyMouseGestures(String fromFile, String toFile) {
+        setMouseGestures(toFile, getMouseGestures(fromFile));
+    }
 }

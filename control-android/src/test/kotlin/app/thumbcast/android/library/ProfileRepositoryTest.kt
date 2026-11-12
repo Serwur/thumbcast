@@ -43,7 +43,7 @@ class ProfileRepositoryTest {
 
     @Test
     fun listPresets_namesFromJson_sortedWithoutDefault() {
-        // Domyślnego presetu (gamepad-xbox) nie ma w tym zestawie, więc kolejność wg nazwy.
+        // Domyślnego presetu (gamepad-playstation) nie ma w tym zestawie, więc kolejność wg nazwy.
         // Kolejność „domyślny pierwszy” sprawdza realPresets_allListedAndValid.
         val list = repo.listPresets()
         assertEquals(listOf(KEYBOARD, PAD_PLUS), list.map { it.fileName })
@@ -67,7 +67,16 @@ class ProfileRepositoryTest {
         val list = real.listPresets()
         assertEquals(files.size, list.size)
         assertEquals(ProfileRepository.DEFAULT_PRESET, list.first().fileName)
+        assertEquals("gamepad-playstation.thumbcast.json", list.first().fileName)
         list.forEach { assertTrue("${it.fileName}: ${it.error}", it.isValid) }
+        // Przełącznik „Gesty myszy”: domyślnie wył. tylko w presetach pada (wolna strefa none).
+        val byFile = list.associateBy { it.fileName }
+        assertFalse(byFile.getValue("gamepad-playstation.thumbcast.json").mouseGesturesDefault)
+        assertFalse(byFile.getValue("gamepad-xbox.thumbcast.json").mouseGesturesDefault)
+        assertTrue(byFile.getValue("gamepad-xbox.thumbcast.json").mouseGesturesTouchpad)
+        assertTrue(byFile.getValue("mmo-pad-plus.thumbcast.json").mouseGesturesDefault)
+        assertFalse(byFile.getValue("mmo-pad-plus.thumbcast.json").mouseGesturesTouchpad)
+        assertTrue(byFile.getValue("big-picture.thumbcast.json").mouseGesturesDefault)
     }
 
     @Test

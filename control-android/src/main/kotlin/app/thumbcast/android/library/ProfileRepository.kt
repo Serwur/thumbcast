@@ -2,6 +2,7 @@ package app.thumbcast.android.library
 
 import android.content.Context
 import app.thumbcast.android.ThumbcastProfiles
+import app.thumbcast.model.MouseGesturesTransform
 import app.thumbcast.model.Profile
 import app.thumbcast.model.ProfileCodec
 import app.thumbcast.model.ProfileMode
@@ -239,7 +240,9 @@ class ProfileRepository(
     private fun entryFor(fileName: String, builtIn: Boolean, read: () -> String): ProfileEntry {
         return try {
             val p = decode(read())
-            ProfileEntry(fileName, p.id, p.name, p.mode, p.controls.size, builtIn, null)
+            ProfileEntry(fileName, p.id, p.name, p.mode, p.controls.size, builtIn, null,
+                mouseGesturesDefault = MouseGesturesTransform.isEnabled(p),
+                mouseGesturesTouchpad = MouseGesturesTransform.style(p) == MouseGesturesTransform.Style.TOUCHPAD)
         } catch (e: Exception) {
             // ProfileLibraryException (zły profil) albo IOException (odczyt).
             val msg = (e as? ProfileLibraryException)?.details?.firstOrNull() ?: e.message ?: e.toString()
@@ -410,7 +413,12 @@ class ProfileRepository(
     }
 }
 
-/** Wiersz listy w bibliotece. Przy uszkodzonym pliku `id` i `mode` są null, a `error` ma pierwszy błąd. */
+/**
+ * Wiersz listy w bibliotece. Przy uszkodzonym pliku `id` i `mode` są null, a `error` ma pierwszy błąd.
+ * [mouseGesturesDefault]: czy profil sam z siebie ma gesty myszy (wartość przełącznika „Gesty myszy” bez wpisu
+ * użytkownika); [mouseGesturesTouchpad]: po włączeniu wolna strefa działa jak gładzik (inaczej kliki w punkcie
+ * przy kamerze). Patrz `MouseGesturesTransform`.
+ */
 data class ProfileEntry(
     val fileName: String,
     val id: String?,
@@ -419,6 +427,8 @@ data class ProfileEntry(
     val controlCount: Int,
     val builtIn: Boolean,
     val error: String?,
+    val mouseGesturesDefault: Boolean = false,
+    val mouseGesturesTouchpad: Boolean = true,
 ) {
     val isValid: Boolean get() = error == null
 }

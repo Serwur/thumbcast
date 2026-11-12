@@ -4,7 +4,8 @@ Zweryfikowane na upstreamie v12.2 (commit `b48494cb96bff23d8886c4775cc4f39a10754
 Opis zmian krok po kroku (nie `git diff`; patrz uwaga w `Game.java.patch.md`).
 
 > Stan po 11.11.2026 różni się od kroków poniżej: wybór profilu to `Preference` otwierająca `ProfileLibraryActivity`
-> (bez tablic `thumbcast_profile_*`), domyślny profil `gamepad-xbox.thumbcast.json`, domyślny rozmiar 100%. Pewny stan: `0001-thumbcast.diff`.
+> (bez tablic `thumbcast_profile_*`), domyślny rozmiar 100%, a od 12.11.2026 domyślny profil `gamepad-playstation.thumbcast.json`
+> (sekcja 7). Pewny stan: `0001-thumbcast.diff`.
 
 Co sprawdzono:
 - `res/xml/preferences.xml`: korzeń `<PreferenceScreen>` z `xmlns:android` i `xmlns:seekbar`. Kategorie w kolejności:
@@ -202,3 +203,29 @@ tasks.named('preBuild') { dependsOn copyPresets }
 (Składnia Groovy z `layout.buildDirectory` w `srcDir` jest nieprzetestowana; w razie problemu użyć
 `"$buildDir/generated/thumbcastAssets"`. Task `preBuild` istnieje w module aplikacji AGP.)
 `ThumbcastProfiles.load(context, name)` czyta najpierw `filesDir/profiles/<name>`, potem `assets/presets/<name>`.
+
+## 7. Profil domyślny „Pad – PlayStation” i gesty myszy (12.11.2026)
+
+Zmiany w plikach upstreamu (tylko bloki `THUMBCAST`), kotwice z v12.2:
+
+- `PreferenceConfiguration.java`, blok `// THUMBCAST:` po `public boolean onscreenController;`:
+  `DEFAULT_THUMBCAST_PROFILE = app.thumbcast.android.ThumbcastProfiles.DEFAULT_PRESET` (jedno źródło; wartość
+  `gamepad-playstation.thumbcast.json`). `readPreferences` czyta `list_thumbcast_profile` z tym domyślnym jak dotąd.
+- `StreamSettings.java`, blok `// THUMBCAST: podsumowanie ...` w `SettingsFragment.onResume`: podsumowanie preferencji
+  `list_thumbcast_profile` = `thumbcast_profile_summary` („Domyślny: <nazwa>”) z `ProfileLibraryActivity.defaultProfileName`.
+- `res/xml/preferences.xml` bez zmian: `list_thumbcast_profile` to `Preference` bez `android:defaultValue` i z
+  `android:persistent="false"`, więc `PreferenceManager.setDefaultValues` (`PcView.onCreate`) niczego nie zapisuje.
+  Kto nie wybrał profilu, dostaje `ThumbcastProfiles.DEFAULT_PRESET`, także po zmianie domyślnego w nowej wersji.
+  Wyjątek: wersje z 11.11.2026 sprzed biblioteki profili (`ListPreference` z `android:defaultValue`, commity
+  `a8330da2`..`4cd7c9bd`) mogły przy pierwszym uruchomieniu zapisać `mmo-pad-plus` albo `gamepad-xbox`; takiego wpisu
+  nie da się odróżnić od wyboru użytkownika, więc nie jest migrowany (w bibliotece wystarczy „Ustaw jako domyślny”).
+
+Reszta zmian jest w plikach Thumbcast (`com.limelight.thumbcast`, `res/*/thumbcast_*.xml`,
+`layout/activity_thumbcast_profile_library.xml`), bez kotwic w upstreamie:
+`ProfileLibraryActivity` (akcja „Ustaw jako domyślny”, znacznik „★ Domyślny”, podpowiedź pod tytułem, usunięcie profilu
+domyślnego usuwa preferencję i pokazuje nazwę presetu dostarczanego z aplikacją, przełącznik „Gesty myszy” w opcjach
+profilu), `ThumbcastSettings` (klucze `thumbcast_mouse_gestures:<plik profilu>`), `ThumbcastSession` (profil efektywny
+`MouseGesturesTransform` → `ScaleTransform`, wiersz menu, zapasowy profil domyślny przez
+`AppStreamOverrides.selectProfile(..., ThumbcastProfiles.DEFAULT_PRESET)`), `ThumbcastMenuModel` (wiersz
+„Gesty myszy: wł./wył.”, ★ przy profilu domyślnym na stronie profili), `ThumbcastAppSettingsDialog`
+(`ProfileLibraryActivity.defaultProfileFile`).

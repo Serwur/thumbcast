@@ -5,7 +5,7 @@
     <string name="title_control_layer">Control layer</string>
     <string name="control_layer_thumbcast">Thumbcast (multitouch, profiles)</string>
     <string name="control_layer_legacy">Classic on-screen controller</string>
-    <string name="title_thumbcast_profile">Control profile</string>
+    <string name="title_thumbcast_profile">Control profiles</string>
     <string name="title_thumbcast_debug">Input debug overlay</string>
     <string name="summary_thumbcast_debug">Shows active pointers, sent pad flags and touch-to-send latency</string>
     <string name="thumbcast_profile_error">Control profile could not be loaded, using classic controller: %1$s</string>
@@ -25,8 +25,8 @@
         <item quantity="other">%d controls</item>
     </plurals>
     <string name="thumbcast_library_invalid">Invalid profile: %1$s</string>
-    <string name="thumbcast_library_active_description">%1$s, active</string>
-    <string name="thumbcast_library_action_select">Use this profile</string>
+    <string name="thumbcast_library_active_description">%1$s, default</string>
+    <string name="thumbcast_library_action_select">Set as default</string>
     <string name="thumbcast_library_action_edit">Edit layout</string>
     <string name="thumbcast_library_action_duplicate">Duplicate</string>
     <string name="thumbcast_library_action_rename">Rename</string>
@@ -34,13 +34,12 @@
     <string name="thumbcast_library_action_share">Share</string>
     <string name="thumbcast_library_action_delete">Delete</string>
     <string name="thumbcast_library_copy_suffix">" (copy)"</string>
-    <string name="thumbcast_library_selected">Active profile: %1$s</string>
     <string name="thumbcast_library_duplicated">Copy created: %1$s</string>
     <string name="thumbcast_library_rename_title">Rename profile</string>
     <string name="thumbcast_library_delete_title">Delete profile?</string>
     <string name="thumbcast_library_delete_message">“%1$s” will be deleted. This cannot be undone.</string>
     <string name="thumbcast_library_deleted">Profile deleted</string>
-    <string name="thumbcast_library_deleted_active">Profile deleted. The default preset is now active.</string>
+    <string name="thumbcast_library_deleted_active">Profile deleted. The default profile is now %1$s.</string>
     <string name="thumbcast_library_editor_unavailable">The layout editor is not available in this version yet.</string>
     <string name="thumbcast_library_saved">Profile saved</string>
     <string name="thumbcast_library_edit_failed">Edited profile was not saved</string>
@@ -53,7 +52,7 @@
     <string name="thumbcast_library_import_details">Name: %1$s\nControls: %2$d\nMode: %3$s</string>
     <string name="thumbcast_library_import_new_id">It will be saved as a new profile, because its ID is already in use.</string>
     <string name="thumbcast_library_import_confirm">Import</string>
-    <string name="thumbcast_library_import_confirm_use">Import and use</string>
+    <string name="thumbcast_library_import_confirm_use">Import as default</string>
     <string name="thumbcast_library_imported">Profile imported: %1$s</string>
     <string name="thumbcast_library_import_failed">Import failed</string>
     <string name="thumbcast_library_error">Operation failed</string>
@@ -82,7 +81,7 @@
     <string name="thumbcast_menu_scale_increase">Larger controls</string>
     <string name="thumbcast_menu_scale_minus" translatable="false">−</string>
     <string name="thumbcast_menu_profile">Profile: %1$s</string>
-    <string name="thumbcast_menu_profiles_title">Control profile</string>
+    <string name="thumbcast_menu_profiles_title">Default profile</string>
     <string name="thumbcast_menu_back">‹ Back</string>
     <string name="thumbcast_menu_profile_active" translatable="false">✓ %1$s</string>
     <string name="thumbcast_menu_profile_switch_error">Could not load the profile: %1$s</string>
@@ -127,4 +126,21 @@
     <string name="thumbcast_app_settings_cleared">%1$s uses the global settings</string>
     <string name="thumbcast_app_profile_missing">The control profile chosen for this app is missing or invalid. Using the default profile.</string>
     <string name="thumbcast_menu_profile_session_only">Profile for this session: %1$s (app setting unchanged)</string>
+    <!-- Profil domyślny i gesty myszy (12.11.2026). -->
+    <string name="thumbcast_profile_summary">Default: %1$s</string>
+    <string name="thumbcast_library_default_set">Default profile: %1$s</string>
+    <string name="thumbcast_library_default_marker">%1$s  ★ Default</string>
+    <string name="thumbcast_library_default_hint">★ The default profile is used in every stream, unless a PC app has its own profile (long-press the app in the app list).</string>
+    <string name="thumbcast_default_profile_missing">The default control profile is missing or invalid. Using %1$s.</string>
+    <string name="thumbcast_menu_profiles_title_session">Profile for this session</string>
+    <string name="thumbcast_menu_profile_default_marker" translatable="false">%1$s  ★</string>
+    <string name="thumbcast_library_action_mouse_gestures_on">Mouse gestures: on</string>
+    <string name="thumbcast_library_action_mouse_gestures_off">Mouse gestures: off</string>
+    <string name="thumbcast_library_mouse_gestures_tag">mouse gestures</string>
+    <string name="thumbcast_menu_mouse_gestures_on">Mouse gestures: on</string>
+    <string name="thumbcast_menu_mouse_gestures_off">Mouse gestures: off</string>
+    <string name="thumbcast_mouse_gestures_on_touchpad">Mouse gestures on: drag in an empty area moves the cursor, tap = left click, two-finger tap = right click, two-finger drag = scroll, hold then drag = drag.</string>
+    <string name="thumbcast_mouse_gestures_off_touchpad">Mouse gestures off: touching an empty area sends nothing. Swiping down from the top edge still opens the menu.</string>
+    <string name="thumbcast_mouse_gestures_on_camera">Mouse gestures on: tap = left click at that spot, long press = right click, pinch = mouse wheel. Dragging still turns the camera.</string>
+    <string name="thumbcast_mouse_gestures_off_camera">Mouse gestures off: tapping and pinching send nothing. Dragging still turns the camera.</string>
 </resources>

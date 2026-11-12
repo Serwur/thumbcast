@@ -71,6 +71,18 @@ Trzeci palec w wolnej strefie nic nie robi i unieważnia tap dwoma palcami. Pale
 
 `"none"` (12.11.2026): dotyk poza kontrolkami nic nie wysyła do hosta (bez kamery, myszy, klików, kółka). Pola `cameraDrag`, `tapTarget`, `longPress`, `pinchZoom` i `touchpad` są ignorowane. Działa tylko `edgeSwipeTop` (`app_menu`), jeśli jest włączony, rozpoznawany tak samo jak w pozostałych trybach. Kamery nie ma, więc prawa gałka jest wolna dla kontrolki. Używają go presety „Pad – Xbox” i „Pad – PlayStation” (pełny pad na ekranie, przeciągnięcie w pustym miejscu nie rusza kursorem na hoście).
 
+### Przełącznik „Gesty myszy” (poza plikiem profilu, 12.11.2026)
+
+Użytkownik może włączyć albo wyłączyć mysz w wolnej strefie dowolnego profilu, także presetu tylko do odczytu. Wybór nie trafia do pliku (schemat bez zmian, eksport go nie zawiera): telefon trzyma go osobno dla każdej nazwy pliku profilu, a `MouseGesturesTransform.apply(profil, wybór)` daje profil efektywny dla silnika. Wartość domyślna (`MouseGesturesTransform.isEnabled`) wynika z pliku, więc bez wpisu nic się nie zmienia:
+
+| `freeZone` w pliku | domyślnie | wł. | wył. |
+|---|---|---|---|
+| `none` | wył. | `freeZone = touchpad`, `tapTarget.enabled` i `longPress.enabled` = true | bez zmian |
+| `touchpad` | wł. | bez zmian | `freeZone = none` |
+| `camera` | wł., gdy `tapTarget`, `longPress` albo `pinchZoom` jest włączony | `tapTarget`, `longPress`, `pinchZoom` włączone | te trzy wyłączone (kamera zostaje) |
+
+Gdy włączenie tapu i long-pressu złamałoby regułę `longPress.minMs > tapTarget.maxMs`, `minMs` dostaje max(450, `maxMs` + 1). Zmieniają się tylko pola `gestures` (`cameraDrag` i `edgeSwipeTop` nigdy), kamera nie jest dokładana, więc reguła jednej gałki zostaje spełniona. Wynik przechodzi `ProfileValidator` (testy właściwości w `MouseGesturesTransformTest` i `ActionPolicyPropertyTest`); gdyby nie przeszedł, zwracany jest profil z pliku. Pole `touchpad` ma znaczenie także w profilu z `none` (czułość po włączeniu gestów myszy; presety pada mają 1.3 jak Big Picture).
+
 `curve`: `{ "type": "linear" }` (wtedy `exponent` musi wynosić 1, co jest wartością domyślną) albo `{ "type": "power", "exponent": 1.0..3.0 }`.
 
 ## Wyjście (`output`)

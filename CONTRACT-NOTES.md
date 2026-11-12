@@ -85,6 +85,7 @@ Autor: agent MODEL, 2026-11-07. Pliki: `control-model/**`, `presets/*.thumbcast.
 - Gdy oba gesty są włączone, zachodzi `longPress.minMs > tapTarget.maxMs`, więc okna czasowe tapu i long-pressu się nie nakładają.
 - `ProfileCodec.decode` uruchamia też `ProfileValidator.validate`, więc profil z `decode` jest zawsze poprawny. Dodatkowo istnieje `ProfileCodec.decodeUnvalidated`, przeznaczony dla edytora. Błąd walidacji to `ProfileValidationException(errors)`.
 - Dostępne są też `ProfileValidator.validateRaw(JsonElement)` (zakazane typy i pola, liczba kluczy w `output`/`chord`) oraz `HandednessTransform.mirror` / `toHandedness`.
+- Od 12.11.2026 `MouseGesturesTransform` (`isEnabled`, `style`, `effective`, `toStore`, `apply(profile, Boolean?)`): przełącznik użytkownika „Gesty myszy” jako czysta funkcja `Profile -> Profile` (zmienia tylko `gestures`: `freeZone` none ↔ touchpad albo `enabled` tapu, long-pressu i pinchu przy kamerze; wynik przechodzi walidator, inaczej zwraca wejście). Stan trzyma aplikacja poza plikiem profilu. Tabela: `control-model/docs/profile-schema.md`.
 
 ### Do zweryfikowania przy pierwszym buildzie
 - Test właściwości używa `runBlocking` z kotlinx-coroutines, dociąganego przechodnio przez `kotest-property`. Jeśli coroutines nie przyjdą jako zależność `api`, trzeba dodać jawny alias (SCAFFOLD).

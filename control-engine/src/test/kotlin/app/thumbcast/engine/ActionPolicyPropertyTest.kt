@@ -1,10 +1,13 @@
 package app.thumbcast.engine
 
 import app.thumbcast.model.Control
+import app.thumbcast.model.FreeZoneMode
+import app.thumbcast.model.MouseGesturesTransform
 import app.thumbcast.model.Output
 import app.thumbcast.model.PadStick
 import app.thumbcast.model.Profile
 import app.thumbcast.model.ProfileMode
+import app.thumbcast.model.ProfileValidator
 import app.thumbcast.model.StickControl
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.long
@@ -99,6 +102,37 @@ class ActionPolicyPropertyTest {
         }
     }
 
+    /**
+     * Przełącznik „Gesty myszy” (12.11.2026): profil efektywny z [MouseGesturesTransform] (kamera z gestami albo bez,
+     * touchpad, none; Pad+ albo KBM; z prawą gałką albo bez; wł. albo wył.) przechodzi walidator, ma żądany stan
+     * przełącznika i spełnia te same właściwości polityki przy chaosie wielu palców. Wynik `none` dodatkowo bez myszy.
+     */
+    @Test
+    fun mouseGesturesSwitchChaoticStreams(): Unit = runBlocking<Unit> {
+        checkAll(iterations, Arb.long()) { seed ->
+            val r = Random(seed xor MOUSE_SALT)
+            val mode = if (r.nextInt(4) == 0) ProfileMode.KEYBOARD_MOUSE else ProfileMode.PAD_PLUS
+            val base = when (r.nextInt(3)) {
+                0 -> testProfile(mode = mode).let {
+                    it.copy(gestures = it.gestures.copy(
+                        tapTarget = it.gestures.tapTarget.copy(enabled = r.nextBoolean()),
+                        longPress = it.gestures.longPress.copy(enabled = r.nextBoolean()),
+                        pinchZoom = it.gestures.pinchZoom.copy(enabled = r.nextBoolean())
+                    ))
+                }
+                1 -> touchpadProfile(mode = mode, rightStick = r.nextBoolean())
+                else -> noFreeZoneProfile(mode = mode, rightStick = r.nextBoolean())
+            }
+            val want = r.nextBoolean()
+            val p = withSprintLock(MouseGesturesTransform.apply(base, want), seed)
+            assertEquals(emptyList(), ProfileValidator.validate(p), "seed=$seed")
+            assertEquals(want, MouseGesturesTransform.isEnabled(p), "seed=$seed")
+            val zone = p.gestures.freeZone
+            Scenario(seed, p, chaotic = true, slide = false, touchpad = zone != FreeZoneMode.CAMERA,
+                noFreeZone = zone == FreeZoneMode.NONE).run()
+        }
+    }
+
     @Test
     fun clockWithoutTouchNeverEmits(): Unit = runBlocking<Unit> {
         checkAll(iterations, Arb.long()) { seed ->
@@ -151,6 +185,7 @@ class ActionPolicyPropertyTest {
         const val SPRINT_SALT: Long = 0x5EED_5B1A7L
         const val TOUCHPAD_SALT: Long = 0x70C4_9AD5L
         const val NONE_SALT: Long = 0x0F2E_E20EL
+        const val MOUSE_SALT: Long = 0x3A05_E6E5L
     }
 
     /** Jeden strumień zdarzeń i jego sprawdzenia. */

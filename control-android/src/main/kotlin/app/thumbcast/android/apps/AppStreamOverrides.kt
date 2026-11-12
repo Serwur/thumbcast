@@ -13,12 +13,15 @@ data class StreamParams(val width: Int, val height: Int, val fps: Int)
  * @property value wczytany profil; null = nie wczytał się ani profil aplikacji, ani globalny
  * @property fromApp true, gdy działa profil przypisany do aplikacji (zmiana profilu w grze dotyczy wtedy tylko tej sesji)
  * @property appProfileFailed true, gdy aplikacja miała profil, ale go brak albo jest niepoprawny (użyto globalnego)
+ * @property defaultProfileFailed true, gdy profilu domyślnego (globalnego) brak albo jest niepoprawny i użyto
+ *   profilu dostarczanego z aplikacją (np. plik usunięty poza biblioteką)
  */
 class ProfileSelection<T : Any>(
     val fileName: String,
     val value: T?,
     val fromApp: Boolean,
     val appProfileFailed: Boolean,
+    val defaultProfileFailed: Boolean = false,
 )
 
 object AppStreamOverrides {
@@ -37,10 +40,18 @@ object AppStreamOverrides {
 
     /**
      * Profil sterowania na start strumienia: najpierw profil aplikacji ([appFile]), a gdy go nie ma w bibliotece
-     * albo nie przechodzi walidacji (np. usunięty), profil globalny ([globalFile]). [load] zwraca null przy błędzie.
+     * albo nie przechodzi walidacji (np. usunięty), profil domyślny ([globalFile], preferencja
+     * `list_thumbcast_profile`). Gdy i tego brak, profil dostarczany z aplikacją ([shippedDefault], o ile podany
+     * i inny niż [globalFile]) z [ProfileSelection.defaultProfileFailed]. [load] zwraca null przy błędzie.
      */
     @JvmStatic
-    fun <T : Any> selectProfile(appFile: String?, globalFile: String, load: (String) -> T?): ProfileSelection<T> {
+    @JvmOverloads
+    fun <T : Any> selectProfile(
+        appFile: String?,
+        globalFile: String,
+        load: (String) -> T?,
+        shippedDefault: String? = null,
+    ): ProfileSelection<T> {
         val app = appFile?.takeIf { AppStreamSettings.isValidProfileFile(it) }
         if (app != null) {
             val loaded = load(app)
@@ -49,6 +60,14 @@ object AppStreamOverrides {
             }
         }
         val failed = appFile != null && appFile.isNotBlank()
-        return ProfileSelection(globalFile, load(globalFile), fromApp = false, appProfileFailed = failed)
+        val global = load(globalFile)
+        if (global == null && shippedDefault != null && shippedDefault != globalFile) {
+            val shipped = load(shippedDefault)
+            if (shipped != null) {
+                return ProfileSelection(shippedDefault, shipped, fromApp = false, appProfileFailed = failed,
+                    defaultProfileFailed = true)
+            }
+        }
+        return ProfileSelection(globalFile, global, fromApp = false, appProfileFailed = failed)
     }
 }

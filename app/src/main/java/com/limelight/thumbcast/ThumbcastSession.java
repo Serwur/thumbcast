@@ -22,6 +22,10 @@ package com.limelight.thumbcast;
 // Profil aplikacji (12.11.2026, ThumbcastAppSettings): gdy uruchamiana aplikacja hosta ma przypisany profil,
 // sesja startuje z nim (brak pliku albo błąd walidacji = profil globalny i komunikat). Zmiana profilu w grze
 // działa wtedy tylko w tej sesji: nie zmienia ani przypisania aplikacji, ani profilu globalnego.
+//
+// Gesty myszy (12.11.2026): przełącznik w menu dla aktywnego profilu (zapis w ThumbcastSettings, klucz = plik
+// profilu), profil efektywny = MouseGesturesTransform(profil z pliku), potem ScaleTransform. Zmiana na żywo.
+// Profil domyślny (list_thumbcast_profile) usunięty poza biblioteką: profil dostarczany z aplikacją i komunikat.
 
 import android.app.Activity;
 import android.content.Context;
@@ -62,6 +66,7 @@ import app.thumbcast.android.menu.MenuInputRouter;
 import app.thumbcast.android.menu.MenuKeyResult;
 import app.thumbcast.android.overlay.ThumbcastOverlay;
 import app.thumbcast.model.AppActions;
+import app.thumbcast.model.MouseGesturesTransform;
 import app.thumbcast.model.Profile;
 import app.thumbcast.model.ScaleTransform;
 
@@ -94,6 +99,8 @@ public final class ThumbcastSession {
     private Profile baseProfile;
     /** Nazwa pliku aktywnego profilu (wartość preferencji list_thumbcast_profile albo profil aplikacji). */
     private String activeProfileFile;
+    /** Zapisany przełącznik „Gesty myszy” aktywnego profilu; null = zachowanie z pliku profilu. */
+    private Boolean mouseGestures;
     /** true = sesja wystartowała z profilem aplikacji: zmiana profilu w grze nie zapisuje preferencji globalnej. */
     private final boolean sessionOnlyProfile;
     private final Map<String, Runnable> commands;
@@ -144,7 +151,15 @@ public final class ThumbcastSession {
             return null;
         }
         ProfileSelection<Profile> selection = AppStreamOverrides.selectProfile(prefConfig.thumbcastAppProfileFile,
-                prefConfig.thumbcastProfileFile, name -> ThumbcastProfiles.loadOrNull(activity, name));
+                prefConfig.thumbcastProfileFile, name -> ThumbcastProfiles.loadOrNull(activity, name),
+                ThumbcastProfiles.DEFAULT_PRESET);
+        if (selection.getDefaultProfileFailed() && selection.getValue() != null) {
+            // Preferencji nie zmieniamy: plik mógł być tylko chwilowo niepoprawny (np. po zmianie wersji).
+            LimeLog.warning("Thumbcast: default profile " + prefConfig.thumbcastProfileFile + " failed, using "
+                    + ThumbcastProfiles.DEFAULT_PRESET);
+            Toast.makeText(activity, activity.getString(R.string.thumbcast_default_profile_missing,
+                    selection.getValue().getName()), Toast.LENGTH_LONG).show();
+        }
         if (selection.getAppProfileFailed()) {
             LimeLog.warning("Thumbcast: app profile " + prefConfig.thumbcastAppProfileFile + " failed: "
                     + ThumbcastProfiles.getLastError());
@@ -184,6 +199,7 @@ public final class ThumbcastSession {
         this.settings = new ThumbcastSettings(activity);
         this.prefConfig = prefConfig;
         this.activeProfileFile = profileFile;
+        this.mouseGestures = settings.getMouseGestures(profileFile);
         this.sessionOnlyProfile = sessionOnlyProfile;
         this.scalePercent = settings.getControlScalePercent();
         this.hideOnGamepad = settings.isHideOnGamepad();
@@ -393,7 +409,35 @@ public final class ThumbcastSession {
     // =====================================================================================
 
     private Profile effectiveProfile() {
-        return ScaleTransform.INSTANCE.scale(baseProfile, scalePercent / 100f);
+        Profile withMouse = MouseGesturesTransform.apply(baseProfile, mouseGestures);
+        return ScaleTransform.INSTANCE.scale(withMouse, scalePercent / 100f);
+    }
+
+    private boolean isMouseGestures() {
+        return MouseGesturesTransform.effective(baseProfile, mouseGestures);
+    }
+
+    /** Przełącznik „Gesty myszy” aktywnego profilu: zapis dla jego pliku i nowy profil efektywny na żywo. */
+    private void setMouseGestures(boolean enabled) {
+        if (enabled == isMouseGestures()) {
+            return;
+        }
+        mouseGestures = MouseGesturesTransform.toStore(baseProfile, enabled);
+        settings.setMouseGestures(activeProfileFile, mouseGestures);
+        overlay.setProfile(effectiveProfile());
+        Toast.makeText(activity, mouseGesturesHint(activity, enabled,
+                MouseGesturesTransform.style(baseProfile) == MouseGesturesTransform.Style.TOUCHPAD),
+                Toast.LENGTH_LONG).show();
+    }
+
+    /** Krótki opis, co robi przełącznik w danym profilu (menu w grze i biblioteka). */
+    static String mouseGesturesHint(Context context, boolean enabled, boolean touchpadStyle) {
+        if (!enabled) {
+            return context.getString(touchpadStyle ? R.string.thumbcast_mouse_gestures_off_touchpad
+                    : R.string.thumbcast_mouse_gestures_off_camera);
+        }
+        return context.getString(touchpadStyle ? R.string.thumbcast_mouse_gestures_on_touchpad
+                : R.string.thumbcast_mouse_gestures_on_camera);
     }
 
     private void applyScale(int percent) {
@@ -491,11 +535,12 @@ public final class ThumbcastSession {
     /** Profile z biblioteki (presety, potem profile użytkownika), bez plików uszkodzonych. */
     private List<ThumbcastMenuModel.ProfileChoice> loadProfileChoices() {
         List<ThumbcastMenuModel.ProfileChoice> out = new ArrayList<>();
+        String defaultFile = ProfileLibraryActivity.defaultProfileFile(activity);
         try {
             for (ProfileEntry e : ProfileRepository.create(activity).listAll()) {
                 if (e.isValid()) {
                     out.add(new ThumbcastMenuModel.ProfileChoice(e.getFileName(), e.getName(),
-                            e.getFileName().equals(activeProfileFile)));
+                            e.getFileName().equals(activeProfileFile), e.getFileName().equals(defaultFile)));
                 }
             }
         } catch (RuntimeException e) {
@@ -526,6 +571,7 @@ public final class ThumbcastSession {
         releaseHostInput();
         baseProfile = ThumbcastOverlayFactory.withAutoHideOnGamepad(loaded, false);
         activeProfileFile = fileName;
+        mouseGestures = settings.getMouseGestures(fileName);
         if (!sessionOnlyProfile) {
             prefConfig.thumbcastProfileFile = fileName;
             PreferenceManager.getDefaultSharedPreferences(activity).edit()
@@ -534,7 +580,7 @@ public final class ThumbcastSession {
         overlay.setProfile(effectiveProfile());
         applyControlsHidden();
         Toast.makeText(activity, activity.getString(sessionOnlyProfile
-                ? R.string.thumbcast_menu_profile_session_only : R.string.thumbcast_library_selected,
+                ? R.string.thumbcast_menu_profile_session_only : R.string.thumbcast_library_default_set,
                 loaded.getName()), Toast.LENGTH_SHORT).show();
     }
 
@@ -555,7 +601,9 @@ public final class ThumbcastSession {
             return;
         }
         if (profilesPage) {
-            menuView.setTitle(menuString(R.string.thumbcast_menu_profiles_title));
+            // Wybór w grze zmienia profil domyślny, chyba że sesja ma profil przypisany do aplikacji.
+            menuView.setTitle(menuString(sessionOnlyProfile ? R.string.thumbcast_menu_profiles_title_session
+                    : R.string.thumbcast_menu_profiles_title));
             menuView.bind(ThumbcastMenuModel.buildProfiles(this::menuString, profileChoices, menuTarget));
         } else {
             menuView.setTitle(menuString(R.string.thumbcast_menu_title));
@@ -651,6 +699,16 @@ public final class ThumbcastSession {
         @Override
         public void switchProfile(String fileName) {
             ThumbcastSession.this.switchProfile(fileName);
+        }
+
+        @Override
+        public boolean isMouseGestures() {
+            return ThumbcastSession.this.isMouseGestures();
+        }
+
+        @Override
+        public void setMouseGestures(boolean enabled) {
+            ThumbcastSession.this.setMouseGestures(enabled);
         }
     };
 }

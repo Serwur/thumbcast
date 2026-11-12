@@ -1,7 +1,9 @@
 package com.limelight.thumbcast;
 
 // NOWY PLIK (moduł :app). Biblioteka profili sterowania: presety wbudowane i profile użytkownika,
-// wybór aktywnego (preferencja list_thumbcast_profile = nazwa pliku), edycja (kontrakt EditorContract),
+// profil domyślny (preferencja list_thumbcast_profile = nazwa pliku; brak = ThumbcastProfiles.DEFAULT_PRESET,
+// „★ Domyślny”, akcja „Ustaw jako domyślny”), przełącznik „Gesty myszy” na profil (ThumbcastSettings),
+// edycja (kontrakt EditorContract),
 // duplikat, zmiana nazwy, eksport (SAF), udostępnianie (ProfileShareProvider), usuwanie, import z pliku,
 // ze schowka i z udostępnionego pliku/tekstu. Logika plików: ProfileRepository (:control-android).
 // Opis formatu i kontraktu edytora: docs/profiles.md.
@@ -68,6 +70,7 @@ public class ProfileLibraryActivity extends Activity {
 
     private ProfileRepository repo;
     private SharedPreferences prefs;
+    private ThumbcastSettings settings;
     private LibraryAdapter adapter;
 
     private String pendingEditFile;
@@ -76,15 +79,24 @@ public class ProfileLibraryActivity extends Activity {
 
     // ---------- API dla ustawień ----------
 
-    /** Nazwa pliku aktywnego profilu (domyślny preset, gdy preferencji nie ustawiono). */
-    public static String activeProfileFile(Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context)
+    /**
+     * Nazwa pliku profilu domyślnego: wybór użytkownika (preferencja), a gdy go nie ma albo plik zniknął,
+     * profil dostarczany z aplikacją ({@link ProfileRepository#DEFAULT_PRESET}). Preferencji nic nie zapisuje
+     * przy pierwszym uruchomieniu (Preference bez defaultValue, persistent=false), więc kto nie wybrał, dostaje
+     * aktualny domyślny preset także po jego zmianie w nowej wersji.
+     */
+    public static String defaultProfileFile(Context context) {
+        String file = PreferenceManager.getDefaultSharedPreferences(context)
                 .getString(PREF_PROFILE, ProfileRepository.DEFAULT_PRESET);
+        if (file == null || !ProfileRepository.create(context).exists(file)) {
+            return ProfileRepository.DEFAULT_PRESET;
+        }
+        return file;
     }
 
-    /** Podsumowanie preferencji w ustawieniach: nazwa wyświetlana aktywnego profilu. */
-    public static String activeProfileName(Context context) {
-        String file = activeProfileFile(context);
+    /** Podsumowanie preferencji w ustawieniach: nazwa wyświetlana profilu domyślnego. */
+    public static String defaultProfileName(Context context) {
+        String file = defaultProfileFile(context);
         ProfileEntry entry = ProfileRepository.create(context).entry(file);
         return entry != null ? entry.getName() : file;
     }
@@ -101,6 +113,7 @@ public class ProfileLibraryActivity extends Activity {
 
         repo = ProfileRepository.create(this);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        settings = new ThumbcastSettings(this);
 
         ListView list = findViewById(R.id.thumbcast_library_list);
         UiHelper.applyStatusBarPadding(list);
@@ -169,14 +182,15 @@ public class ProfileLibraryActivity extends Activity {
     }
 
     private void refresh() {
-        String active = activeProfileFile(this);
-        List<ProfileEntry> presets = repo.listPresets();
-        List<ProfileEntry> user = repo.listUser();
-        // Aktywny plik zniknął (np. usunięty poza aplikacją): pokazujemy domyślny preset jako aktywny.
-        if (!repo.exists(active)) {
-            active = ProfileRepository.DEFAULT_PRESET;
-        }
-        adapter.setData(presets, user, active);
+        // Plik profilu domyślnego zniknął (np. usunięty poza aplikacją): domyślny jest preset z aplikacji.
+        String defaultFile = defaultProfileFile(this);
+        adapter.setData(repo.listPresets(), repo.listUser(), defaultFile);
+    }
+
+    /** Stan przełącznika „Gesty myszy” profilu: zapisany wybór albo zachowanie z pliku profilu. */
+    private boolean mouseGesturesOn(ProfileEntry entry) {
+        Boolean stored = settings.getMouseGestures(entry.getFileName());
+        return stored != null ? stored : entry.getMouseGesturesDefault();
     }
 
     // ---------- akcje na profilu ----------
@@ -191,6 +205,10 @@ public class ProfileLibraryActivity extends Activity {
                 labels.add(getString(R.string.thumbcast_library_action_select));
                 actions.add(() -> select(entry));
             }
+            final boolean mouse = mouseGesturesOn(entry);
+            labels.add(getString(mouse ? R.string.thumbcast_library_action_mouse_gestures_on
+                    : R.string.thumbcast_library_action_mouse_gestures_off));
+            actions.add(() -> toggleMouseGestures(entry, !mouse));
             labels.add(getString(R.string.thumbcast_library_action_edit));
             actions.add(() -> edit(entry, isActive));
             labels.add(getString(R.string.thumbcast_library_action_duplicate));
@@ -220,7 +238,15 @@ public class ProfileLibraryActivity extends Activity {
 
     private void select(ProfileEntry entry) {
         selectFile(entry.getFileName());
-        Toast.makeText(this, getString(R.string.thumbcast_library_selected, entry.getName()), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.thumbcast_library_default_set, entry.getName()), Toast.LENGTH_SHORT).show();
+    }
+
+    /** Zapis tylko, gdy wybór różni się od zachowania z pliku profilu (jak MouseGesturesTransform.toStore). */
+    private void toggleMouseGestures(ProfileEntry entry, boolean enabled) {
+        settings.setMouseGestures(entry.getFileName(), enabled == entry.getMouseGesturesDefault() ? null : enabled);
+        refresh();
+        Toast.makeText(this, ThumbcastSession.mouseGesturesHint(this, enabled, entry.getMouseGesturesTouchpad()),
+                Toast.LENGTH_LONG).show();
     }
 
     private void selectFile(String fileName) {
@@ -245,6 +271,7 @@ public class ProfileLibraryActivity extends Activity {
             if (entry.getBuiltIn()) {
                 // Preset jest tylko do odczytu: edytor dostaje kopię użytkownika.
                 target = repo.duplicate(target, getString(R.string.thumbcast_library_copy_suffix));
+                settings.copyMouseGestures(entry.getFileName(), target);
                 selectAfter = wasActive;
                 refresh();
             }
@@ -288,6 +315,7 @@ public class ProfileLibraryActivity extends Activity {
     private void duplicate(ProfileEntry entry) {
         try {
             String file = repo.duplicate(entry.getFileName(), getString(R.string.thumbcast_library_copy_suffix));
+            settings.copyMouseGestures(entry.getFileName(), file);
             refresh();
             ProfileEntry copy = repo.entry(file);
             Toast.makeText(this, getString(R.string.thumbcast_library_duplicated,
@@ -330,10 +358,16 @@ public class ProfileLibraryActivity extends Activity {
                 .setPositiveButton(R.string.thumbcast_library_action_delete, (dialog, which) -> {
                     try {
                         repo.delete(entry.getFileName());
+                        settings.setMouseGestures(entry.getFileName(), null);
                         if (wasActive) {
-                            // Usunięcie aktywnego profilu: wracamy do domyślnego presetu.
-                            selectFile(ProfileRepository.DEFAULT_PRESET);
-                            Toast.makeText(this, R.string.thumbcast_library_deleted_active, Toast.LENGTH_LONG).show();
+                            // Usunięcie profilu domyślnego: wybór użytkownika znika, domyślny jest znowu preset
+                            // dostarczany z aplikacją (jak przed pierwszym wyborem).
+                            prefs.edit().remove(PREF_PROFILE).apply();
+                            refresh();
+                            ProfileEntry shipped = repo.entry(ProfileRepository.DEFAULT_PRESET);
+                            Toast.makeText(this, getString(R.string.thumbcast_library_deleted_active,
+                                    shipped != null ? shipped.getName() : ProfileRepository.DEFAULT_PRESET),
+                                    Toast.LENGTH_LONG).show();
                         } else {
                             refresh();
                             Toast.makeText(this, R.string.thumbcast_library_deleted, Toast.LENGTH_SHORT).show();
@@ -694,13 +728,18 @@ public class ProfileLibraryActivity extends Activity {
 
             boolean isActive = entry.getFileName().equals(activeFile);
             active.setChecked(isActive);
-            name.setText(entry.getName());
+            name.setText(isActive ? getString(R.string.thumbcast_library_default_marker, entry.getName())
+                    : entry.getName());
             if (entry.isValid()) {
                 String kind = getString(entry.getBuiltIn() ? R.string.thumbcast_library_builtin
                         : R.string.thumbcast_library_custom);
                 String controls = getResources().getQuantityString(R.plurals.thumbcast_library_controls,
                         entry.getControlCount(), entry.getControlCount());
-                details.setText(kind + " · " + modeLabel(entry.getMode()) + " · " + controls);
+                String text = kind + " · " + modeLabel(entry.getMode()) + " · " + controls;
+                if (mouseGesturesOn(entry)) {
+                    text += " · " + getString(R.string.thumbcast_library_mouse_gestures_tag);
+                }
+                details.setText(text);
             } else {
                 details.setText(getString(R.string.thumbcast_library_invalid, entry.getError()));
             }

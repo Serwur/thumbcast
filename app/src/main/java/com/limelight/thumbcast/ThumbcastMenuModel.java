@@ -48,18 +48,29 @@ final class ThumbcastMenuModel {
 
         /** Zmiana aktywnego profilu na żywo (wołane po zamknięciu menu); aktywny profil = nic. */
         void switchProfile(String fileName);
+
+        /** Przełącznik „Gesty myszy” aktywnego profilu (stan efektywny). */
+        boolean isMouseGestures();
+
+        /** Zmiana na żywo i zapis dla pliku aktywnego profilu (menu zostaje otwarte). */
+        void setMouseGestures(boolean enabled);
     }
 
-    /** Profil na stronie wyboru: plik (wartość preferencji list_thumbcast_profile) i nazwa. */
+    /**
+     * Profil na stronie wyboru: plik (wartość preferencji list_thumbcast_profile) i nazwa; {@code active} = profil
+     * tej sesji, {@code isDefault} = profil domyślny (preferencja), może być inny przy profilu aplikacji.
+     */
     static final class ProfileChoice {
         final String fileName;
         final String name;
         final boolean active;
+        final boolean isDefault;
 
-        ProfileChoice(String fileName, String name, boolean active) {
+        ProfileChoice(String fileName, String name, boolean active, boolean isDefault) {
             this.fileName = fileName;
             this.name = name;
             this.active = active;
+            this.isDefault = isDefault;
         }
     }
 
@@ -117,6 +128,10 @@ final class ThumbcastMenuModel {
         items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_keyboard), true, t::toggleKeyboard));
         items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_profile, t.getActiveProfileName()),
                 false, t::openProfiles));
+        final boolean mouse = t.isMouseGestures();
+        items.add(Item.button(Style.NORMAL, s.get(mouse
+                ? R.string.thumbcast_menu_mouse_gestures_on : R.string.thumbcast_menu_mouse_gestures_off),
+                false, () -> t.setMouseGestures(!mouse)));
 
         final int percent = t.getScalePercent();
         final int smaller = stepScale(percent, -1);
@@ -141,8 +156,11 @@ final class ThumbcastMenuModel {
         List<Item> items = new ArrayList<>();
         items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_back), false, t::showMainPage));
         for (final ProfileChoice p : profiles) {
-            items.add(Item.button(p.active ? Style.PRIMARY : Style.NORMAL,
-                    p.active ? s.get(R.string.thumbcast_menu_profile_active, p.name) : p.name,
+            String label = p.active ? s.get(R.string.thumbcast_menu_profile_active, p.name) : p.name;
+            if (p.isDefault) {
+                label = s.get(R.string.thumbcast_menu_profile_default_marker, label);
+            }
+            items.add(Item.button(p.active ? Style.PRIMARY : Style.NORMAL, label,
                     true, () -> t.switchProfile(p.fileName)));
         }
         return Collections.unmodifiableList(items);

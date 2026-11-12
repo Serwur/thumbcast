@@ -840,10 +840,10 @@ index 945f114b..2fe809e6 100644
                      continue;
                  }
 diff --git a/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java b/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java
-index 8ed01e36..3ec73a5a 100644
+index 8ed01e36..40d13725 100644
 --- a/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java
 +++ b/app/src/main/java/com/limelight/preferences/PreferenceConfiguration.java
-@@ -131,6 +131,20 @@ public class PreferenceConfiguration {
+@@ -131,6 +131,21 @@ public class PreferenceConfiguration {
      public String language;
      public boolean smallIconMode, multiController, usbDriver, flipFaceButtons;
      public boolean onscreenController;
@@ -853,7 +853,8 @@ index 8ed01e36..3ec73a5a 100644
 +    private static final String THUMBCAST_PROFILE_PREF_STRING = "list_thumbcast_profile";
 +    private static final String THUMBCAST_DEBUG_PREF_STRING = "checkbox_thumbcast_debug";
 +    private static final String DEFAULT_CONTROL_LAYER = "thumbcast";
-+    private static final String DEFAULT_THUMBCAST_PROFILE = "gamepad-xbox.thumbcast.json";
++    // Jedno źródło: profil domyślny dostarczany z aplikacją (od 12.11.2026 „Pad – PlayStation”).
++    private static final String DEFAULT_THUMBCAST_PROFILE = app.thumbcast.android.ThumbcastProfiles.DEFAULT_PRESET;
 +
 +    public ControlLayer controlLayer;
 +    public String thumbcastProfileFile;
@@ -864,7 +865,7 @@ index 8ed01e36..3ec73a5a 100644
      public boolean onlyL3R3;
      public boolean showGuideButton;
      public boolean enableHdr;
-@@ -579,6 +593,19 @@ public class PreferenceConfiguration {
+@@ -579,6 +594,19 @@ public class PreferenceConfiguration {
          config.multiController = prefs.getBoolean(MULTI_CONTROLLER_PREF_STRING, DEFAULT_MULTI_CONTROLLER);
          config.usbDriver = prefs.getBoolean(USB_DRIVER_PREF_SRING, DEFAULT_USB_DRIVER);
          config.onscreenController = prefs.getBoolean(ONSCREEN_CONTROLLER_PREF_STRING, ONSCREEN_CONTROLLER_DEFAULT);
@@ -885,7 +886,7 @@ index 8ed01e36..3ec73a5a 100644
          config.showGuideButton = prefs.getBoolean(SHOW_GUIDE_BUTTON_PREF_STRING, SHOW_GUIDE_BUTTON_DEFAULT);
          config.enableHdr = prefs.getBoolean(ENABLE_HDR_PREF_STRING, DEFAULT_ENABLE_HDR) && !isShieldAtvFirmwareWithBrokenHdr();
 diff --git a/app/src/main/java/com/limelight/preferences/StreamSettings.java b/app/src/main/java/com/limelight/preferences/StreamSettings.java
-index 70701041..94ffc29e 100644
+index 70701041..a8be978a 100644
 --- a/app/src/main/java/com/limelight/preferences/StreamSettings.java
 +++ b/app/src/main/java/com/limelight/preferences/StreamSettings.java
 @@ -31,6 +31,9 @@ import com.limelight.LimeLog;
@@ -898,17 +899,18 @@ index 70701041..94ffc29e 100644
  import com.limelight.utils.Dialog;
  import com.limelight.utils.UiHelper;
  
-@@ -263,6 +266,17 @@ public class StreamSettings extends Activity {
+@@ -263,6 +266,18 @@ public class StreamSettings extends Activity {
                      .apply();
          }
  
-+        // THUMBCAST: podsumowanie = nazwa aktywnego profilu (odświeżane po powrocie z biblioteki).
++        // THUMBCAST: podsumowanie = nazwa profilu domyślnego (odświeżane po powrocie z biblioteki).
 +        @Override
 +        public void onResume() {
 +            super.onResume();
 +            Preference thumbcastProfile = findPreference("list_thumbcast_profile");
 +            if (thumbcastProfile != null) {
-+                thumbcastProfile.setSummary(ProfileLibraryActivity.activeProfileName(getActivity()));
++                thumbcastProfile.setSummary(getString(R.string.thumbcast_profile_summary,
++                        ProfileLibraryActivity.defaultProfileName(getActivity())));
 +            }
 +        }
 +        // THUMBCAST END
@@ -916,7 +918,7 @@ index 70701041..94ffc29e 100644
          @Override
          public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
              View view = super.onCreateView(inflater, container, savedInstanceState);
-@@ -351,6 +365,39 @@ public class StreamSettings extends Activity {
+@@ -351,6 +366,39 @@ public class StreamSettings extends Activity {
                  category_gamepad_settings.removePreference(findPreference("seekbar_vibrate_fallback_strength"));
              }
  
@@ -1262,14 +1264,16 @@ index 00000000..6711a759
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ProfileLibraryActivity.java b/app/src/main/java/com/limelight/thumbcast/ProfileLibraryActivity.java
 new file mode 100644
-index 00000000..4a609bb1
+index 00000000..a705564e
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ProfileLibraryActivity.java
-@@ -0,0 +1,713 @@
+@@ -0,0 +1,752 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Biblioteka profili sterowania: presety wbudowane i profile użytkownika,
-+// wybór aktywnego (preferencja list_thumbcast_profile = nazwa pliku), edycja (kontrakt EditorContract),
++// profil domyślny (preferencja list_thumbcast_profile = nazwa pliku; brak = ThumbcastProfiles.DEFAULT_PRESET,
++// „★ Domyślny”, akcja „Ustaw jako domyślny”), przełącznik „Gesty myszy” na profil (ThumbcastSettings),
++// edycja (kontrakt EditorContract),
 +// duplikat, zmiana nazwy, eksport (SAF), udostępnianie (ProfileShareProvider), usuwanie, import z pliku,
 +// ze schowka i z udostępnionego pliku/tekstu. Logika plików: ProfileRepository (:control-android).
 +// Opis formatu i kontraktu edytora: docs/profiles.md.
@@ -1336,6 +1340,7 @@ index 00000000..4a609bb1
 +
 +    private ProfileRepository repo;
 +    private SharedPreferences prefs;
++    private ThumbcastSettings settings;
 +    private LibraryAdapter adapter;
 +
 +    private String pendingEditFile;
@@ -1344,15 +1349,24 @@ index 00000000..4a609bb1
 +
 +    // ---------- API dla ustawień ----------
 +
-+    /** Nazwa pliku aktywnego profilu (domyślny preset, gdy preferencji nie ustawiono). */
-+    public static String activeProfileFile(Context context) {
-+        return PreferenceManager.getDefaultSharedPreferences(context)
++    /**
++     * Nazwa pliku profilu domyślnego: wybór użytkownika (preferencja), a gdy go nie ma albo plik zniknął,
++     * profil dostarczany z aplikacją ({@link ProfileRepository#DEFAULT_PRESET}). Preferencji nic nie zapisuje
++     * przy pierwszym uruchomieniu (Preference bez defaultValue, persistent=false), więc kto nie wybrał, dostaje
++     * aktualny domyślny preset także po jego zmianie w nowej wersji.
++     */
++    public static String defaultProfileFile(Context context) {
++        String file = PreferenceManager.getDefaultSharedPreferences(context)
 +                .getString(PREF_PROFILE, ProfileRepository.DEFAULT_PRESET);
++        if (file == null || !ProfileRepository.create(context).exists(file)) {
++            return ProfileRepository.DEFAULT_PRESET;
++        }
++        return file;
 +    }
 +
-+    /** Podsumowanie preferencji w ustawieniach: nazwa wyświetlana aktywnego profilu. */
-+    public static String activeProfileName(Context context) {
-+        String file = activeProfileFile(context);
++    /** Podsumowanie preferencji w ustawieniach: nazwa wyświetlana profilu domyślnego. */
++    public static String defaultProfileName(Context context) {
++        String file = defaultProfileFile(context);
 +        ProfileEntry entry = ProfileRepository.create(context).entry(file);
 +        return entry != null ? entry.getName() : file;
 +    }
@@ -1369,6 +1383,7 @@ index 00000000..4a609bb1
 +
 +        repo = ProfileRepository.create(this);
 +        prefs = PreferenceManager.getDefaultSharedPreferences(this);
++        settings = new ThumbcastSettings(this);
 +
 +        ListView list = findViewById(R.id.thumbcast_library_list);
 +        UiHelper.applyStatusBarPadding(list);
@@ -1437,14 +1452,15 @@ index 00000000..4a609bb1
 +    }
 +
 +    private void refresh() {
-+        String active = activeProfileFile(this);
-+        List<ProfileEntry> presets = repo.listPresets();
-+        List<ProfileEntry> user = repo.listUser();
-+        // Aktywny plik zniknął (np. usunięty poza aplikacją): pokazujemy domyślny preset jako aktywny.
-+        if (!repo.exists(active)) {
-+            active = ProfileRepository.DEFAULT_PRESET;
-+        }
-+        adapter.setData(presets, user, active);
++        // Plik profilu domyślnego zniknął (np. usunięty poza aplikacją): domyślny jest preset z aplikacji.
++        String defaultFile = defaultProfileFile(this);
++        adapter.setData(repo.listPresets(), repo.listUser(), defaultFile);
++    }
++
++    /** Stan przełącznika „Gesty myszy” profilu: zapisany wybór albo zachowanie z pliku profilu. */
++    private boolean mouseGesturesOn(ProfileEntry entry) {
++        Boolean stored = settings.getMouseGestures(entry.getFileName());
++        return stored != null ? stored : entry.getMouseGesturesDefault();
 +    }
 +
 +    // ---------- akcje na profilu ----------
@@ -1459,6 +1475,10 @@ index 00000000..4a609bb1
 +                labels.add(getString(R.string.thumbcast_library_action_select));
 +                actions.add(() -> select(entry));
 +            }
++            final boolean mouse = mouseGesturesOn(entry);
++            labels.add(getString(mouse ? R.string.thumbcast_library_action_mouse_gestures_on
++                    : R.string.thumbcast_library_action_mouse_gestures_off));
++            actions.add(() -> toggleMouseGestures(entry, !mouse));
 +            labels.add(getString(R.string.thumbcast_library_action_edit));
 +            actions.add(() -> edit(entry, isActive));
 +            labels.add(getString(R.string.thumbcast_library_action_duplicate));
@@ -1488,7 +1508,15 @@ index 00000000..4a609bb1
 +
 +    private void select(ProfileEntry entry) {
 +        selectFile(entry.getFileName());
-+        Toast.makeText(this, getString(R.string.thumbcast_library_selected, entry.getName()), Toast.LENGTH_SHORT).show();
++        Toast.makeText(this, getString(R.string.thumbcast_library_default_set, entry.getName()), Toast.LENGTH_SHORT).show();
++    }
++
++    /** Zapis tylko, gdy wybór różni się od zachowania z pliku profilu (jak MouseGesturesTransform.toStore). */
++    private void toggleMouseGestures(ProfileEntry entry, boolean enabled) {
++        settings.setMouseGestures(entry.getFileName(), enabled == entry.getMouseGesturesDefault() ? null : enabled);
++        refresh();
++        Toast.makeText(this, ThumbcastSession.mouseGesturesHint(this, enabled, entry.getMouseGesturesTouchpad()),
++                Toast.LENGTH_LONG).show();
 +    }
 +
 +    private void selectFile(String fileName) {
@@ -1513,6 +1541,7 @@ index 00000000..4a609bb1
 +            if (entry.getBuiltIn()) {
 +                // Preset jest tylko do odczytu: edytor dostaje kopię użytkownika.
 +                target = repo.duplicate(target, getString(R.string.thumbcast_library_copy_suffix));
++                settings.copyMouseGestures(entry.getFileName(), target);
 +                selectAfter = wasActive;
 +                refresh();
 +            }
@@ -1556,6 +1585,7 @@ index 00000000..4a609bb1
 +    private void duplicate(ProfileEntry entry) {
 +        try {
 +            String file = repo.duplicate(entry.getFileName(), getString(R.string.thumbcast_library_copy_suffix));
++            settings.copyMouseGestures(entry.getFileName(), file);
 +            refresh();
 +            ProfileEntry copy = repo.entry(file);
 +            Toast.makeText(this, getString(R.string.thumbcast_library_duplicated,
@@ -1598,10 +1628,16 @@ index 00000000..4a609bb1
 +                .setPositiveButton(R.string.thumbcast_library_action_delete, (dialog, which) -> {
 +                    try {
 +                        repo.delete(entry.getFileName());
++                        settings.setMouseGestures(entry.getFileName(), null);
 +                        if (wasActive) {
-+                            // Usunięcie aktywnego profilu: wracamy do domyślnego presetu.
-+                            selectFile(ProfileRepository.DEFAULT_PRESET);
-+                            Toast.makeText(this, R.string.thumbcast_library_deleted_active, Toast.LENGTH_LONG).show();
++                            // Usunięcie profilu domyślnego: wybór użytkownika znika, domyślny jest znowu preset
++                            // dostarczany z aplikacją (jak przed pierwszym wyborem).
++                            prefs.edit().remove(PREF_PROFILE).apply();
++                            refresh();
++                            ProfileEntry shipped = repo.entry(ProfileRepository.DEFAULT_PRESET);
++                            Toast.makeText(this, getString(R.string.thumbcast_library_deleted_active,
++                                    shipped != null ? shipped.getName() : ProfileRepository.DEFAULT_PRESET),
++                                    Toast.LENGTH_LONG).show();
 +                        } else {
 +                            refresh();
 +                            Toast.makeText(this, R.string.thumbcast_library_deleted, Toast.LENGTH_SHORT).show();
@@ -1962,13 +1998,18 @@ index 00000000..4a609bb1
 +
 +            boolean isActive = entry.getFileName().equals(activeFile);
 +            active.setChecked(isActive);
-+            name.setText(entry.getName());
++            name.setText(isActive ? getString(R.string.thumbcast_library_default_marker, entry.getName())
++                    : entry.getName());
 +            if (entry.isValid()) {
 +                String kind = getString(entry.getBuiltIn() ? R.string.thumbcast_library_builtin
 +                        : R.string.thumbcast_library_custom);
 +                String controls = getResources().getQuantityString(R.plurals.thumbcast_library_controls,
 +                        entry.getControlCount(), entry.getControlCount());
-+                details.setText(kind + " · " + modeLabel(entry.getMode()) + " · " + controls);
++                String text = kind + " · " + modeLabel(entry.getMode()) + " · " + controls;
++                if (mouseGesturesOn(entry)) {
++                    text += " · " + getString(R.string.thumbcast_library_mouse_gestures_tag);
++                }
++                details.setText(text);
 +            } else {
 +                details.setText(getString(R.string.thumbcast_library_invalid, entry.getError()));
 +            }
@@ -2349,10 +2390,10 @@ index 00000000..5811d5da
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastAppSettingsDialog.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastAppSettingsDialog.java
 new file mode 100644
-index 00000000..f5e7c5bf
+index 00000000..805587e3
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastAppSettingsDialog.java
-@@ -0,0 +1,211 @@
+@@ -0,0 +1,209 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Dialog „Ustawienia Thumbcast dla aplikacji” z menu kontekstowego aplikacji w AppView:
@@ -2361,7 +2402,6 @@ index 00000000..f5e7c5bf
 +
 +import android.app.Activity;
 +import android.app.AlertDialog;
-+import android.preference.PreferenceManager;
 +import android.util.TypedValue;
 +import android.view.View;
 +import android.widget.ArrayAdapter;
@@ -2410,8 +2450,7 @@ index 00000000..f5e7c5bf
 +
 +        // ---- profil ----
 +        ProfileRepository repo = ProfileRepository.create(activity);
-+        String globalFile = PreferenceManager.getDefaultSharedPreferences(activity)
-+                .getString(ProfileLibraryActivity.PREF_PROFILE, ProfileRepository.DEFAULT_PRESET);
++        String globalFile = ProfileLibraryActivity.defaultProfileFile(activity);
 +        String globalName = globalFile;
 +        List<Choice<String>> profiles = new ArrayList<>();
 +        int profileIndex = 0;
@@ -2602,10 +2641,10 @@ index 00000000..056ba4cc
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuModel.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuModel.java
 new file mode 100644
-index 00000000..d6d8dbd2
+index 00000000..0d00b6e2
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastMenuModel.java
-@@ -0,0 +1,173 @@
+@@ -0,0 +1,191 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Pozycje menu w grze (etykiety i akcje) bez widoku: ThumbcastMenuView je tylko rysuje,
@@ -2656,18 +2695,29 @@ index 00000000..d6d8dbd2
 +
 +        /** Zmiana aktywnego profilu na żywo (wołane po zamknięciu menu); aktywny profil = nic. */
 +        void switchProfile(String fileName);
++
++        /** Przełącznik „Gesty myszy” aktywnego profilu (stan efektywny). */
++        boolean isMouseGestures();
++
++        /** Zmiana na żywo i zapis dla pliku aktywnego profilu (menu zostaje otwarte). */
++        void setMouseGestures(boolean enabled);
 +    }
 +
-+    /** Profil na stronie wyboru: plik (wartość preferencji list_thumbcast_profile) i nazwa. */
++    /**
++     * Profil na stronie wyboru: plik (wartość preferencji list_thumbcast_profile) i nazwa; {@code active} = profil
++     * tej sesji, {@code isDefault} = profil domyślny (preferencja), może być inny przy profilu aplikacji.
++     */
 +    static final class ProfileChoice {
 +        final String fileName;
 +        final String name;
 +        final boolean active;
++        final boolean isDefault;
 +
-+        ProfileChoice(String fileName, String name, boolean active) {
++        ProfileChoice(String fileName, String name, boolean active, boolean isDefault) {
 +            this.fileName = fileName;
 +            this.name = name;
 +            this.active = active;
++            this.isDefault = isDefault;
 +        }
 +    }
 +
@@ -2725,6 +2775,10 @@ index 00000000..d6d8dbd2
 +        items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_keyboard), true, t::toggleKeyboard));
 +        items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_profile, t.getActiveProfileName()),
 +                false, t::openProfiles));
++        final boolean mouse = t.isMouseGestures();
++        items.add(Item.button(Style.NORMAL, s.get(mouse
++                ? R.string.thumbcast_menu_mouse_gestures_on : R.string.thumbcast_menu_mouse_gestures_off),
++                false, () -> t.setMouseGestures(!mouse)));
 +
 +        final int percent = t.getScalePercent();
 +        final int smaller = stepScale(percent, -1);
@@ -2749,8 +2803,11 @@ index 00000000..d6d8dbd2
 +        List<Item> items = new ArrayList<>();
 +        items.add(Item.button(Style.NORMAL, s.get(R.string.thumbcast_menu_back), false, t::showMainPage));
 +        for (final ProfileChoice p : profiles) {
-+            items.add(Item.button(p.active ? Style.PRIMARY : Style.NORMAL,
-+                    p.active ? s.get(R.string.thumbcast_menu_profile_active, p.name) : p.name,
++            String label = p.active ? s.get(R.string.thumbcast_menu_profile_active, p.name) : p.name;
++            if (p.isDefault) {
++                label = s.get(R.string.thumbcast_menu_profile_default_marker, label);
++            }
++            items.add(Item.button(p.active ? Style.PRIMARY : Style.NORMAL, label,
 +                    true, () -> t.switchProfile(p.fileName)));
 +        }
 +        return Collections.unmodifiableList(items);
@@ -3250,10 +3307,10 @@ index 00000000..56f3dc0b
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
 new file mode 100644
-index 00000000..11b561a3
+index 00000000..b606d5b6
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastSession.java
-@@ -0,0 +1,656 @@
+@@ -0,0 +1,714 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Cała logika Thumbcast w aktywności Game: Game trzyma jedno pole
@@ -3278,6 +3335,10 @@ index 00000000..11b561a3
 +// Profil aplikacji (12.11.2026, ThumbcastAppSettings): gdy uruchamiana aplikacja hosta ma przypisany profil,
 +// sesja startuje z nim (brak pliku albo błąd walidacji = profil globalny i komunikat). Zmiana profilu w grze
 +// działa wtedy tylko w tej sesji: nie zmienia ani przypisania aplikacji, ani profilu globalnego.
++//
++// Gesty myszy (12.11.2026): przełącznik w menu dla aktywnego profilu (zapis w ThumbcastSettings, klucz = plik
++// profilu), profil efektywny = MouseGesturesTransform(profil z pliku), potem ScaleTransform. Zmiana na żywo.
++// Profil domyślny (list_thumbcast_profile) usunięty poza biblioteką: profil dostarczany z aplikacją i komunikat.
 +
 +import android.app.Activity;
 +import android.content.Context;
@@ -3318,6 +3379,7 @@ index 00000000..11b561a3
 +import app.thumbcast.android.menu.MenuKeyResult;
 +import app.thumbcast.android.overlay.ThumbcastOverlay;
 +import app.thumbcast.model.AppActions;
++import app.thumbcast.model.MouseGesturesTransform;
 +import app.thumbcast.model.Profile;
 +import app.thumbcast.model.ScaleTransform;
 +
@@ -3350,6 +3412,8 @@ index 00000000..11b561a3
 +    private Profile baseProfile;
 +    /** Nazwa pliku aktywnego profilu (wartość preferencji list_thumbcast_profile albo profil aplikacji). */
 +    private String activeProfileFile;
++    /** Zapisany przełącznik „Gesty myszy” aktywnego profilu; null = zachowanie z pliku profilu. */
++    private Boolean mouseGestures;
 +    /** true = sesja wystartowała z profilem aplikacji: zmiana profilu w grze nie zapisuje preferencji globalnej. */
 +    private final boolean sessionOnlyProfile;
 +    private final Map<String, Runnable> commands;
@@ -3400,7 +3464,15 @@ index 00000000..11b561a3
 +            return null;
 +        }
 +        ProfileSelection<Profile> selection = AppStreamOverrides.selectProfile(prefConfig.thumbcastAppProfileFile,
-+                prefConfig.thumbcastProfileFile, name -> ThumbcastProfiles.loadOrNull(activity, name));
++                prefConfig.thumbcastProfileFile, name -> ThumbcastProfiles.loadOrNull(activity, name),
++                ThumbcastProfiles.DEFAULT_PRESET);
++        if (selection.getDefaultProfileFailed() && selection.getValue() != null) {
++            // Preferencji nie zmieniamy: plik mógł być tylko chwilowo niepoprawny (np. po zmianie wersji).
++            LimeLog.warning("Thumbcast: default profile " + prefConfig.thumbcastProfileFile + " failed, using "
++                    + ThumbcastProfiles.DEFAULT_PRESET);
++            Toast.makeText(activity, activity.getString(R.string.thumbcast_default_profile_missing,
++                    selection.getValue().getName()), Toast.LENGTH_LONG).show();
++        }
 +        if (selection.getAppProfileFailed()) {
 +            LimeLog.warning("Thumbcast: app profile " + prefConfig.thumbcastAppProfileFile + " failed: "
 +                    + ThumbcastProfiles.getLastError());
@@ -3440,6 +3512,7 @@ index 00000000..11b561a3
 +        this.settings = new ThumbcastSettings(activity);
 +        this.prefConfig = prefConfig;
 +        this.activeProfileFile = profileFile;
++        this.mouseGestures = settings.getMouseGestures(profileFile);
 +        this.sessionOnlyProfile = sessionOnlyProfile;
 +        this.scalePercent = settings.getControlScalePercent();
 +        this.hideOnGamepad = settings.isHideOnGamepad();
@@ -3649,7 +3722,35 @@ index 00000000..11b561a3
 +    // =====================================================================================
 +
 +    private Profile effectiveProfile() {
-+        return ScaleTransform.INSTANCE.scale(baseProfile, scalePercent / 100f);
++        Profile withMouse = MouseGesturesTransform.apply(baseProfile, mouseGestures);
++        return ScaleTransform.INSTANCE.scale(withMouse, scalePercent / 100f);
++    }
++
++    private boolean isMouseGestures() {
++        return MouseGesturesTransform.effective(baseProfile, mouseGestures);
++    }
++
++    /** Przełącznik „Gesty myszy” aktywnego profilu: zapis dla jego pliku i nowy profil efektywny na żywo. */
++    private void setMouseGestures(boolean enabled) {
++        if (enabled == isMouseGestures()) {
++            return;
++        }
++        mouseGestures = MouseGesturesTransform.toStore(baseProfile, enabled);
++        settings.setMouseGestures(activeProfileFile, mouseGestures);
++        overlay.setProfile(effectiveProfile());
++        Toast.makeText(activity, mouseGesturesHint(activity, enabled,
++                MouseGesturesTransform.style(baseProfile) == MouseGesturesTransform.Style.TOUCHPAD),
++                Toast.LENGTH_LONG).show();
++    }
++
++    /** Krótki opis, co robi przełącznik w danym profilu (menu w grze i biblioteka). */
++    static String mouseGesturesHint(Context context, boolean enabled, boolean touchpadStyle) {
++        if (!enabled) {
++            return context.getString(touchpadStyle ? R.string.thumbcast_mouse_gestures_off_touchpad
++                    : R.string.thumbcast_mouse_gestures_off_camera);
++        }
++        return context.getString(touchpadStyle ? R.string.thumbcast_mouse_gestures_on_touchpad
++                : R.string.thumbcast_mouse_gestures_on_camera);
 +    }
 +
 +    private void applyScale(int percent) {
@@ -3747,11 +3848,12 @@ index 00000000..11b561a3
 +    /** Profile z biblioteki (presety, potem profile użytkownika), bez plików uszkodzonych. */
 +    private List<ThumbcastMenuModel.ProfileChoice> loadProfileChoices() {
 +        List<ThumbcastMenuModel.ProfileChoice> out = new ArrayList<>();
++        String defaultFile = ProfileLibraryActivity.defaultProfileFile(activity);
 +        try {
 +            for (ProfileEntry e : ProfileRepository.create(activity).listAll()) {
 +                if (e.isValid()) {
 +                    out.add(new ThumbcastMenuModel.ProfileChoice(e.getFileName(), e.getName(),
-+                            e.getFileName().equals(activeProfileFile)));
++                            e.getFileName().equals(activeProfileFile), e.getFileName().equals(defaultFile)));
 +                }
 +            }
 +        } catch (RuntimeException e) {
@@ -3782,6 +3884,7 @@ index 00000000..11b561a3
 +        releaseHostInput();
 +        baseProfile = ThumbcastOverlayFactory.withAutoHideOnGamepad(loaded, false);
 +        activeProfileFile = fileName;
++        mouseGestures = settings.getMouseGestures(fileName);
 +        if (!sessionOnlyProfile) {
 +            prefConfig.thumbcastProfileFile = fileName;
 +            PreferenceManager.getDefaultSharedPreferences(activity).edit()
@@ -3790,7 +3893,7 @@ index 00000000..11b561a3
 +        overlay.setProfile(effectiveProfile());
 +        applyControlsHidden();
 +        Toast.makeText(activity, activity.getString(sessionOnlyProfile
-+                ? R.string.thumbcast_menu_profile_session_only : R.string.thumbcast_library_selected,
++                ? R.string.thumbcast_menu_profile_session_only : R.string.thumbcast_library_default_set,
 +                loaded.getName()), Toast.LENGTH_SHORT).show();
 +    }
 +
@@ -3811,7 +3914,9 @@ index 00000000..11b561a3
 +            return;
 +        }
 +        if (profilesPage) {
-+            menuView.setTitle(menuString(R.string.thumbcast_menu_profiles_title));
++            // Wybór w grze zmienia profil domyślny, chyba że sesja ma profil przypisany do aplikacji.
++            menuView.setTitle(menuString(sessionOnlyProfile ? R.string.thumbcast_menu_profiles_title_session
++                    : R.string.thumbcast_menu_profiles_title));
 +            menuView.bind(ThumbcastMenuModel.buildProfiles(this::menuString, profileChoices, menuTarget));
 +        } else {
 +            menuView.setTitle(menuString(R.string.thumbcast_menu_title));
@@ -3908,14 +4013,24 @@ index 00000000..11b561a3
 +        public void switchProfile(String fileName) {
 +            ThumbcastSession.this.switchProfile(fileName);
 +        }
++
++        @Override
++        public boolean isMouseGestures() {
++            return ThumbcastSession.this.isMouseGestures();
++        }
++
++        @Override
++        public void setMouseGestures(boolean enabled) {
++            ThumbcastSession.this.setMouseGestures(enabled);
++        }
 +    };
 +}
 diff --git a/app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java b/app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java
 new file mode 100644
-index 00000000..5011fa6c
+index 00000000..cb770151
 --- /dev/null
 +++ b/app/src/main/java/com/limelight/thumbcast/ThumbcastSettings.java
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,115 @@
 +package com.limelight.thumbcast;
 +
 +// NOWY PLIK (moduł :app). Ustawienia Thumbcast zmieniane także z menu w grze, więc mają własny
@@ -3995,13 +4110,48 @@ index 00000000..5011fa6c
 +    public void setHideOnGamepad(boolean hide) {
 +        prefs.edit().putBoolean(KEY_HIDE_ON_GAMEPAD, hide).apply();
 +    }
++
++    // ---------- Gesty myszy (12.11.2026): przełącznik na profil, MouseGesturesTransform ----------
++
++    /**
++     * Klucz = prefiks + nazwa pliku profilu (wartość list_thumbcast_profile), więc działa także dla presetów
++     * tylko do odczytu. Brak wpisu = zachowanie zapisane w profilu (MouseGesturesTransform.isEnabled).
++     */
++    static final String KEY_MOUSE_GESTURES_PREFIX = "thumbcast_mouse_gestures:";
++
++    /** Zapisany wybór dla pliku profilu albo null (profil działa tak, jak go zapisano). */
++    public Boolean getMouseGestures(String profileFile) {
++        String key = KEY_MOUSE_GESTURES_PREFIX + profileFile;
++        if (profileFile == null || !prefs.contains(key)) {
++            return null;
++        }
++        return prefs.getBoolean(key, false);
++    }
++
++    /** {@code value} = MouseGesturesTransform.toStore(...): null usuwa wpis (wartość równa domyślnej profilu). */
++    public void setMouseGestures(String profileFile, Boolean value) {
++        if (profileFile == null) {
++            return;
++        }
++        String key = KEY_MOUSE_GESTURES_PREFIX + profileFile;
++        if (value == null) {
++            prefs.edit().remove(key).apply();
++        } else {
++            prefs.edit().putBoolean(key, value).apply();
++        }
++    }
++
++    /** Przeniesienie wyboru na kopię profilu (Duplikuj, edycja presetu). */
++    public void copyMouseGestures(String fromFile, String toFile) {
++        setMouseGestures(toFile, getMouseGestures(fromFile));
++    }
 +}
 diff --git a/app/src/main/res/layout/activity_thumbcast_profile_library.xml b/app/src/main/res/layout/activity_thumbcast_profile_library.xml
 new file mode 100644
-index 00000000..ad0385f2
+index 00000000..3732b028
 --- /dev/null
 +++ b/app/src/main/res/layout/activity_thumbcast_profile_library.xml
-@@ -0,0 +1,49 @@
+@@ -0,0 +1,56 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: biblioteka profili (ProfileLibraryActivity). -->
 +<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -4020,6 +4170,13 @@ index 00000000..ad0385f2
 +        android:paddingBottom="8dp"
 +        android:text="@string/thumbcast_library_title"
 +        android:textAppearance="?android:attr/textAppearanceLarge" />
++
++    <TextView
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:paddingBottom="8dp"
++        android:text="@string/thumbcast_library_default_hint"
++        android:textAppearance="?android:attr/textAppearanceSmall" />
 +
 +    <LinearLayout
 +        android:layout_width="match_parent"
@@ -4115,10 +4272,10 @@ index 00000000..d0fa4d92
 +</LinearLayout>
 diff --git a/app/src/main/res/values-pl/thumbcast_strings.xml b/app/src/main/res/values-pl/thumbcast_strings.xml
 new file mode 100644
-index 00000000..92a28c05
+index 00000000..2e8d768f
 --- /dev/null
 +++ b/app/src/main/res/values-pl/thumbcast_strings.xml
-@@ -0,0 +1,129 @@
+@@ -0,0 +1,144 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -4126,7 +4283,7 @@ index 00000000..92a28c05
 +    <string name="title_control_layer">Warstwa sterowania</string>
 +    <string name="control_layer_thumbcast">Thumbcast (multitouch, profile)</string>
 +    <string name="control_layer_legacy">Klasyczny kontroler ekranowy</string>
-+    <string name="title_thumbcast_profile">Profil sterowania</string>
++    <string name="title_thumbcast_profile">Profile sterowania</string>
 +    <string name="title_thumbcast_debug">Nakładka debug wejścia</string>
 +    <string name="summary_thumbcast_debug">Pokazuje aktywne wskaźniki, wysłane flagi pada i opóźnienie dotyk→wysyłka</string>
 +    <string name="thumbcast_profile_error">Nie udało się wczytać profilu, używam klasycznego kontrolera: %1$s</string>
@@ -4148,8 +4305,8 @@ index 00000000..92a28c05
 +        <item quantity="other">%d kontrolki</item>
 +    </plurals>
 +    <string name="thumbcast_library_invalid">Niepoprawny profil: %1$s</string>
-+    <string name="thumbcast_library_active_description">%1$s, aktywny</string>
-+    <string name="thumbcast_library_action_select">Użyj tego profilu</string>
++    <string name="thumbcast_library_active_description">%1$s, domyślny</string>
++    <string name="thumbcast_library_action_select">Ustaw jako domyślny</string>
 +    <string name="thumbcast_library_action_edit">Edytuj układ</string>
 +    <string name="thumbcast_library_action_duplicate">Duplikuj</string>
 +    <string name="thumbcast_library_action_rename">Zmień nazwę</string>
@@ -4157,13 +4314,12 @@ index 00000000..92a28c05
 +    <string name="thumbcast_library_action_share">Udostępnij</string>
 +    <string name="thumbcast_library_action_delete">Usuń</string>
 +    <string name="thumbcast_library_copy_suffix">" (kopia)"</string>
-+    <string name="thumbcast_library_selected">Aktywny profil: %1$s</string>
 +    <string name="thumbcast_library_duplicated">Utworzono kopię: %1$s</string>
 +    <string name="thumbcast_library_rename_title">Zmień nazwę profilu</string>
 +    <string name="thumbcast_library_delete_title">Usunąć profil?</string>
 +    <string name="thumbcast_library_delete_message">Profil „%1$s” zostanie usunięty. Tego nie da się cofnąć.</string>
 +    <string name="thumbcast_library_deleted">Profil usunięty</string>
-+    <string name="thumbcast_library_deleted_active">Profil usunięty. Aktywny jest teraz domyślny preset.</string>
++    <string name="thumbcast_library_deleted_active">Profil usunięty. Profil domyślny to teraz „%1$s”.</string>
 +    <string name="thumbcast_library_editor_unavailable">Edytor układu nie jest jeszcze dostępny w tej wersji.</string>
 +    <string name="thumbcast_library_saved">Profil zapisany</string>
 +    <string name="thumbcast_library_edit_failed">Nie zapisano edytowanego profilu</string>
@@ -4176,7 +4332,7 @@ index 00000000..92a28c05
 +    <string name="thumbcast_library_import_details">Nazwa: %1$s\nKontrolki: %2$d\nTryb: %3$s</string>
 +    <string name="thumbcast_library_import_new_id">Zostanie zapisany jako nowy profil, bo jego identyfikator jest już zajęty.</string>
 +    <string name="thumbcast_library_import_confirm">Importuj</string>
-+    <string name="thumbcast_library_import_confirm_use">Importuj i użyj</string>
++    <string name="thumbcast_library_import_confirm_use">Importuj jako domyślny</string>
 +    <string name="thumbcast_library_imported">Zaimportowano profil: %1$s</string>
 +    <string name="thumbcast_library_import_failed">Import nie powiódł się</string>
 +    <string name="thumbcast_library_error">Operacja nie powiodła się</string>
@@ -4204,7 +4360,7 @@ index 00000000..92a28c05
 +    <string name="thumbcast_menu_scale_decrease">Mniejsze kontrolki</string>
 +    <string name="thumbcast_menu_scale_increase">Większe kontrolki</string>
 +    <string name="thumbcast_menu_profile">Profil: %1$s</string>
-+    <string name="thumbcast_menu_profiles_title">Profil sterowania</string>
++    <string name="thumbcast_menu_profiles_title">Profil domyślny</string>
 +    <string name="thumbcast_menu_back">‹ Wstecz</string>
 +    <string name="thumbcast_menu_profile_switch_error">Nie udało się wczytać profilu: %1$s</string>
 +    <!-- THUMBCAST: adresy połączenia PC (LAN + Tailscale/ZeroTier), menu PC w PcView -->
@@ -4247,6 +4403,22 @@ index 00000000..92a28c05
 +    <string name="thumbcast_app_settings_cleared">%1$s używa ustawień globalnych</string>
 +    <string name="thumbcast_app_profile_missing">Profil sterowania wybrany dla tej aplikacji nie istnieje albo jest niepoprawny. Używam profilu domyślnego.</string>
 +    <string name="thumbcast_menu_profile_session_only">Profil w tej sesji: %1$s (ustawienie aplikacji bez zmian)</string>
++    <!-- Profil domyślny i gesty myszy (12.11.2026). -->
++    <string name="thumbcast_profile_summary">Domyślny: %1$s</string>
++    <string name="thumbcast_library_default_set">Profil domyślny: %1$s</string>
++    <string name="thumbcast_library_default_marker">%1$s  ★ Domyślny</string>
++    <string name="thumbcast_library_default_hint">★ Profil domyślny działa w każdym strumieniu, chyba że aplikacja na PC ma własny profil (przytrzymaj aplikację na liście aplikacji).</string>
++    <string name="thumbcast_default_profile_missing">Profil domyślny nie istnieje albo jest niepoprawny. Używam „%1$s”.</string>
++    <string name="thumbcast_menu_profiles_title_session">Profil w tej sesji</string>
++    <string name="thumbcast_library_action_mouse_gestures_on">Gesty myszy: wł.</string>
++    <string name="thumbcast_library_action_mouse_gestures_off">Gesty myszy: wył.</string>
++    <string name="thumbcast_library_mouse_gestures_tag">gesty myszy</string>
++    <string name="thumbcast_menu_mouse_gestures_on">Gesty myszy: wł.</string>
++    <string name="thumbcast_menu_mouse_gestures_off">Gesty myszy: wył.</string>
++    <string name="thumbcast_mouse_gestures_on_touchpad">Gesty myszy wł.: przeciągnij w pustym miejscu = kursor, dotknij = lewy klik, dotknij dwoma palcami = prawy klik, przeciągnij dwoma palcami = przewijanie, przytrzymaj i przeciągnij = przeciąganie.</string>
++    <string name="thumbcast_mouse_gestures_off_touchpad">Gesty myszy wył.: dotyk w pustym miejscu nic nie wysyła. Przeciągnięcie w dół od górnej krawędzi nadal otwiera menu.</string>
++    <string name="thumbcast_mouse_gestures_on_camera">Gesty myszy wł.: dotknij = lewy klik w tym miejscu, przytrzymaj = prawy klik, szczypanie = kółko myszy. Przeciąganie nadal obraca kamerę.</string>
++    <string name="thumbcast_mouse_gestures_off_camera">Gesty myszy wył.: dotknięcia i szczypanie nic nie wysyłają. Przeciąganie nadal obraca kamerę.</string>
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_arrays.xml b/app/src/main/res/values/thumbcast_arrays.xml
 new file mode 100644
@@ -4285,10 +4457,10 @@ index 00000000..1e5e7040
 +</resources>
 diff --git a/app/src/main/res/values/thumbcast_strings.xml b/app/src/main/res/values/thumbcast_strings.xml
 new file mode 100644
-index 00000000..ad32ef0d
+index 00000000..f93c4684
 --- /dev/null
 +++ b/app/src/main/res/values/thumbcast_strings.xml
-@@ -0,0 +1,130 @@
+@@ -0,0 +1,146 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- THUMBCAST: teksty preferencji warstwy sterowania (patches/preferences.patch.md, pkt 3). -->
 +<resources>
@@ -4296,7 +4468,7 @@ index 00000000..ad32ef0d
 +    <string name="title_control_layer">Control layer</string>
 +    <string name="control_layer_thumbcast">Thumbcast (multitouch, profiles)</string>
 +    <string name="control_layer_legacy">Classic on-screen controller</string>
-+    <string name="title_thumbcast_profile">Control profile</string>
++    <string name="title_thumbcast_profile">Control profiles</string>
 +    <string name="title_thumbcast_debug">Input debug overlay</string>
 +    <string name="summary_thumbcast_debug">Shows active pointers, sent pad flags and touch-to-send latency</string>
 +    <string name="thumbcast_profile_error">Control profile could not be loaded, using classic controller: %1$s</string>
@@ -4316,8 +4488,8 @@ index 00000000..ad32ef0d
 +        <item quantity="other">%d controls</item>
 +    </plurals>
 +    <string name="thumbcast_library_invalid">Invalid profile: %1$s</string>
-+    <string name="thumbcast_library_active_description">%1$s, active</string>
-+    <string name="thumbcast_library_action_select">Use this profile</string>
++    <string name="thumbcast_library_active_description">%1$s, default</string>
++    <string name="thumbcast_library_action_select">Set as default</string>
 +    <string name="thumbcast_library_action_edit">Edit layout</string>
 +    <string name="thumbcast_library_action_duplicate">Duplicate</string>
 +    <string name="thumbcast_library_action_rename">Rename</string>
@@ -4325,13 +4497,12 @@ index 00000000..ad32ef0d
 +    <string name="thumbcast_library_action_share">Share</string>
 +    <string name="thumbcast_library_action_delete">Delete</string>
 +    <string name="thumbcast_library_copy_suffix">" (copy)"</string>
-+    <string name="thumbcast_library_selected">Active profile: %1$s</string>
 +    <string name="thumbcast_library_duplicated">Copy created: %1$s</string>
 +    <string name="thumbcast_library_rename_title">Rename profile</string>
 +    <string name="thumbcast_library_delete_title">Delete profile?</string>
 +    <string name="thumbcast_library_delete_message">“%1$s” will be deleted. This cannot be undone.</string>
 +    <string name="thumbcast_library_deleted">Profile deleted</string>
-+    <string name="thumbcast_library_deleted_active">Profile deleted. The default preset is now active.</string>
++    <string name="thumbcast_library_deleted_active">Profile deleted. The default profile is now %1$s.</string>
 +    <string name="thumbcast_library_editor_unavailable">The layout editor is not available in this version yet.</string>
 +    <string name="thumbcast_library_saved">Profile saved</string>
 +    <string name="thumbcast_library_edit_failed">Edited profile was not saved</string>
@@ -4344,7 +4515,7 @@ index 00000000..ad32ef0d
 +    <string name="thumbcast_library_import_details">Name: %1$s\nControls: %2$d\nMode: %3$s</string>
 +    <string name="thumbcast_library_import_new_id">It will be saved as a new profile, because its ID is already in use.</string>
 +    <string name="thumbcast_library_import_confirm">Import</string>
-+    <string name="thumbcast_library_import_confirm_use">Import and use</string>
++    <string name="thumbcast_library_import_confirm_use">Import as default</string>
 +    <string name="thumbcast_library_imported">Profile imported: %1$s</string>
 +    <string name="thumbcast_library_import_failed">Import failed</string>
 +    <string name="thumbcast_library_error">Operation failed</string>
@@ -4373,7 +4544,7 @@ index 00000000..ad32ef0d
 +    <string name="thumbcast_menu_scale_increase">Larger controls</string>
 +    <string name="thumbcast_menu_scale_minus" translatable="false">−</string>
 +    <string name="thumbcast_menu_profile">Profile: %1$s</string>
-+    <string name="thumbcast_menu_profiles_title">Control profile</string>
++    <string name="thumbcast_menu_profiles_title">Default profile</string>
 +    <string name="thumbcast_menu_back">‹ Back</string>
 +    <string name="thumbcast_menu_profile_active" translatable="false">✓ %1$s</string>
 +    <string name="thumbcast_menu_profile_switch_error">Could not load the profile: %1$s</string>
@@ -4418,6 +4589,23 @@ index 00000000..ad32ef0d
 +    <string name="thumbcast_app_settings_cleared">%1$s uses the global settings</string>
 +    <string name="thumbcast_app_profile_missing">The control profile chosen for this app is missing or invalid. Using the default profile.</string>
 +    <string name="thumbcast_menu_profile_session_only">Profile for this session: %1$s (app setting unchanged)</string>
++    <!-- Profil domyślny i gesty myszy (12.11.2026). -->
++    <string name="thumbcast_profile_summary">Default: %1$s</string>
++    <string name="thumbcast_library_default_set">Default profile: %1$s</string>
++    <string name="thumbcast_library_default_marker">%1$s  ★ Default</string>
++    <string name="thumbcast_library_default_hint">★ The default profile is used in every stream, unless a PC app has its own profile (long-press the app in the app list).</string>
++    <string name="thumbcast_default_profile_missing">The default control profile is missing or invalid. Using %1$s.</string>
++    <string name="thumbcast_menu_profiles_title_session">Profile for this session</string>
++    <string name="thumbcast_menu_profile_default_marker" translatable="false">%1$s  ★</string>
++    <string name="thumbcast_library_action_mouse_gestures_on">Mouse gestures: on</string>
++    <string name="thumbcast_library_action_mouse_gestures_off">Mouse gestures: off</string>
++    <string name="thumbcast_library_mouse_gestures_tag">mouse gestures</string>
++    <string name="thumbcast_menu_mouse_gestures_on">Mouse gestures: on</string>
++    <string name="thumbcast_menu_mouse_gestures_off">Mouse gestures: off</string>
++    <string name="thumbcast_mouse_gestures_on_touchpad">Mouse gestures on: drag in an empty area moves the cursor, tap = left click, two-finger tap = right click, two-finger drag = scroll, hold then drag = drag.</string>
++    <string name="thumbcast_mouse_gestures_off_touchpad">Mouse gestures off: touching an empty area sends nothing. Swiping down from the top edge still opens the menu.</string>
++    <string name="thumbcast_mouse_gestures_on_camera">Mouse gestures on: tap = left click at that spot, long press = right click, pinch = mouse wheel. Dragging still turns the camera.</string>
++    <string name="thumbcast_mouse_gestures_off_camera">Mouse gestures off: tapping and pinching send nothing. Dragging still turns the camera.</string>
 +</resources>
 diff --git a/app/src/main/res/xml/preferences.xml b/app/src/main/res/xml/preferences.xml
 index 5b09082b..702825ee 100644

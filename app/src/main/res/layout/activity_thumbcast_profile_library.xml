@@ -17,6 +17,13 @@
         android:text="@string/thumbcast_library_title"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="8dp"
+        android:text="@string/thumbcast_library_default_hint"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
