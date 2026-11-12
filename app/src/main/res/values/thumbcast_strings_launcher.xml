@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Teksty ekranu startowego Thumbcast (docs/ui-audit.md, pakiet P2): lista PC, karty PC, pusty stan, menu PC,
+    parowanie, dodawanie PC, lista gier, dialogi „Adresy połączenia” i „Ustawienia gry”.
+    Polski (język główny): values-pl/thumbcast_strings_launcher.xml. Słownik: D7.
+-->
+<resources>
+    <!-- Lista PC: pasek (U8) -->
+    <string name="thumbcast_launcher_title">Your computers</string>
+    <string name="thumbcast_launcher_add_pc">Add PC</string>
+    <string name="thumbcast_launcher_guide">How to connect a PC</string>
+
+    <!-- Lista PC: pusty stan (U3) -->
+    <string name="thumbcast_launcher_searching">Looking for computers on this network…</string>
+    <string name="thumbcast_launcher_empty_title">Can\'t see your computer</string>
+    <string name="thumbcast_launcher_empty_hint_wifi">Your phone and PC are on the same Wi-Fi network.</string>
+    <string name="thumbcast_launcher_empty_hint_sunshine">Sunshine is running on the PC.</string>
+    <string name="thumbcast_launcher_empty_hint_firewall">Windows Firewall lets Sunshine through.</string>
+    <string name="thumbcast_launcher_empty_guide">How to connect a PC</string>
+    <string name="thumbcast_launcher_empty_add">Add address manually</string>
+    <string name="thumbcast_launcher_still_searching">Still looking…</string>
+
+    <!-- Karta PC: plakietki stanu (U9) -->
+    <string name="thumbcast_launcher_status_online">Available</string>
+    <string name="thumbcast_launcher_status_offline">Unavailable</string>
+    <string name="thumbcast_launcher_status_unpaired">Needs pairing</string>
+    <string name="thumbcast_launcher_status_checking">Checking…</string>
+    <string name="thumbcast_launcher_status_in_game">Game running</string>
+    <!-- Opis karty dla czytnika ekranu: nazwa PC, stan. -->
+    <string name="thumbcast_launcher_card_description">%1$s, %2$s</string>
+    <string name="thumbcast_launcher_more_for">More options: %1$s</string>
+
+    <!-- Menu PC (U11) -->
+    <string name="thumbcast_launcher_menu_header">%1$s · %2$s</string>
+    <string name="thumbcast_launcher_menu_resume">Back to the game</string>
+    <string name="thumbcast_launcher_menu_quit">Close the game on the PC</string>
+    <string name="thumbcast_launcher_menu_all_apps">Show all games (including hidden)</string>
+    <string name="thumbcast_launcher_menu_pair">Pair with this PC</string>
+    <string name="thumbcast_launcher_menu_wol">Wake the PC (Wake-on-LAN)</string>
+    <string name="thumbcast_launcher_menu_network_test">Diagnostics: network test</string>
+    <string name="thumbcast_launcher_menu_details">Diagnostics: details</string>
+    <string name="thumbcast_launcher_menu_delete">Remove PC</string>
+
+    <!-- Parowanie (U10, U18) -->
+    <string name="thumbcast_launcher_step_1" translatable="false">1</string>
+    <string name="thumbcast_launcher_step_2" translatable="false">2</string>
+    <string name="thumbcast_launcher_step_3" translatable="false">3</string>
+    <string name="thumbcast_launcher_pair_title">Pairing with %1$s</string>
+    <string name="thumbcast_launcher_pair_connecting">Connecting to the PC…</string>
+    <string name="thumbcast_launcher_pair_step_open">On the PC, open the Sunshine panel: https://localhost:47990</string>
+    <string name="thumbcast_launcher_pair_step_tab">Go to the PIN tab.</string>
+    <string name="thumbcast_launcher_pair_step_enter">Enter this code and a name for this phone, then confirm.</string>
+    <string name="thumbcast_launcher_pair_pin_description">Code: %1$s</string>
+    <string name="thumbcast_launcher_pair_waiting">Waiting for the code on the PC…</string>
+    <string name="thumbcast_launcher_pair_show_guide">Show guide</string>
+    <string name="thumbcast_launcher_pair_failed_title">Pairing failed</string>
+
+    <!-- Dodawanie PC (U13) -->
+    <string name="thumbcast_launcher_add_label">PC address</string>
+    <string name="thumbcast_launcher_add_hint">e.g. 192.168.1.20</string>
+    <string name="thumbcast_launcher_add_help_home">At home: the PC\'s IP address on your Wi-Fi, e.g. 192.168.1.20. On the PC, run ipconfig and look for “IPv4 Address”.</string>
+    <string name="thumbcast_launcher_add_help_away">Away from home: the PC\'s Tailscale address, e.g. 100.64.1.2 (shown in the Tailscale app on the PC).</string>
+    <string name="thumbcast_launcher_add_more_help">PC still not visible?</string>
+
+    <!-- Lista gier (U15) -->
+    <string name="thumbcast_launcher_apps_hint">Tap a game to start it. ⋮ opens the game settings.</string>
+    <string name="thumbcast_launcher_app_more_for">Options: %1$s</string>
+    <string name="thumbcast_launcher_app_menu_settings">Game settings</string>
+    <string name="thumbcast_launcher_app_menu_quit_and_start">Close the current game and start this one</string>
+    <string name="thumbcast_launcher_app_menu_hide">Hide from the list</string>
+
+    <!-- Dialog „Adresy połączenia” (U16) -->
+    <string name="thumbcast_launcher_addresses_title">Connection addresses: %1$s</string>
+    <string name="thumbcast_launcher_addresses_group_home">At home (LAN)</string>
+    <string name="thumbcast_launcher_addresses_group_away">Away from home (Tailscale, ZeroTier)</string>
+    <string name="thumbcast_launcher_addresses_in_use">In use</string>
+    <string name="thumbcast_launcher_addresses_remove_for">Remove %1$s</string>
+    <string name="thumbcast_launcher_addresses_note">Home addresses are tried first, then the others. Pairing stays the same.</string>
+
+    <!-- Dialog „Ustawienia gry” (U17) -->
+    <string name="thumbcast_launcher_app_settings_title">Game settings: %1$s</string>
+    <string name="thumbcast_launcher_app_settings_resolution">Picture resolution</string>
+    <string name="thumbcast_launcher_app_settings_fps">Smoothness (FPS)</string>
+    <string name="thumbcast_launcher_app_settings_reset">Use global</string>
+</resources>

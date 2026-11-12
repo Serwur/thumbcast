@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    THUMBCAST (P2, U15): tło przycisku ⋮ na okładce gry: półprzezroczyste kółko 36 dp (czytelne na każdej okładce)
+    z falą dotyku, wcięte w polu dotyku 48 dp.
+-->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:inset="6dp">
+    <ripple android:color="?android:attr/colorControlHighlight">
+        <item>
+            <shape android:shape="oval">
+                <solid android:color="@color/thumbcast_scrim" />
+            </shape>
+        </item>
+    </ripple>
+</inset>

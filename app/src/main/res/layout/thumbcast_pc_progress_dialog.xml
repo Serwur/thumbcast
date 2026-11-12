@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST (P2, U18): treść dialogu postępu (ThumbcastPairingDialog, „Łączę się z komputerem…”) zamiast toastu. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/thumbcast_space_large"
+    android:paddingEnd="@dimen/thumbcast_space_large"
+    android:paddingTop="@dimen/thumbcast_space_small"
+    android:paddingBottom="@dimen/thumbcast_space_medium">
+
+    <ProgressBar
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:importantForAccessibility="no"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/thumbcast_accent" />
+
+    <TextView
+        android:id="@+id/thumbcast_progress_text"
+        style="@style/ThumbcastText.Body"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="@dimen/thumbcast_space_medium"
+        android:accessibilityLiveRegion="polite" />
+</LinearLayout>

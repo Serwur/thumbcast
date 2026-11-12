@@ -3,8 +3,13 @@ package com.limelight.thumbcast;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.text.InputType;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.limelight.R;
@@ -19,8 +24,9 @@ import app.thumbcast.android.net.Endpoint;
 import app.thumbcast.android.net.HostAddresses;
 
 /**
- * Dialog „Adresy połączenia” z menu PC (długie przytrzymanie w PcView): adresy LAN i alternatywne
- * w kolejności łączenia, aktywny oznaczony; tap = usuń, „Dodaj adres” = nowy adres alternatywny.
+ * Dialog „Adresy połączenia” z menu PC (przytrzymanie albo ⋮ w PcView): adresy w grupach „W domu (LAN)” i
+ * „Poza domem” w kolejności łączenia, aktywny z plakietką „Używany”; kosz przy wierszu = usuń (z potwierdzeniem),
+ * „Dodaj adres” = nowy adres alternatywny (od 12.11.2026, U16: wcześniej tap w wiersz od razu pytał o usunięcie).
  * Zmiany idą przez {@code ComputerManagerBinder.addAddress/removeAddress} (zapis do bazy, bez parowania).
  */
 public final class HostAddressesDialog {
@@ -33,26 +39,76 @@ public final class HostAddressesDialog {
         }
 
         final List<AddressEntry> entries = ThumbcastAddressBook.entries(computer);
-        String[] items = new String[entries.size()];
-        for (int i = 0; i < entries.size(); i++) {
-            items[i] = describe(activity, entries.get(i));
-        }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity)
-                .setTitle(activity.getString(R.string.thumbcast_addresses_title, computer.name))
+                .setTitle(activity.getString(R.string.thumbcast_launcher_addresses_title, computer.name))
                 .setNeutralButton(R.string.thumbcast_addresses_add, (d, w) -> showAdd(activity, binder, computer))
                 .setPositiveButton(R.string.thumbcast_addresses_close, null);
         if (entries.isEmpty()) {
             builder.setMessage(R.string.thumbcast_addresses_empty);
-        } else {
-            builder.setItems(items, (d, which) -> confirmRemove(activity, binder, computer, entries.get(which)));
+            builder.show();
+            return;
         }
-        builder.show();
+        final AlertDialog[] dialog = new AlertDialog[1];
+        builder.setView(buildList(activity, entries, entry -> {
+            if (dialog[0] != null) {
+                dialog[0].dismiss();
+            }
+            confirmRemove(activity, binder, computer, entry);
+        }));
+        dialog[0] = builder.show();
     }
 
-    private static String describe(Activity activity, AddressEntry entry) {
-        String group = activity.getString(entry.getGroup() == AddressGroup.LAN
-                ? R.string.thumbcast_addresses_group_lan : R.string.thumbcast_addresses_group_alt);
+    private interface RemoveAction {
+        void remove(AddressEntry entry);
+    }
+
+    /** Lista z nagłówkami grup i koszem przy każdym adresie (thumbcast_pc_address_header / _row). */
+    private static View buildList(Activity activity, List<AddressEntry> entries, RemoveAction onRemove) {
+        LayoutInflater inflater = LayoutInflater.from(activity);
+        LinearLayout column = new LinearLayout(activity);
+        column.setOrientation(LinearLayout.VERTICAL);
+        AddressGroup[] groups = {AddressGroup.LAN, AddressGroup.ALTERNATIVE};
+        for (AddressGroup group : groups) {
+            boolean header = false;
+            for (final AddressEntry entry : entries) {
+                if (entry.getGroup() != group) {
+                    continue;
+                }
+                if (!header) {
+                    TextView title = (TextView) inflater.inflate(R.layout.thumbcast_pc_address_header, column, false);
+                    title.setText(group == AddressGroup.LAN ? R.string.thumbcast_launcher_addresses_group_home
+                            : R.string.thumbcast_launcher_addresses_group_away);
+                    column.addView(title);
+                    header = true;
+                }
+                View row = inflater.inflate(R.layout.thumbcast_pc_address_row, column, false);
+                String host = display(entry.getEndpoint());
+                ((TextView) row.findViewById(R.id.thumbcast_address_host)).setText(host);
+                ((TextView) row.findViewById(R.id.thumbcast_address_source)).setText(sourceLabel(entry));
+                row.findViewById(R.id.thumbcast_address_active).setVisibility(entry.getActive() ? View.VISIBLE : View.GONE);
+                View remove = row.findViewById(R.id.thumbcast_address_remove);
+                String removeLabel = activity.getString(R.string.thumbcast_launcher_addresses_remove_for, host);
+                remove.setContentDescription(removeLabel);
+                remove.setTooltipText(removeLabel);
+                remove.setOnClickListener(v -> onRemove.remove(entry));
+                column.addView(row);
+            }
+        }
+        TextView note = new TextView(activity);
+        note.setTextAppearance(R.style.ThumbcastText_BodySecondary);
+        note.setText(R.string.thumbcast_launcher_addresses_note);
+        int pad = activity.getResources().getDimensionPixelSize(R.dimen.thumbcast_space_large);
+        int small = activity.getResources().getDimensionPixelSize(R.dimen.thumbcast_space_small);
+        note.setPadding(pad, small, pad, small);
+        column.addView(note);
+
+        ScrollView scroll = new ScrollView(activity);
+        scroll.addView(column);
+        return scroll;
+    }
+
+    private static int sourceLabel(AddressEntry entry) {
         int sourceRes;
         switch (entry.getSource()) {
             case LOCAL:
@@ -69,12 +125,7 @@ public final class HostAddressesDialog {
                 sourceRes = R.string.thumbcast_addresses_source_manual;
                 break;
         }
-        String text = activity.getString(R.string.thumbcast_addresses_item, group,
-                display(entry.getEndpoint()), activity.getString(sourceRes));
-        if (entry.getActive()) {
-            text = activity.getString(R.string.thumbcast_addresses_item_active, text);
-        }
-        return text;
+        return sourceRes;
     }
 
     private static String display(Endpoint e) {

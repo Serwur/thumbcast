@@ -65,6 +65,10 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
     private ShortcutHelper shortcutHelper;
     private ComputerManagerService.ComputerManagerBinder managerBinder;
     private boolean freezeUpdates, runningPolling, inForeground, completeOnCreateCalled;
+    // THUMBCAST: pusty stan listy PC (U3): „Szukam…”, po ok. 5 s karta „Nie widzę komputera”.
+    private final com.limelight.thumbcast.ThumbcastLauncherUi.EmptyState thumbcastEmptyState =
+            new com.limelight.thumbcast.ThumbcastLauncherUi.EmptyState();
+    // THUMBCAST END
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
             final ComputerManagerService.ComputerManagerBinder localBinder =
@@ -124,7 +128,10 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
     // THUMBCAST END
 
     private void initializeViews() {
-        setContentView(R.layout.activity_pc_view);
+        // THUMBCAST: pasek „Twoje komputery” z opisanymi ikonami i pusty stan (U3, U8); ID upstreamu zostają.
+        // Upstream: setContentView(R.layout.activity_pc_view);
+        setContentView(R.layout.thumbcast_activity_pc_view);
+        // THUMBCAST END
 
         UiHelper.notifyNewRootView(this);
 
@@ -182,6 +189,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
         else {
             noPcFoundLayout.setVisibility(View.INVISIBLE);
         }
+        // THUMBCAST: pusty stan (U3).
+        thumbcastEmptyState.bind(this);
+        // THUMBCAST END
         pcGridAdapter.notifyDataSetChanged();
     }
 
@@ -192,6 +202,10 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
         // Assume we're in the foreground when created to avoid a race
         // between binding to CMS and onResume()
         inForeground = true;
+
+        // THUMBCAST: kreator pierwszego uruchomienia (U1), tylko przy pustej liście PC i starszej wersji kreatora.
+        com.limelight.thumbcast.ThumbcastOnboardingHook.onCreate(this, savedInstanceState);
+        // THUMBCAST END
 
         // Create a GLSurfaceView to fetch GLRenderer unless we have
         // a cached result already.
@@ -297,10 +311,24 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
     public void onDestroy() {
         super.onDestroy();
 
+        // THUMBCAST: timer pustego stanu i dialog parowania.
+        thumbcastEmptyState.release();
+        com.limelight.thumbcast.ThumbcastPairingDialog.dismiss(this);
+        // THUMBCAST END
+
         if (managerBinder != null) {
             unbindService(serviceConnection);
         }
     }
+
+    // THUMBCAST: wynik kreatora pierwszego uruchomienia (U1).
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (!com.limelight.thumbcast.ThumbcastOnboardingHook.onActivityResult(this, requestCode, resultCode, data)) {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+    // THUMBCAST END
 
     @Override
     protected void onResume() {
@@ -388,6 +416,23 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
         // THUMBCAST:
         menu.add(Menu.NONE, THUMBCAST_ADDRESSES_ID, 8, getResources().getString(R.string.thumbcast_pcview_menu_addresses));
         // THUMBCAST END
+
+        // THUMBCAST: menu PC prostym językiem (U11): bez pozycji o końcu NVIDIA GameStream, diagnostyka w osobnej
+        // grupie niżej, „Usuń komputer” na końcu. Te same ID, więc onContextItemSelected bez zmian.
+        menu.removeItem(GAMESTREAM_EOL_ID);
+        menu.setHeaderTitle(getString(R.string.thumbcast_launcher_menu_header, computer.details.name,
+                com.limelight.thumbcast.ThumbcastLauncherUi.statusText(this, computer.details)));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, RESUME_ID, 0, 1, getString(R.string.thumbcast_launcher_menu_resume));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, QUIT_ID, 0, 2, getString(R.string.thumbcast_launcher_menu_quit));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, PAIR_ID, 0, 3, getString(R.string.thumbcast_launcher_menu_pair));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, WOL_ID, 0, 4, getString(R.string.thumbcast_launcher_menu_wol));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, FULL_APP_LIST_ID, 0, 5, getString(R.string.thumbcast_launcher_menu_all_apps));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, THUMBCAST_ADDRESSES_ID, 0, 6, getString(R.string.thumbcast_pcview_menu_addresses));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, TEST_NETWORK_ID, 1, 7, getString(R.string.thumbcast_launcher_menu_network_test));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, VIEW_DETAILS_ID, 1, 8, getString(R.string.thumbcast_launcher_menu_details));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, DELETE_ID, 2, 9, getString(R.string.thumbcast_launcher_menu_delete));
+        com.limelight.thumbcast.ThumbcastLauncherUi.enableGroupDividers(menu);
+        // THUMBCAST END
     }
 
     @Override
@@ -408,7 +453,10 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
             return;
         }
 
-        Toast.makeText(PcView.this, getResources().getString(R.string.pairing), Toast.LENGTH_SHORT).show();
+        // THUMBCAST: dialog postępu zamiast toastu „Parowanie…” (U18).
+        // Upstream: Toast.makeText(PcView.this, getResources().getString(R.string.pairing), Toast.LENGTH_SHORT).show();
+        com.limelight.thumbcast.ThumbcastPairingDialog.showConnecting(PcView.this, computer.name);
+        // THUMBCAST END
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -431,9 +479,12 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
                         final String pinStr = PairingManager.generatePinString();
 
                         // Spin the dialog off in a thread because it blocks
-                        Dialog.displayDialog(PcView.this, getResources().getString(R.string.pair_pairing_title),
-                                getResources().getString(R.string.pair_pairing_msg)+" "+pinStr+"\n\n"+
-                                getResources().getString(R.string.pair_pairing_help), false);
+                        // THUMBCAST: kroki w Sunshine, duży PIN i „Pokaż poradnik” (U10). Upstream:
+                        // Dialog.displayDialog(PcView.this, getResources().getString(R.string.pair_pairing_title),
+                        //         getResources().getString(R.string.pair_pairing_msg)+" "+pinStr+"\n\n"+
+                        //         getResources().getString(R.string.pair_pairing_help), false);
+                        com.limelight.thumbcast.ThumbcastPairingDialog.showPin(PcView.this, computer.name, pinStr);
+                        // THUMBCAST END
 
                         PairingManager pm = httpConn.getPairingManager();
 
@@ -479,6 +530,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
                 }
 
                 Dialog.closeDialogs();
+                // THUMBCAST: zamknięcie dialogu postępu lub PIN-u.
+                com.limelight.thumbcast.ThumbcastPairingDialog.dismiss(PcView.this);
+                // THUMBCAST END
 
                 final String toastMessage = message;
                 final boolean toastSuccess = success;
@@ -489,7 +543,10 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
                     @Override
                     public void run() {
                         if (toastMessage != null) {
-                            Toast.makeText(PcView.this, toastMessage, Toast.LENGTH_LONG).show();
+                            // THUMBCAST: błąd parowania w dialogu z poradnikiem zamiast toastu (U18).
+                            // Upstream: Toast.makeText(PcView.this, toastMessage, Toast.LENGTH_LONG).show();
+                            com.limelight.thumbcast.ThumbcastPairingDialog.showFailure(PcView.this, toastMessage);
+                            // THUMBCAST END
                         }
 
                         if (toastSuccess) {
@@ -765,7 +822,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
 
     @Override
     public int getAdapterFragmentLayoutId() {
-        return R.layout.pc_grid_view;
+        // THUMBCAST: siatka kart PC (U9). Upstream: return R.layout.pc_grid_view;
+        return R.layout.thumbcast_pc_grid_view;
+        // THUMBCAST END
     }
 
     @Override

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    THUMBCAST (P2, U16): wiersz dialogu „Adresy połączenia” (HostAddressesDialog): adres, źródło, plakietka
+    „Używany” przy aktywnym i osobny przycisk kosza (tap w wiersz niczego nie usuwa).
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:minHeight="@dimen/thumbcast_list_item_two_line_min_height"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/thumbcast_space_large"
+    android:paddingEnd="@dimen/thumbcast_space_small">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingTop="@dimen/thumbcast_space_small"
+        android:paddingBottom="@dimen/thumbcast_space_small">
+
+        <TextView
+            android:id="@+id/thumbcast_address_host"
+            style="@style/ThumbcastText.ListTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="middle"
+            android:singleLine="true"
+            android:textIsSelectable="true" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/thumbcast_space_xsmall"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/thumbcast_address_source"
+                style="@style/ThumbcastText.ListSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/thumbcast_address_active"
+                style="@style/ThumbcastText.Badge.Success"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/thumbcast_space_small"
+                android:text="@string/thumbcast_launcher_addresses_in_use"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/thumbcast_address_remove"
+        style="@style/ThumbcastIconButton"
+        android:contentDescription="@string/thumbcast_common_delete"
+        android:src="@drawable/thumbcast_ic_delete"
+        android:tint="@color/thumbcast_text_secondary" />
+</LinearLayout>

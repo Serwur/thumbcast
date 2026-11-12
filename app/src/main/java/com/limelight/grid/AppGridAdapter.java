@@ -74,12 +74,15 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
     }
 
     private static int getLayoutIdForPreferences(PreferenceConfiguration prefs) {
+        // THUMBCAST: kafelki z widocznym przyciskiem ⋮ (U15).
+        // Upstream: app_grid_item_small / app_grid_item.
         if (prefs.smallIconMode) {
-            return R.layout.app_grid_item_small;
+            return R.layout.thumbcast_app_grid_item_small;
         }
         else {
-            return R.layout.app_grid_item;
+            return R.layout.thumbcast_app_grid_item;
         }
+        // THUMBCAST END
     }
 
     public void updateLayoutWithPreferences(Context context, PreferenceConfiguration prefs) {
@@ -180,5 +183,12 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
         else {
             parentView.setAlpha(1.0f);
         }
+
+        // THUMBCAST: ⋮ na kafelku otwiera to samo menu co długie przytrzymanie (Ustawienia gry) (U15). Nazwa gry
+        // jako opis kafelka dla czytnika ekranu (napis znika, gdy okładka się wczyta).
+        parentView.setContentDescription(obj.app.getAppName());
+        com.limelight.thumbcast.ThumbcastLauncherUi.bindMoreButton(parentView.findViewById(R.id.thumbcast_app_more), parentView,
+                context.getString(R.string.thumbcast_launcher_app_more_for, obj.app.getAppName()));
+        // THUMBCAST END
     }
 }

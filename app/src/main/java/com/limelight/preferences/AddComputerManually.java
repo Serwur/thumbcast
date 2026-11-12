@@ -270,7 +270,11 @@ public class AddComputerManually extends Activity {
 
         UiHelper.setLocale(this);
 
-        setContentView(R.layout.activity_add_computer_manually);
+        // THUMBCAST: podpowiedź, skąd wziąć adres, przycisk „Dodaj”, pasek z „Wróć” (U13). Upstream:
+        // setContentView(R.layout.activity_add_computer_manually);
+        setContentView(R.layout.thumbcast_activity_add_computer_manually);
+        com.limelight.thumbcast.ThumbcastLauncherUi.bindAddComputerScreen(this);
+        // THUMBCAST END
 
         UiHelper.notifyNewRootView(this);
 

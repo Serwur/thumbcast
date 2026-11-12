@@ -38,10 +38,20 @@ public class HelpLauncher {
     }
 
     public static void launchSetupGuide(Context context) {
+        // THUMBCAST: offline poradnik „Jak podłączyć PC” (:control-ui) zamiast wiki upstreamu (U2); wiki tylko awaryjnie.
+        if (com.limelight.thumbcast.ThumbcastLauncherUi.openGuide(context, app.thumbcast.ui.UiContract.SECTION_INSTALL)) {
+            return;
+        }
+        // THUMBCAST END
         launchUrl(context, "https://github.com/moonlight-stream/moonlight-docs/wiki/Setup-Guide");
     }
 
     public static void launchTroubleshooting(Context context) {
+        // THUMBCAST: poradnik, sekcja „Nie działa?” (U2); wiki tylko awaryjnie.
+        if (com.limelight.thumbcast.ThumbcastLauncherUi.openGuide(context, app.thumbcast.ui.UiContract.SECTION_TROUBLESHOOT)) {
+            return;
+        }
+        // THUMBCAST END
         launchUrl(context, "https://github.com/moonlight-stream/moonlight-docs/wiki/Troubleshooting");
     }
 

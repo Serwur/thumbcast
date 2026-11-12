@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    THUMBCAST (P2, U13): dodawanie PC zamiast activity_add_computer_manually.xml (AddComputerManually.onCreate,
+    blok THUMBCAST). Podpowiedź, skąd wziąć adres (Wi-Fi w domu, Tailscale poza domem), i przycisk „Dodaj”.
+    Identyfikatory upstreamu zostają: manuallyAddPcText, hostTextView (EditText), addPcButton.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".preferences.AddComputerManually">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/thumbcast_space_xsmall"
+        android:paddingEnd="@dimen/thumbcast_space_medium"
+        android:preferKeepClear="true">
+
+        <ImageButton
+            android:id="@+id/thumbcast_add_pc_back"
+            style="@style/ThumbcastIconButton"
+            android:contentDescription="@string/thumbcast_common_navigate_up"
+            android:src="@drawable/thumbcast_ic_arrow_back"
+            android:tooltipText="@string/thumbcast_common_navigate_up" />
+
+        <TextView
+            android:id="@+id/manuallyAddPcText"
+            style="@style/ThumbcastText.Title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/thumbcast_space_xsmall"
+            android:accessibilityHeading="true"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/thumbcast_launcher_add_pc" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/thumbcast_space_medium">
+
+            <TextView
+                android:id="@+id/thumbcast_add_pc_label"
+                style="@style/ThumbcastText.ListSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/thumbcast_launcher_add_label" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/thumbcast_space_small"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/hostTextView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/thumbcast_outline_strong"
+                    android:hint="@string/thumbcast_launcher_add_hint"
+                    android:importantForAutofill="no"
+                    android:inputType="textNoSuggestions|textUri"
+                    android:minHeight="@dimen/thumbcast_touch_target"
+                    android:preferKeepClear="true"
+                    android:singleLine="true"
+                    android:textColor="@color/thumbcast_text"
+                    android:textColorHint="@color/thumbcast_text_secondary"
+                    android:textSize="@dimen/thumbcast_text_body">
+
+                    <requestFocus />
+                </EditText>
+
+                <Button
+                    android:id="@+id/addPcButton"
+                    style="@style/ThumbcastButton.Primary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/thumbcast_space_small"
+                    android:preferKeepClear="true"
+                    android:text="@string/thumbcast_common_add" />
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/ThumbcastCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/thumbcast_space_large"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/ThumbcastText.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawableStart="@drawable/thumbcast_ic_computer"
+                    android:drawablePadding="@dimen/thumbcast_space_medium"
+                    android:drawableTint="@color/thumbcast_text_secondary"
+                    android:text="@string/thumbcast_launcher_add_help_home"
+                    android:textIsSelectable="true" />
+
+                <TextView
+                    style="@style/ThumbcastText.BodySecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/thumbcast_space_medium"
+                    android:drawableStart="@drawable/thumbcast_ic_vpn_key"
+                    android:drawablePadding="@dimen/thumbcast_space_medium"
+                    android:drawableTint="@color/thumbcast_text_secondary"
+                    android:text="@string/thumbcast_launcher_add_help_away"
+                    android:textIsSelectable="true" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/thumbcast_add_pc_help"
+                style="@style/ThumbcastButton.Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/thumbcast_space_small"
+                android:drawableStart="@drawable/thumbcast_ic_help"
+                android:drawablePadding="@dimen/thumbcast_space_small"
+                android:drawableTint="@color/thumbcast_accent"
+                android:text="@string/thumbcast_launcher_add_more_help" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

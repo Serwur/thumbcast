@@ -300,7 +300,11 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
         UiHelper.setLocale(this);
 
-        setContentView(R.layout.activity_app_view);
+        // THUMBCAST: pasek jak na liście PC („Wróć”, nazwa PC, podpowiedź o ⋮) (U15). Upstream:
+        // setContentView(R.layout.activity_app_view);
+        setContentView(R.layout.thumbcast_activity_app_view);
+        com.limelight.thumbcast.ThumbcastLauncherUi.bindBackButton(this, R.id.thumbcast_app_back);
+        // THUMBCAST END
 
         // Allow floating expanded PiP overlays while browsing apps
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -441,6 +445,18 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
                 }
             }
         }
+
+        // THUMBCAST: menu gry prostym językiem (U15, D7): „Ustawienia gry” zaraz po akcjach gry, diagnostyka na
+        // końcu w osobnej grupie. Te same ID, więc onContextItemSelected bez zmian.
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, START_OR_RESUME_ID, 0, 1, getString(R.string.thumbcast_launcher_menu_resume));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, START_WITH_QUIT, 0, 1, getString(R.string.thumbcast_launcher_app_menu_quit_and_start));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, QUIT_ID, 0, 2, getString(R.string.thumbcast_launcher_menu_quit));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, THUMBCAST_APP_SETTINGS_ID, 0, 3, getString(R.string.thumbcast_launcher_app_menu_settings));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, HIDE_APP_ID, 0, 4, getString(R.string.thumbcast_launcher_app_menu_hide));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, CREATE_SHORTCUT_ID, 0, 5, getString(R.string.applist_menu_scut));
+        com.limelight.thumbcast.ThumbcastLauncherUi.place(menu, VIEW_DETAILS_ID, 1, 6, getString(R.string.thumbcast_launcher_menu_details));
+        com.limelight.thumbcast.ThumbcastLauncherUi.enableGroupDividers(menu);
+        // THUMBCAST END
     }
 
     @Override
