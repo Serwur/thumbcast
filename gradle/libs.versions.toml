@@ -2,6 +2,7 @@
 #
 # Źródła wersji:
 #   - plan, sekcja 3: Kotlin 2.4.21 [Z:22], AGP 9.4.0 (jak upstream) [Z:7][Z:23], Compose BOM 2026.09.00 [Z:24]
+#   - 12.11.2026: AGP 9.5.1 (decyzja właściciela; wrapper Gradle 9.7.1 spełnia wymóg >= 9.6.0)
 #   - pozostałe sprawdzone 7.11.2026 przez WebFetch na stronach wydań (linki przy wpisach).
 # Wpisy z komentarzem "DO ZWERYFIKOWANIA" trzeba potwierdzić przy pierwszym buildzie z siecią.
 #
@@ -13,8 +14,9 @@
 # Plan, sekcja 3 [Z:22]
 kotlin = "2.4.21"
 # Plan, sekcja 3: jak upstream moonlight-android (root build.gradle: com.android.tools.build:gradle:9.4.0) [Z:7].
-# Przejście na 9.5.0 dopiero razem z rebase upstreamu (9.5 wymaga Gradle >= 9.6.0) [Z:23].
-agp = "9.4.0"
+# 12.11.2026: podniesione do 9.5.1 przed rebase upstreamu (decyzja właściciela). Nowy lint ThreadConstraint
+# zgłaszał fałszywe alarmy w AppView/PcView z upstreamu; wyciszone punktowo w blokach THUMBCAST.
+agp = "9.5.1"
 # https://github.com/Kotlin/kotlinx.serialization/releases : 1.12.0 (19.10, zbudowane z Kotlin 2.4.10).
 # DO ZWERYFIKOWANIA: zgodność 1.12.0 z Kotlin 2.4.21 (plan sekcja 3 oznacza to jako [?]).
 kotlinx-serialization = "1.12.0"

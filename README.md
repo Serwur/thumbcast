@@ -46,7 +46,7 @@ Tryby sterowania:
 
 ## Budowanie
 
-Wymagania: JDK 17, Android Studio ze wsparciem AGP 9.4, Android SDK (compileSdk 37), NDK 29.0.14206865 (dla `:app` z upstreamu).
+Wymagania: JDK 17, Android Studio ze wsparciem AGP 9.5, Android SDK (compileSdk 37), NDK 29.0.14206865 (dla `:app` z upstreamu).
 
 ```bash
 git clone --recurse-submodules <adres-repo>

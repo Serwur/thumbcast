@@ -14,8 +14,8 @@ Pluginy (`alias(libs.plugins.<...>)`; w głównym `build.gradle.kts` zadeklarowa
 | `libs.plugins.kotlin.jvm` | `org.jetbrains.kotlin.jvm` | kotlin 2.4.21 |
 | `libs.plugins.kotlin.serialization` | `org.jetbrains.kotlin.plugin.serialization` | kotlin 2.4.21 |
 | `libs.plugins.kotlin.compose` | `org.jetbrains.kotlin.plugin.compose` | kotlin 2.4.21 (na przyszłość) |
-| `libs.plugins.android.library` | `com.android.library` | agp 9.4.0 |
-| `libs.plugins.android.application` | `com.android.application` | agp 9.4.0 |
+| `libs.plugins.android.library` | `com.android.library` | agp 9.5.1 (od 12.11.2026; wcześniej 9.4.0) |
+| `libs.plugins.android.application` | `com.android.application` | agp 9.5.1 (od 12.11.2026; wcześniej 9.4.0) |
 
 Brak aliasu `kotlin-android`: AGP 9 ma wbudowany Kotlin, nie stosować `org.jetbrains.kotlin.android` w `:control-android`.
 

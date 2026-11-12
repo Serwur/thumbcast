@@ -483,6 +483,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
                 final String toastMessage = message;
                 final boolean toastSuccess = success;
                 runOnUiThread(new Runnable() {
+                    // THUMBCAST: lint AGP 9.5 (ThreadConstraint): startComputerUpdates() tylko rejestruje listener; skróty tworzy on na wątku odpytywania, nie tutaj. Fałszywy alarm, zachowanie upstreamu bez zmian.
+                    @android.annotation.SuppressLint("ThreadConstraint")
+                    // THUMBCAST END
                     @Override
                     public void run() {
                         if (toastMessage != null) {
@@ -696,6 +699,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
         }
     }
     
+    // THUMBCAST: lint AGP 9.5 (ThreadConstraint): ShortcutManager ma @WorkerThread, upstream woła go z wątku UI; fałszywy alarm, zachowanie upstreamu bez zmian.
+    @android.annotation.SuppressLint("ThreadConstraint")
+    // THUMBCAST END
     private void removeComputer(ComputerDetails details) {
         managerBinder.removeComputer(details);
 

@@ -72,6 +72,8 @@ własny, pewny diff: `git diff v12.2 -- app/ > patches/0001-thumbcast.diff`.
 
 ## Na co uważać przy rebase na nowy upstream
 
+- AGP 9.5.1 (od 12.11.2026): lint `ThreadConstraint` zgłasza w `AppView.java` (3 metody) i `PcView.java` (2) wywołania `ShortcutManager` (`@WorkerThread`) z wątku UI. To zachowanie upstreamu; wyciszone `@android.annotation.SuppressLint("ThreadConstraint")` w blokach THUMBCAST. Po rebase sprawdzić, czy upstream sam tego nie poprawił, i wtedy usunąć wyciszenia.
+
 - Wszystkie zmiany w plikach upstreamu są w blokach `// THUMBCAST:` … `// THUMBCAST END`
   (w XML: `<!-- THUMBCAST: -->` … `<!-- THUMBCAST END -->`). Po rebase: `git grep -n "THUMBCAST"`
   i porównanie liczby bloków przed i po.

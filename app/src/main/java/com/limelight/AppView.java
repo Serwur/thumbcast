@@ -220,6 +220,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
                 // Close immediately if the PC is no longer paired
                 if (details.state == ComputerDetails.State.ONLINE && details.pairState != PairingManager.PairState.PAIRED) {
                     AppView.this.runOnUiThread(new Runnable() {
+                        // THUMBCAST: lint AGP 9.5 (ThreadConstraint): ShortcutManager ma @WorkerThread, upstream woła go z wątku UI; fałszywy alarm, zachowanie upstreamu bez zmian.
+                        @android.annotation.SuppressLint("ThreadConstraint")
+                        // THUMBCAST END
                         @Override
                         public void run() {
                             // Disable shortcuts referencing this PC for now
@@ -444,6 +447,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     public void onContextMenuClosed(Menu menu) {
     }
 
+    // THUMBCAST: lint AGP 9.5 (ThreadConstraint): ShortcutManager ma @WorkerThread, upstream woła go z wątku UI; fałszywy alarm, zachowanie upstreamu bez zmian.
+    @android.annotation.SuppressLint("ThreadConstraint")
+    // THUMBCAST END
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
@@ -560,6 +566,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
     private void updateUiWithAppList(final List<NvApp> appList) {
         AppView.this.runOnUiThread(new Runnable() {
+            // THUMBCAST: lint AGP 9.5 (ThreadConstraint): ShortcutManager ma @WorkerThread, upstream woła go z wątku UI; fałszywy alarm, zachowanie upstreamu bez zmian.
+            @android.annotation.SuppressLint("ThreadConstraint")
+            // THUMBCAST END
             @Override
             public void run() {
                 boolean updated = false;

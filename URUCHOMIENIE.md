@@ -19,7 +19,7 @@ Repo **nie zawiera** kodu Moonlight. Aplikacja powstaje przez scalenie tych modu
 3. Bez żadnego sterownika pada używaj trybu Klawiatura+Mysz: klawiatura i mysz działają bez niego.
 
 ## Krok 2. Środowisko na komputerze z internetem
-Android Studio (zgodne z AGP 9.4+), SDK platforma 37, NDK 29.0.14206865 + CMake, JDK 17, Git.
+Android Studio (zgodne z AGP 9.5+), SDK platforma 37, NDK 29.0.14206865 + CMake, JDK 17, Git.
 
 ## Krok 3. Fork Moonlight i scalenie
 Pełna procedura z tabelą konfliktów: **`docs/NEXT-STEPS.md`**, sekcje 1 i 2. W skrócie:

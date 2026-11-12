@@ -207,7 +207,7 @@ index d916899e..3b65fdbf 100644
              android:name=".preferences.AddComputerManually"
              android:resizeableActivity="true"
 diff --git a/app/src/main/java/com/limelight/AppView.java b/app/src/main/java/com/limelight/AppView.java
-index 1337627e..7cf6d631 100644
+index 1337627e..52661e81 100644
 --- a/app/src/main/java/com/limelight/AppView.java
 +++ b/app/src/main/java/com/limelight/AppView.java
 @@ -13,6 +13,9 @@ import com.limelight.nvstream.http.NvApp;
@@ -230,7 +230,17 @@ index 1337627e..7cf6d631 100644
  
      public final static String HIDDEN_APPS_PREF_FILENAME = "HiddenApps";
  
-@@ -415,6 +421,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
+@@ -214,6 +220,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
+                 // Close immediately if the PC is no longer paired
+                 if (details.state == ComputerDetails.State.ONLINE && details.pairState != PairingManager.PairState.PAIRED) {
+                     AppView.this.runOnUiThread(new Runnable() {
++                        // THUMBCAST: lint AGP 9.5 (ThreadConstraint): ShortcutManager ma @WorkerThread, upstream woła go z wątku UI; fałszywy alarm, zachowanie upstreamu bez zmian.
++                        @android.annotation.SuppressLint("ThreadConstraint")
++                        // THUMBCAST END
+                         @Override
+                         public void run() {
+                             // Disable shortcuts referencing this PC for now
+@@ -415,6 +424,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
          }
  
          menu.add(Menu.NONE, VIEW_DETAILS_ID, 4, getResources().getString(R.string.applist_menu_details));
@@ -240,7 +250,17 @@ index 1337627e..7cf6d631 100644
  
          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
              // Only add an option to create shortcut if box art is loaded
-@@ -492,6 +501,12 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
+@@ -435,6 +447,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
+     public void onContextMenuClosed(Menu menu) {
+     }
+ 
++    // THUMBCAST: lint AGP 9.5 (ThreadConstraint): ShortcutManager ma @WorkerThread, upstream woła go z wątku UI; fałszywy alarm, zachowanie upstreamu bez zmian.
++    @android.annotation.SuppressLint("ThreadConstraint")
++    // THUMBCAST END
+     @Override
+     public boolean onContextItemSelected(MenuItem item) {
+         AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+@@ -492,6 +507,12 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
                  updateHiddenApps(false);
                  return true;
  
@@ -253,6 +273,16 @@ index 1337627e..7cf6d631 100644
              case CREATE_SHORTCUT_ID:
                  ImageView appImageView = info.targetView.findViewById(R.id.grid_image);
                  Bitmap appBits = ((BitmapDrawable)appImageView.getDrawable()).getBitmap();
+@@ -545,6 +566,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
+ 
+     private void updateUiWithAppList(final List<NvApp> appList) {
+         AppView.this.runOnUiThread(new Runnable() {
++            // THUMBCAST: lint AGP 9.5 (ThreadConstraint): ShortcutManager ma @WorkerThread, upstream woła go z wątku UI; fałszywy alarm, zachowanie upstreamu bez zmian.
++            @android.annotation.SuppressLint("ThreadConstraint")
++            // THUMBCAST END
+             @Override
+             public void run() {
+                 boolean updated = false;
 diff --git a/app/src/main/java/com/limelight/Game.java b/app/src/main/java/com/limelight/Game.java
 index 8d369b3e..06ac5c0e 100644
 --- a/app/src/main/java/com/limelight/Game.java
@@ -431,7 +461,7 @@ index 8d369b3e..06ac5c0e 100644
              }.start();
          }
 diff --git a/app/src/main/java/com/limelight/PcView.java b/app/src/main/java/com/limelight/PcView.java
-index 4ec6094f..ed48f5b3 100644
+index 4ec6094f..4984bf05 100644
 --- a/app/src/main/java/com/limelight/PcView.java
 +++ b/app/src/main/java/com/limelight/PcView.java
 @@ -119,6 +119,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
@@ -454,7 +484,17 @@ index 4ec6094f..ed48f5b3 100644
      }
  
      @Override
-@@ -675,6 +681,16 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
+@@ -477,6 +483,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
+                 final String toastMessage = message;
+                 final boolean toastSuccess = success;
+                 runOnUiThread(new Runnable() {
++                    // THUMBCAST: lint AGP 9.5 (ThreadConstraint): startComputerUpdates() tylko rejestruje listener; skróty tworzy on na wątku odpytywania, nie tutaj. Fałszywy alarm, zachowanie upstreamu bez zmian.
++                    @android.annotation.SuppressLint("ThreadConstraint")
++                    // THUMBCAST END
+                     @Override
+                     public void run() {
+                         if (toastMessage != null) {
+@@ -675,11 +684,24 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
                  HelpLauncher.launchGameStreamEolFaq(PcView.this);
                  return true;
  
@@ -471,6 +511,14 @@ index 4ec6094f..ed48f5b3 100644
              default:
                  return super.onContextItemSelected(item);
          }
+     }
+     
++    // THUMBCAST: lint AGP 9.5 (ThreadConstraint): ShortcutManager ma @WorkerThread, upstream woła go z wątku UI; fałszywy alarm, zachowanie upstreamu bez zmian.
++    @android.annotation.SuppressLint("ThreadConstraint")
++    // THUMBCAST END
+     private void removeComputer(ComputerDetails details) {
+         managerBinder.removeComputer(details);
+ 
 diff --git a/app/src/main/java/com/limelight/binding/input/ControllerHandler.java b/app/src/main/java/com/limelight/binding/input/ControllerHandler.java
 index 0fffe5d0..9a165bfd 100644
 --- a/app/src/main/java/com/limelight/binding/input/ControllerHandler.java

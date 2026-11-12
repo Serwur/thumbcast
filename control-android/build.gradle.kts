@@ -1,7 +1,7 @@
 // Moduł :control-android – warstwa Androida dla Thumbcast (overlay dotykowy + adaptery InputSink).
 //
 // Oczekiwane aliasy w gradle/libs.versions.toml (tworzy agent SCAFFOLD):
-//   [plugins]   android-library            = com.android.library (AGP 9.4.0, jak upstream)
+//   [plugins]   android-library            = com.android.library (AGP 9.5.1 od 12.11.2026, wcześniej 9.4.0 jak upstream)
 //   [libraries] junit4                     = junit:junit (4.13.2)                      [istnieje]
 //               androidx-test-runner       = androidx.test:runner                     [BRAK, prośba w CONTRACT-NOTES]
 //               androidx-test-ext-junit    = androidx.test.ext:junit                  [BRAK, prośba w CONTRACT-NOTES]
