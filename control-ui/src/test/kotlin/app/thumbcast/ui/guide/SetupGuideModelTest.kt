@@ -90,7 +90,7 @@ class SetupGuideModelTest {
     @Test
     fun shareTextHasUrlOnOwnLine() {
         val text = GuideLinks.shareText(" Download Sunshine ", GuideLinks.SUNSHINE_RELEASES)
-        assertEquals("Download Sunshine\nhttps://github.com/SunshineStream/Sunshine/releases", text)
+        assertEquals("Download Sunshine\nhttps://github.com/SunshineStream/Sunshine/releases/latest", text)
         assertTrue(GuideLinks.VIGEMBUS_RELEASES.startsWith("https://"))
         assertTrue(GuideLinks.TAILSCALE_DOWNLOAD.startsWith("https://"))
     }

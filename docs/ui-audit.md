@@ -156,6 +156,8 @@ Kreator ma 4 kroki, każdy z przyciskiem „Pomiń” i paskiem postępu:
 3. **Przygotuj PC.** Skrót poradnika w 3 punktach oraz [Pokaż pełny poradnik] i [Wyślij sobie link] (systemowy share sheet z adresem pobierania Sunshine).
 4. **Połącz.** Instrukcja: „Telefon i PC w tym samym Wi-Fi. Wybierz komputer z listy i wpisz PIN w Sunshine”. Na końcu kreator wraca do listy PC.
 
+**Zmiana 12.11.2026 (uwagi właściciela po pierwszej wersji):** kreator ma 5 kroków. Nowy krok 4 „Zainstaluj sterownik pada” (ViGEmBus) pojawia się zawsze, niezależnie od kafla. Sunshine i ViGEmBus są opisane krok po kroku przez GitHub, dla osoby, która go nie zna. ViGEmBus to „sterownik wymagany do grania padem”, bez „za darmo”, z dopiskiem, że istnieją płatne zamienniki. Każdy punkt i dopisek ma ikonę. Szczegóły: `control-ui/docs/ui.md`.
+
 Zasady uruchamiania:
 - Kreator nie pokazuje się, gdy baza PC nie jest pusta (aktualizacja aplikacji); wtedy tylko zapisuje wersję.
 - Ponowne uruchomienie: Ustawienia → Pomoc → „Uruchom konfigurację od nowa”.

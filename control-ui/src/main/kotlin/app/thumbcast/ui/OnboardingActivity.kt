@@ -7,6 +7,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.StringRes
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -69,27 +70,34 @@ class OnboardingActivity : ComponentActivity() {
                         onBack = { handle(state.back()) },
                         onSkip = { handle(state.skip()) },
                         onSelect = { choiceName = it.name },
-                        onOpenGuide = {
-                            startActivity(UiContract.setupGuideIntent(this, UiContract.SECTION_INSTALL))
+                        onOpenGuide = { section ->
+                            startActivity(UiContract.setupGuideIntent(this, section))
                         },
-                        onShareLink = {
-                            val ok = LinkActions.share(
-                                context = this,
-                                chooserTitle = getString(R.string.ui_share_chooser_title),
-                                subject = getString(R.string.ui_share_sunshine_subject),
-                                text = GuideLinks.shareText(
-                                    getString(R.string.ui_share_sunshine_hint),
-                                    GuideLinks.SUNSHINE_RELEASES,
-                                ),
-                                url = GuideLinks.SUNSHINE_RELEASES,
-                            )
-                            if (!ok) scope.launch { snackbarHostState.showSnackbar(linkFailed) }
+                        onShareSunshine = {
+                            if (!shareLink(R.string.ui_share_sunshine_subject, R.string.ui_share_sunshine_hint, GuideLinks.SUNSHINE_RELEASES)) {
+                                scope.launch { snackbarHostState.showSnackbar(linkFailed) }
+                            }
+                        },
+                        onShareDriver = {
+                            if (!shareLink(R.string.ui_share_vigembus_subject, R.string.ui_share_vigembus_hint, GuideLinks.VIGEMBUS_RELEASES)) {
+                                scope.launch { snackbarHostState.showSnackbar(linkFailed) }
+                            }
                         },
                     ),
                 )
             }
         }
     }
+
+    /** Share sheet z linkiem pobierania; `false` = brak aplikacji (adres trafił do schowka). */
+    private fun shareLink(@StringRes subject: Int, @StringRes hint: Int, url: String): Boolean =
+        LinkActions.share(
+            context = this,
+            chooserTitle = getString(R.string.ui_share_chooser_title),
+            subject = getString(subject),
+            text = GuideLinks.shareText(getString(hint), url),
+            url = url,
+        )
 
     private fun finishWith(outcome: OnboardingOutcome) {
         when (outcome) {

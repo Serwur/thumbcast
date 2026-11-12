@@ -73,14 +73,24 @@ poza grą, `configChanges` jak w `:app`), motyw okna `Theme.ThumbcastUi` (tło `
 
 ### Kreator (`OnboardingActivity`, `OnboardingScreen.kt`)
 
-Cztery kroki (sekcja 3 audytu), na każdym „Krok N z 4”, pasek postępu i „Pomiń” u góry, na dole „Wstecz”
-(od kroku 2) i przycisk główny:
-1. Powitanie: tytuł, 3 korzyści z ikonami, [Zaczynamy].
+Pięć kroków (sekcja 3 audytu; krok 4 dodany 12.11.2026), na każdym „Krok N z 5”, pasek postępu i „Pomiń”
+u góry, na dole „Wstecz” (od kroku 2) i przycisk główny. Każdy krok ma dużą ikonę nad tytułem, każdy punkt ikonę
+z numerem w rogu (`IconStep`), dopiski mają małą ikonę (`NoteRow`):
+1. Powitanie: tytuł, 4 korzyści z ikonami (dotyk/pad, PC robi pracę, parowanie PIN-em, poza domem), [Zaczynamy].
 2. „Czym grasz najczęściej?”: 5 kafli (wybór jednokrotny, `Role.RadioButton`, kółko wyboru obok koloru),
    domyślnie „Pad PS4 / PS5”, dopisek „Zmienisz to w Ustawieniach”. Na szerokim ekranie (≥ 560 dp) dwie kolumny.
-3. „Przygotuj PC”: 3 punkty, [Wyślij sobie link] (systemowy share sheet: jedna linia podpowiedzi i adres wydań
-   Sunshine) i [Pokaż pełny poradnik] (`SetupGuideActivity` od sekcji `install`).
-4. „Połącz”: 3 punkty (to samo Wi-Fi, wybór PC, PIN w Sunshine), przycisk [Przejdź do listy komputerów].
+3. „Zainstaluj Sunshine na PC”: [Wyślij sobie link] (share sheet: podpowiedź z nazwą pliku i adres
+   `releases/latest`) i [Pokaż pełny poradnik] (sekcja `install`) nad krokami, potem 8 punktów prowadzących przez
+   GitHub dla laika: strona GitHub bez konta, sekcja Assets i „Show all … assets”, plik
+   `Sunshine-Windows-AMD64-installer.msi` (Ctrl+F `installer.msi`), instalator, `https://localhost:47990`,
+   ostrzeżenie przeglądarki o certyfikacie, login i hasło.
+4. „Zainstaluj sterownik pada”: zawsze, niezależnie od kafla z kroku 2 (decyzja właściciela 12.11.2026). ViGEmBus
+   opisany jako sterownik wymagany do grania padem (bez „za darmo”); 6 punktów: link, żółta informacja
+   „archived” to norma, plik `ViGEmBus_1.22.0_x64_x86_arm64.exe`, instalacja, restart, Sunshine → Input → Xbox 360.
+   Dopisek: są płatne zamienniki (LizardByte Virtual HID Driver), ViGEmBus wystarczy. Przyciski jak w kroku 3
+   (link ViGEmBus, poradnik od sekcji `gamepad`).
+5. „Połącz”: 3 punkty (to samo Wi-Fi, wybór PC, PIN w Sunshine), dopiski o dodaniu PC po IP i o tym, gdzie
+   zawsze jest poradnik, przycisk [Przejdź do listy komputerów].
 
 Mapowanie kafli na wynik (`onboarding/OnboardingFlow.kt`, `OnboardingChoice`):
 
@@ -94,11 +104,11 @@ Mapowanie kafli na wynik (`onboarding/OnboardingFlow.kt`, `OnboardingChoice`):
 
 Wynik i nawigacja (decyzja P1, logika w `OnboardingState`, testy `OnboardingFlowTest`):
 
-| Akcja | Krok 1 | Kroki 2–4 |
+| Akcja | Krok 1 | Kroki 2–5 |
 |---|---|---|
 | „Pomiń” | `RESULT_CANCELED` (nic nie wybrano, `:app` zostawia ustawienia domyślne) | `RESULT_OK` z bieżącym zaznaczeniem (domyślnie Pad PS4 / PS5) |
 | Wstecz (przycisk, gest systemowy) | zamknięcie z `RESULT_CANCELED` | poprzedni krok, wybór zostaje |
-| Przycisk główny | następny krok | następny krok; na kroku 4 `RESULT_OK` z zaznaczeniem |
+| Przycisk główny | następny krok | następny krok; na kroku 5 `RESULT_OK` z zaznaczeniem |
 
 Uzasadnienie „Pomiń” od kroku 2: kafel jest już widocznie zaznaczony, więc użytkownik, który go zostawił,
 dostaje to, co widział. W obu przypadkach `:app` zapisuje wersję kreatora (patrz kontrakt). Stan (krok, kafel)
@@ -107,12 +117,17 @@ przetrwa obrót ekranu (`rememberSaveable`).
 ### Poradnik (`SetupGuideActivity`, `SetupGuideScreen.kt`)
 
 Pasek u góry ze strzałką wstecz i tytułem „Jak podłączyć PC”, wstęp z licznikiem „Zrobione: N z 5”, sześć
-rozwijanych kart w kolejności `UiContract.GUIDE_SECTIONS` (sekcja 4 audytu): instalacja Sunshine, wirtualny pad,
-parowanie, gry, poza domem, „Nie działa?”. Każda karta: ikona, „N. Tytuł”, numerowane kroki (`string-array`),
-kod (`https://localhost:47990`, `100.x.y.z`, nazwy plików) czcionką o stałej szerokości.
+rozwijanych kart w kolejności `UiContract.GUIDE_SECTIONS` (sekcja 4 audytu): instalacja Sunshine, sterownik pada
+(ViGEmBus), parowanie, gry, poza domem, „Nie działa?”. Każda karta: ikona, „N. Tytuł”, kroki z ikonami i numerem
+(`string-array` + `GuideSectionUi.stepIcons`, ta sama kolejność), kod (`https://localhost:47990`, `100.x.y.z`,
+nazwy plików) czcionką o stałej szerokości, dopiski z ikonami (`notes`). Sekcje Sunshine i sterownika prowadzą
+przez GitHub krok po kroku (Assets, nazwa pliku, ostrzeżenia Windows i przeglądarki); sterownik nie jest
+opisany jako darmowy, płatne zamienniki są w dopisku.
 
-- Strony pobierania (`guide/GuideLinks`): Sunshine `https://github.com/SunshineStream/Sunshine/releases`,
-  ViGEmBus `https://github.com/nefarius/ViGEmBus/releases`, Tailscale `https://tailscale.com/download`. Przy każdej
+- Strony pobierania (`guide/GuideLinks`): Sunshine `https://github.com/SunshineStream/Sunshine/releases/latest`,
+  ViGEmBus `https://github.com/nefarius/ViGEmBus/releases/latest` (od razu strona jednego wydania z Assets),
+  Tailscale `https://tailscale.com/download`. Nazwy plików w tekstach sprawdzone 12.11.2026 (Sunshine
+  v2026.914.233613, ViGEmBus v1.22.0, ostatnie wydanie zarchiwizowanego repo). Przy każdej
   [Wyślij link na PC] (share sheet z jedną linią podpowiedzi) i [Otwórz stronę] (`ACTION_VIEW`); adres da się
   zaznaczyć i skopiować. Brak aplikacji (`ActivityNotFoundException`): adres trafia do schowka, komunikat w snackbarze.
 - „Nie działa?” ma przyciski „Zobacz: …” do sekcji pada i „Poza domem” (rozwija i przewija).
@@ -127,7 +142,7 @@ kod (`https://localhost:47990`, `100.x.y.z`, nazwy plików) czcionką o stałej 
 
 Obszary dotyku ≥ 48 dp (przyciski, nagłówki kart 64 dp, wiersz pola wyboru), tytuły kroków i nagłówki kart jako
 `heading`, nagłówek karty ma etykietę akcji „Rozwiń”/„Zwiń” i stan „Rozwinięte”/„Zwinięte”, numerowany krok jest
-czytany jako jedna pozycja, „Krok N z 4” to `liveRegion`. Ikony są dekoracyjne (obok zawsze jest tekst), strzałka
+czytany jako jedna pozycja, „Krok N z 5” to `liveRegion`. Ikony są dekoracyjne (obok zawsze jest tekst), strzałka
 wstecz ma opis „Wróć”. Kolory z palety D1; stan nigdy tylko kolorem (kółko wyboru, ✓ z napisem).
 
 ### Ikony (`UiIcons.kt`)
@@ -143,12 +158,13 @@ zależności `material-icons-*` i bez zasobów `drawable` w module.
 | `guide/SetupGuideModel.kt` | `GuideLinks`, `SetupGuideModel`, `parseInlineCode` (czysta logika) |
 | `OnboardingActivity.kt`, `OnboardingScreen.kt` | kreator |
 | `SetupGuideActivity.kt`, `SetupGuideScreen.kt` | poradnik, treść sekcji (`GUIDE_SECTIONS_UI`) |
-| `UiComponents.kt` | `LinkActions` (otwieranie i share sheet), `InlineCodeText`, `NumberedStep` |
+| `UiComponents.kt` | `LinkActions` (otwieranie i share sheet), `InlineCodeText`, `IconStep`/`IconSteps`, `NoteRow`, `NumberedStep` |
 
 ## Teksty
 
 `res/values/strings.xml` (angielski, domyślny) i `res/values-pl/strings.xml` (polski, główny), prefiks `ui_`,
-bo zasoby bibliotek łączą się z zasobami `:app`. Kroki są w `string-array` (ta sama liczba pozycji w obu językach),
+bo zasoby bibliotek łączą się z zasobami `:app`. Kroki są w `string-array` (ta sama liczba pozycji w obu językach
+i tyle samo ikon w kodzie; bez ikony krok dostaje sam numer),
 kod zapisuje się w znakach `` ` ``. Treść poradnika pochodzi z `docs/host-setup.md`, `docs/host-apps.md`,
 `docs/tailscale.md` i `docs/DECISIONS.md`; przy zmianie tych dokumentów sprawdź poradnik. Nazwy pozycji menu `:app`
 użyte w tekstach: „Adresy połączenia”, „Dodaj adres”, „Ustawienia gry” (z audytu, U15), „Jakość obrazu” (D7).

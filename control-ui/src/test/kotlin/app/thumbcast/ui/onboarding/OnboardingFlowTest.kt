@@ -9,16 +9,17 @@ import org.junit.Test
 class OnboardingFlowTest {
 
     @Test
-    fun fourStepsInSpecOrder() {
-        assertEquals(4, OnboardingStep.COUNT)
+    fun fiveStepsInSpecOrder() {
+        assertEquals(5, OnboardingStep.COUNT)
         assertEquals(
             listOf(
-                OnboardingStep.WELCOME, OnboardingStep.DEVICE, OnboardingStep.PREPARE_PC, OnboardingStep.CONNECT,
+                OnboardingStep.WELCOME, OnboardingStep.DEVICE, OnboardingStep.PREPARE_PC,
+                OnboardingStep.GAMEPAD_DRIVER, OnboardingStep.CONNECT,
             ),
             OnboardingStep.entries,
         )
         assertEquals(1, OnboardingStep.WELCOME.number)
-        assertEquals(4, OnboardingStep.CONNECT.number)
+        assertEquals(5, OnboardingStep.CONNECT.number)
     }
 
     @Test
@@ -47,7 +48,9 @@ class OnboardingFlowTest {
     @Test
     fun nextWalksAllStepsAndFinishesWithSelection() {
         var state = OnboardingState().select(OnboardingChoice.MOUSE_KEYBOARD)
-        for (expected in listOf(OnboardingStep.DEVICE, OnboardingStep.PREPARE_PC, OnboardingStep.CONNECT)) {
+        for (expected in listOf(
+            OnboardingStep.DEVICE, OnboardingStep.PREPARE_PC, OnboardingStep.GAMEPAD_DRIVER, OnboardingStep.CONNECT,
+        )) {
             val outcome = state.next()
             state = (outcome as OnboardingOutcome.Show).state
             assertEquals(expected, state.step)
@@ -64,7 +67,7 @@ class OnboardingFlowTest {
         assertEquals(OnboardingOutcome.Cancel, OnboardingState().back())
         val onConnect = OnboardingState(OnboardingStep.CONNECT, OnboardingChoice.TOUCH_XBOX)
         assertEquals(
-            OnboardingOutcome.Show(OnboardingState(OnboardingStep.PREPARE_PC, OnboardingChoice.TOUCH_XBOX)),
+            OnboardingOutcome.Show(OnboardingState(OnboardingStep.GAMEPAD_DRIVER, OnboardingChoice.TOUCH_XBOX)),
             onConnect.back(),
         )
         assertEquals(
@@ -90,8 +93,24 @@ class OnboardingFlowTest {
 
     @Test
     fun progressGrowsPerStep() {
-        assertEquals(0.25f, OnboardingState(OnboardingStep.WELCOME).progress, 0.0001f)
+        assertEquals(0.2f, OnboardingState(OnboardingStep.WELCOME).progress, 0.0001f)
         assertEquals(1f, OnboardingState(OnboardingStep.CONNECT).progress, 0.0001f)
+    }
+
+    @Test
+    fun driverStepIsShownForEveryChoice() {
+        // Sterownik pada jest częścią kreatora zawsze, także przy sterowaniu myszą i klawiaturą.
+        for (choice in OnboardingChoice.entries) {
+            var state = OnboardingState().select(choice)
+            val seen = mutableListOf(state.step)
+            while (true) {
+                val outcome = state.next()
+                if (outcome !is OnboardingOutcome.Show) break
+                state = outcome.state
+                seen += state.step
+            }
+            assertEquals(choice.name, OnboardingStep.entries, seen)
+        }
     }
 
     @Test

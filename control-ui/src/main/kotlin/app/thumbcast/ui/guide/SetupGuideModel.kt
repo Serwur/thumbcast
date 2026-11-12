@@ -4,11 +4,16 @@ import app.thumbcast.ui.UiContract
 
 /** Strony pobierania używane w kreatorze i poradniku (źródło: docs/host-setup.md, docs/tailscale.md). */
 object GuideLinks {
-    /** Wydania Sunshine (repo przeniesione z LizardByte/Sunshine; stary adres przekierowuje). */
-    const val SUNSHINE_RELEASES: String = "https://github.com/SunshineStream/Sunshine/releases"
+    /**
+     * Najnowsze stabilne wydanie Sunshine (repo przeniesione z LizardByte/Sunshine; stary adres przekierowuje).
+     * `/releases/latest` otwiera od razu stronę jednego wydania z listą plików (Assets), bez wersji testowych.
+     * Nazwy plików w tekstach (`Sunshine-Windows-AMD64-installer.msi`, `ViGEmBus_1.22.0_x64_x86_arm64.exe`)
+     * sprawdzone 12.11.2026 dla Sunshine v2026.914.233613 i ViGEmBus v1.22.0 (ostatnie wydanie, repo zarchiwizowane).
+     */
+    const val SUNSHINE_RELEASES: String = "https://github.com/SunshineStream/Sunshine/releases/latest"
 
-    /** ViGEmBus 1.17+ (repo zarchiwizowane, darmowy sterownik pada). */
-    const val VIGEMBUS_RELEASES: String = "https://github.com/nefarius/ViGEmBus/releases"
+    /** ViGEmBus, sterownik pada wymagany do grania padem. */
+    const val VIGEMBUS_RELEASES: String = "https://github.com/nefarius/ViGEmBus/releases/latest"
 
     const val TAILSCALE_DOWNLOAD: String = "https://tailscale.com/download"
 

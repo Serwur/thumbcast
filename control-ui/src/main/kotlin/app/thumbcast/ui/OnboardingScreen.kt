@@ -33,6 +33,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -66,8 +67,10 @@ internal class OnboardingActions(
     val onBack: () -> Unit,
     val onSkip: () -> Unit,
     val onSelect: (OnboardingChoice) -> Unit,
-    val onOpenGuide: () -> Unit,
-    val onShareLink: () -> Unit,
+    /** Poradnik otwarty na sekcji ([UiContract.SECTION_INSTALL], [UiContract.SECTION_GAMEPAD]). */
+    val onOpenGuide: (String) -> Unit,
+    val onShareSunshine: () -> Unit,
+    val onShareDriver: () -> Unit,
 )
 
 /** Kreator pierwszego uruchomienia (docs/ui-audit.md, sekcja 3): pasek postępu, „Pomiń”, treść kroku, przyciski. */
@@ -108,7 +111,14 @@ internal fun OnboardingScreen(
                     when (step) {
                         OnboardingStep.WELCOME -> WelcomeStep()
                         OnboardingStep.DEVICE -> DeviceStep(state.choice, actions.onSelect)
-                        OnboardingStep.PREPARE_PC -> PreparePcStep(actions.onOpenGuide, actions.onShareLink)
+                        OnboardingStep.PREPARE_PC -> PreparePcStep(
+                            onOpenGuide = { actions.onOpenGuide(UiContract.SECTION_INSTALL) },
+                            onShareLink = actions.onShareSunshine,
+                        )
+                        OnboardingStep.GAMEPAD_DRIVER -> DriverStep(
+                            onOpenGuide = { actions.onOpenGuide(UiContract.SECTION_GAMEPAD) },
+                            onShareLink = actions.onShareDriver,
+                        )
                         OnboardingStep.CONNECT -> ConnectStep()
                     }
                 }
@@ -191,15 +201,25 @@ private fun OnboardingBottomBar(step: OnboardingStep, onBack: () -> Unit, onNext
 @StringRes
 private fun primaryLabel(step: OnboardingStep): Int = when (step) {
     OnboardingStep.WELCOME -> R.string.ui_onboarding_start
-    OnboardingStep.DEVICE, OnboardingStep.PREPARE_PC -> R.string.ui_onboarding_next
+    OnboardingStep.DEVICE, OnboardingStep.PREPARE_PC, OnboardingStep.GAMEPAD_DRIVER -> R.string.ui_onboarding_next
     OnboardingStep.CONNECT -> R.string.ui_onboarding_finish
 }
 
 // ----- Kroki -----
 
+/** Tytuł kroku z dużą ikoną nad nim (ikona dekoracyjna, tytuł jest nagłówkiem). */
 @Composable
-private fun StepTitle(@StringRes title: Int, @StringRes subtitle: Int?) {
+private fun StepTitle(icon: ImageVector, @StringRes title: Int, @StringRes subtitle: Int?) {
     Column(verticalArrangement = Arrangement.spacedBy(ThumbcastDimens.SpaceSmall)) {
+        Box(
+            modifier = Modifier
+                .padding(bottom = ThumbcastDimens.SpaceXSmall)
+                .size(56.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.shapes.large),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
+        }
         Text(
             text = stringResource(title),
             style = MaterialTheme.typography.headlineSmall,
@@ -218,11 +238,13 @@ private fun StepTitle(@StringRes title: Int, @StringRes subtitle: Int?) {
 
 @Composable
 private fun WelcomeStep() {
-    StepTitle(R.string.ui_onboarding_welcome_title, R.string.ui_onboarding_welcome_subtitle)
+    StepTitle(UiIcons.VideogameAsset, R.string.ui_onboarding_welcome_title, R.string.ui_onboarding_welcome_subtitle)
     Spacer(Modifier.size(ThumbcastDimens.SpaceXSmall))
     Benefit(UiIcons.TouchApp, R.string.ui_onboarding_benefit_controls_title, R.string.ui_onboarding_benefit_controls_body)
     Benefit(UiIcons.Computer, R.string.ui_onboarding_benefit_pc_title, R.string.ui_onboarding_benefit_pc_body)
+    Benefit(UiIcons.Lock, R.string.ui_onboarding_benefit_secure_title, R.string.ui_onboarding_benefit_secure_body)
     Benefit(UiIcons.VpnKey, R.string.ui_onboarding_benefit_remote_title, R.string.ui_onboarding_benefit_remote_body)
+    NoteRow(UiIcons.DesktopWindows, stringResource(R.string.ui_onboarding_welcome_note))
 }
 
 @Composable
@@ -280,7 +302,7 @@ private val CHOICES: List<ChoiceUi> by lazy {
 
 @Composable
 private fun DeviceStep(selected: OnboardingChoice, onSelect: (OnboardingChoice) -> Unit) {
-    StepTitle(R.string.ui_onboarding_device_title, R.string.ui_onboarding_device_subtitle)
+    StepTitle(UiIcons.Gamepad, R.string.ui_onboarding_device_title, R.string.ui_onboarding_device_subtitle)
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         // Na tablecie i w poziomie dwie kolumny kafli, na telefonie w pionie jedna.
         val columns = if (maxWidth >= 560.dp) 2 else 1
@@ -308,11 +330,7 @@ private fun DeviceStep(selected: OnboardingChoice, onSelect: (OnboardingChoice) 
             }
         }
     }
-    Text(
-        text = stringResource(R.string.ui_onboarding_device_note),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    NoteRow(UiIcons.Settings, stringResource(R.string.ui_onboarding_device_note))
 }
 
 @Composable
@@ -342,18 +360,44 @@ private fun ChoiceTile(item: ChoiceUi, selected: Boolean, onClick: () -> Unit, m
     }
 }
 
+/** Ikony kroków 3–5, w kolejności pozycji `string-array` (ta sama liczba pozycji w PL i EN). */
+private val PREPARE_ICONS: List<ImageVector> by lazy {
+    listOf(
+        UiIcons.Share, UiIcons.Language, UiIcons.SwipeDown, UiIcons.Download,
+        UiIcons.InstallDesktop, UiIcons.Link, UiIcons.VerifiedUser, UiIcons.Person,
+    )
+}
+
+private val DRIVER_ICONS: List<ImageVector> by lazy {
+    listOf(UiIcons.Share, UiIcons.Warning, UiIcons.Download, UiIcons.InstallDesktop, UiIcons.RestartAlt, UiIcons.Settings)
+}
+
+private val CONNECT_ICONS: List<ImageVector> by lazy {
+    listOf(UiIcons.Wifi, UiIcons.Computer, UiIcons.Pin)
+}
+
 @Composable
 private fun PreparePcStep(onOpenGuide: () -> Unit, onShareLink: () -> Unit) {
-    StepTitle(R.string.ui_onboarding_prepare_title, R.string.ui_onboarding_prepare_subtitle)
-    val points = stringArrayResource(R.array.ui_onboarding_prepare_points)
-    Column(verticalArrangement = Arrangement.spacedBy(ThumbcastDimens.SpaceMedium)) {
-        points.forEachIndexed { i, text -> NumberedStep(number = i + 1, text = text) }
-    }
-    Column(
-        modifier = Modifier.padding(top = ThumbcastDimens.SpaceSmall),
-        verticalArrangement = Arrangement.spacedBy(ThumbcastDimens.SpaceSmall),
-    ) {
-        OutlinedButton(
+    StepTitle(UiIcons.InstallDesktop, R.string.ui_onboarding_prepare_title, R.string.ui_onboarding_prepare_subtitle)
+    LinkButtons(onShareLink, onOpenGuide)
+    IconSteps(stringArrayResource(R.array.ui_onboarding_prepare_points), PREPARE_ICONS)
+    NoteRow(UiIcons.Info, stringResource(R.string.ui_onboarding_send_link_hint))
+}
+
+/** Sterownik pada: krok obowiązkowy w kreatorze, niezależnie od wybranego sterowania. */
+@Composable
+private fun DriverStep(onOpenGuide: () -> Unit, onShareLink: () -> Unit) {
+    StepTitle(UiIcons.SportsEsports, R.string.ui_onboarding_driver_title, R.string.ui_onboarding_driver_subtitle)
+    LinkButtons(onShareLink, onOpenGuide)
+    IconSteps(stringArrayResource(R.array.ui_onboarding_driver_points), DRIVER_ICONS)
+    NoteRow(UiIcons.Payments, stringResource(R.string.ui_onboarding_driver_paid_note))
+}
+
+/** „Wyślij sobie link” (share sheet) i „Pokaż pełny poradnik” nad krokami, żeby były widoczne bez przewijania. */
+@Composable
+private fun LinkButtons(onShareLink: () -> Unit, onOpenGuide: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(ThumbcastDimens.SpaceXSmall)) {
+        FilledTonalButton(
             onClick = onShareLink,
             modifier = Modifier
                 .fillMaxWidth()
@@ -363,7 +407,7 @@ private fun PreparePcStep(onOpenGuide: () -> Unit, onShareLink: () -> Unit) {
             Spacer(Modifier.size(ThumbcastDimens.SpaceSmall))
             Text(stringResource(R.string.ui_onboarding_send_link))
         }
-        TextButton(
+        OutlinedButton(
             onClick = onOpenGuide,
             modifier = Modifier
                 .fillMaxWidth()
@@ -374,23 +418,12 @@ private fun PreparePcStep(onOpenGuide: () -> Unit, onShareLink: () -> Unit) {
             Text(stringResource(R.string.ui_onboarding_show_guide))
         }
     }
-    Text(
-        text = stringResource(R.string.ui_onboarding_send_link_hint),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
 }
 
 @Composable
 private fun ConnectStep() {
-    StepTitle(R.string.ui_onboarding_connect_title, R.string.ui_onboarding_connect_subtitle)
-    val points = stringArrayResource(R.array.ui_onboarding_connect_points)
-    Column(verticalArrangement = Arrangement.spacedBy(ThumbcastDimens.SpaceMedium)) {
-        points.forEachIndexed { i, text -> NumberedStep(number = i + 1, text = text) }
-    }
-    Text(
-        text = stringResource(R.string.ui_onboarding_connect_note),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    StepTitle(UiIcons.Wifi, R.string.ui_onboarding_connect_title, R.string.ui_onboarding_connect_subtitle)
+    IconSteps(stringArrayResource(R.array.ui_onboarding_connect_points), CONNECT_ICONS)
+    NoteRow(UiIcons.AddCircle, stringResource(R.string.ui_onboarding_connect_note))
+    NoteRow(UiIcons.Help, stringResource(R.string.ui_onboarding_connect_help))
 }

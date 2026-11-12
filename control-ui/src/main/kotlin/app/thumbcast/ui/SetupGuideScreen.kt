@@ -62,17 +62,24 @@ import app.thumbcast.ui.guide.SetupGuideModel
 /** Strona pobierania w sekcji poradnika: przycisk „Wyślij link na PC” (share sheet) i „Otwórz stronę”. */
 internal class GuideLinkUi(@StringRes val label: Int, val url: String, @StringRes val shareHint: Int)
 
-/** Treść jednej sekcji poradnika (docs/ui-audit.md, sekcja 4). Kroki są w `string-array`, kod w znakach `` ` ``. */
+/** Uwaga pod krokami sekcji: ikona i tekst. */
+internal class GuideNoteUi(val icon: ImageVector, @StringRes val text: Int)
+
+/**
+ * Treść jednej sekcji poradnika (docs/ui-audit.md, sekcja 4). Kroki są w `string-array`, kod w znakach `` ` ``.
+ * [stepIcons] idą w kolejności pozycji `string-array` (ta sama liczba pozycji w PL i EN).
+ */
 internal class GuideSectionUi(
     val id: String,
     val icon: ImageVector,
     @StringRes val title: Int,
     @StringRes val intro: Int?,
     @ArrayRes val steps: Int,
+    val stepIcons: List<ImageVector>,
     val links: List<GuideLinkUi> = emptyList(),
-    /** Sekcje, do których prowadzą przyciski „Zobacz: …” (np. z „Nie działa?” do „Wirtualny pad”). */
+    /** Sekcje, do których prowadzą przyciski „Zobacz: …” (np. z „Nie działa?” do „Sterownik pada”). */
     val jumps: List<String> = emptyList(),
-    @StringRes val note: Int? = null,
+    val notes: List<GuideNoteUi> = emptyList(),
 )
 
 internal val GUIDE_SECTIONS_UI: List<GuideSectionUi> by lazy {
@@ -83,10 +90,17 @@ internal val GUIDE_SECTIONS_UI: List<GuideSectionUi> by lazy {
             title = R.string.ui_guide_install_title,
             intro = R.string.ui_guide_install_intro,
             steps = R.array.ui_guide_install_steps,
+            stepIcons = listOf(
+                UiIcons.Language, UiIcons.SwipeDown, UiIcons.Download, UiIcons.InstallDesktop,
+                UiIcons.Link, UiIcons.VerifiedUser, UiIcons.Person,
+            ),
             links = listOf(
                 GuideLinkUi(R.string.ui_guide_link_sunshine, GuideLinks.SUNSHINE_RELEASES, R.string.ui_share_sunshine_hint),
             ),
-            note = R.string.ui_guide_install_note,
+            notes = listOf(
+                GuideNoteUi(UiIcons.Computer, R.string.ui_guide_install_note_arm),
+                GuideNoteUi(UiIcons.Info, R.string.ui_guide_install_note),
+            ),
         ),
         GuideSectionUi(
             id = UiContract.SECTION_GAMEPAD,
@@ -94,16 +108,25 @@ internal val GUIDE_SECTIONS_UI: List<GuideSectionUi> by lazy {
             title = R.string.ui_guide_gamepad_title,
             intro = R.string.ui_guide_gamepad_intro,
             steps = R.array.ui_guide_gamepad_steps,
+            stepIcons = listOf(
+                UiIcons.Language, UiIcons.Warning, UiIcons.Download, UiIcons.InstallDesktop,
+                UiIcons.RestartAlt, UiIcons.Settings,
+            ),
             links = listOf(
                 GuideLinkUi(R.string.ui_guide_link_vigembus, GuideLinks.VIGEMBUS_RELEASES, R.string.ui_share_vigembus_hint),
+            ),
+            notes = listOf(
+                GuideNoteUi(UiIcons.Payments, R.string.ui_guide_gamepad_paid_note),
+                GuideNoteUi(UiIcons.Keyboard, R.string.ui_guide_gamepad_keyboard_note),
             ),
         ),
         GuideSectionUi(
             id = UiContract.SECTION_PAIR,
-            icon = UiIcons.Lock,
+            icon = UiIcons.Pin,
             title = R.string.ui_guide_pair_title,
             intro = null,
             steps = R.array.ui_guide_pair_steps,
+            stepIcons = listOf(UiIcons.Wifi, UiIcons.Smartphone, UiIcons.Pin, UiIcons.CheckCircle, UiIcons.AddCircle),
         ),
         GuideSectionUi(
             id = UiContract.SECTION_APPS,
@@ -111,13 +134,15 @@ internal val GUIDE_SECTIONS_UI: List<GuideSectionUi> by lazy {
             title = R.string.ui_guide_apps_title,
             intro = null,
             steps = R.array.ui_guide_apps_steps,
+            stepIcons = listOf(UiIcons.Apps, UiIcons.VideogameAsset, UiIcons.PlayArrow, UiIcons.Smartphone, UiIcons.DesktopWindows),
         ),
         GuideSectionUi(
             id = UiContract.SECTION_REMOTE,
-            icon = UiIcons.VpnKey,
+            icon = UiIcons.TravelExplore,
             title = R.string.ui_guide_remote_title,
             intro = R.string.ui_guide_remote_intro,
             steps = R.array.ui_guide_remote_steps,
+            stepIcons = listOf(UiIcons.Download, UiIcons.Wifi, UiIcons.AddCircle, UiIcons.Router, UiIcons.Warning),
             links = listOf(
                 GuideLinkUi(R.string.ui_guide_link_tailscale, GuideLinks.TAILSCALE_DOWNLOAD, R.string.ui_share_tailscale_hint),
             ),
@@ -128,6 +153,7 @@ internal val GUIDE_SECTIONS_UI: List<GuideSectionUi> by lazy {
             title = R.string.ui_guide_troubleshoot_title,
             intro = null,
             steps = R.array.ui_guide_troubleshoot_steps,
+            stepIcons = listOf(UiIcons.WifiOff, UiIcons.SportsEsports, UiIcons.Speed, UiIcons.VpnKey),
             jumps = listOf(UiContract.SECTION_GAMEPAD, UiContract.SECTION_REMOTE),
         ),
     ).also { list -> check(list.map { it.id } == SetupGuideModel.SECTIONS) }
@@ -223,15 +249,27 @@ private fun GuideIntro(done: Set<String>, modifier: Modifier) {
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Text(
-            text = stringResource(
-                R.string.ui_guide_progress,
-                SetupGuideModel.doneCount(done),
-                SetupGuideModel.CHECKABLE_SECTIONS.size,
-            ),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
+        Row(
+            modifier = Modifier.semantics(mergeDescendants = true) {},
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(ThumbcastDimens.SpaceSmall),
+        ) {
+            Icon(
+                UiIcons.CheckCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.size(20.dp),
+            )
+            Text(
+                text = stringResource(
+                    R.string.ui_guide_progress,
+                    SetupGuideModel.doneCount(done),
+                    SetupGuideModel.CHECKABLE_SECTIONS.size,
+                ),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
 }
 
@@ -266,9 +304,7 @@ private fun GuideSectionCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                stringArrayResource(section.steps).forEachIndexed { i, text ->
-                    NumberedStep(number = i + 1, text = text)
-                }
+                IconSteps(stringArrayResource(section.steps), section.stepIcons)
                 for (link in section.links) {
                     LinkBlock(link, actions)
                 }
@@ -277,15 +313,15 @@ private fun GuideSectionCard(
                         onClick = { actions.onJump(target) },
                         modifier = Modifier.heightIn(min = ThumbcastDimens.TouchTarget),
                     ) {
+                        Icon(sectionUi(target).icon, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.size(ThumbcastDimens.SpaceSmall))
                         Text(stringResource(R.string.ui_guide_jump_to, stringResource(sectionUi(target).title)))
+                        Spacer(Modifier.size(ThumbcastDimens.SpaceXSmall))
+                        Icon(UiIcons.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
                     }
                 }
-                if (section.note != null) {
-                    Text(
-                        text = stringResource(section.note),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                for (note in section.notes) {
+                    NoteRow(note.icon, stringResource(note.text))
                 }
                 if (checkable) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)

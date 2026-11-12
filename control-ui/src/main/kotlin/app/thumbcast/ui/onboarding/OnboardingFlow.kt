@@ -8,6 +8,9 @@ enum class OnboardingStep {
     WELCOME,
     DEVICE,
     PREPARE_PC,
+
+    /** Sterownik pada (ViGEmBus). Pokazywany zawsze, niezależnie od wybranego sterowania (decyzja 12.11.2026). */
+    GAMEPAD_DRIVER,
     CONNECT,
     ;
 
@@ -86,7 +89,7 @@ data class OnboardingState(
 
     fun select(newChoice: OnboardingChoice): OnboardingState = copy(choice = newChoice)
 
-    /** Postęp 0..1 dla paska (krok 1 = 1/4). */
+    /** Postęp 0..1 dla paska (krok 1 = 1/[OnboardingStep.COUNT]). */
     val progress: Float get() = step.number.toFloat() / OnboardingStep.COUNT
 
     companion object {

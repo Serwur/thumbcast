@@ -2,7 +2,8 @@
 <!--
     Teksty :control-ui, angielski (domyślny). Prefiks ui_, bo zasoby bibliotek łączą się z :app. Polski (język główny):
     values-pl/strings.xml, te same klucze i ta sama liczba pozycji w string-array. Fragmenty w znakach ` (adresy,
-    nazwy plików) są rysowane czcionką o stałej szerokości.
+    nazwy plików) są rysowane czcionką o stałej szerokości. Każda pozycja string-array ma ikonę w kodzie
+    (OnboardingScreen.kt, SetupGuideScreen.kt), w tej samej kolejności.
 -->
 <resources>
     <string name="ui_onboarding_title">Setup</string>
@@ -24,8 +25,11 @@
     <string name="ui_onboarding_benefit_controls_body">Play with touch, or connect a gamepad to your phone.</string>
     <string name="ui_onboarding_benefit_pc_title">Your PC does the heavy lifting</string>
     <string name="ui_onboarding_benefit_pc_body">Your phone just shows the picture and passes on your input.</string>
+    <string name="ui_onboarding_benefit_secure_title">Secure pairing</string>
+    <string name="ui_onboarding_benefit_secure_body">You connect your phone and PC once, with a PIN.</string>
     <string name="ui_onboarding_benefit_remote_title">Away from home, too</string>
     <string name="ui_onboarding_benefit_remote_body">Through Tailscale, without opening ports on your router.</string>
+    <string name="ui_onboarding_welcome_note">Setup takes a few minutes. Have your Windows PC at hand.</string>
 
     <!-- Wizard, step 2: what you play with -->
     <string name="ui_onboarding_device_title">What do you usually play with?</string>
@@ -39,21 +43,39 @@
     <string name="ui_choice_pad_playstation">PS4 / PS5 gamepad</string>
     <string name="ui_choice_pad_body">On-screen buttons hide when you connect the gamepad.</string>
     <string name="ui_choice_mouse_keyboard">Mouse and keyboard (MMO)</string>
-    <string name="ui_choice_mouse_keyboard_body">On-screen keys and mouse. Works even without a gamepad driver on the PC.</string>
+    <string name="ui_choice_mouse_keyboard_body">On-screen keys and mouse, like at a computer.</string>
 
-    <!-- Wizard, step 3: prepare the PC -->
-    <string name="ui_onboarding_prepare_title">Prepare your PC</string>
-    <string name="ui_onboarding_prepare_subtitle">Your Windows computer needs Sunshine, a free program.</string>
+    <!-- Wizard, step 3: Sunshine -->
+    <string name="ui_onboarding_prepare_title">Install Sunshine on your PC</string>
+    <string name="ui_onboarding_prepare_subtitle">Sunshine is a free program that sends the picture from your PC to your phone. You get it from GitHub.</string>
     <string-array name="ui_onboarding_prepare_points">
-        <item>Download and install Sunshine (version v2026.914 or newer).</item>
-        <item>On the PC, open `https://localhost:47990` and set a username and password.</item>
-        <item>Want to play with a gamepad? Also install a virtual gamepad (ViGEmBus, free). The guide has the details.</item>
+        <item>Tap “Send yourself the link” (by email, for example) and open the link on your PC.</item>
+        <item>GitHub opens. It is a site where free programs are published. You don\'t need an account.</item>
+        <item>Scroll down to the Assets section (the list of files). If the list is shortened, click “Show all … assets”.</item>
+        <item>Click the file `Sunshine-Windows-AMD64-installer.msi`. Can\'t see it? Press Ctrl+F and type `installer.msi`.</item>
+        <item>Open the downloaded file (Downloads folder) and keep clicking Next. When Windows asks for permission, choose Yes.</item>
+        <item>On the PC, open `https://localhost:47990` in a browser.</item>
+        <item>The browser warns that the connection is not private. That is normal: click Advanced and continue to localhost.</item>
+        <item>Set a Sunshine username and password. Write them down.</item>
     </string-array>
     <string name="ui_onboarding_send_link">Send yourself the link</string>
     <string name="ui_onboarding_show_guide">Show the full guide</string>
     <string name="ui_onboarding_send_link_hint">Send the link by email or a messenger, for example, and open it on your PC.</string>
 
-    <!-- Wizard, step 4: connect -->
+    <!-- Wizard, step 4: gamepad driver (always, whatever was picked in step 2) -->
+    <string name="ui_onboarding_driver_title">Install the gamepad driver</string>
+    <string name="ui_onboarding_driver_subtitle">ViGEmBus is the driver you need to play with a gamepad. With it, games on your PC see your phone as a regular Xbox gamepad.</string>
+    <string-array name="ui_onboarding_driver_points">
+        <item>Tap “Send yourself the link” and open it on your PC. This is a GitHub page too.</item>
+        <item>At the top you will see a yellow note that the project is archived. That is normal: the driver is finished and works.</item>
+        <item>In the Assets section, click the file `ViGEmBus_1.22.0_x64_x86_arm64.exe`.</item>
+        <item>Run the downloaded file and go through the installation. When Windows asks for permission, choose Yes.</item>
+        <item>Restart the PC if the installer asks you to.</item>
+        <item>In Sunshine (`https://localhost:47990`), open Configuration → Input, pick the Xbox 360 gamepad (`x360`) and save.</item>
+    </string-array>
+    <string name="ui_onboarding_driver_paid_note">There are also paid alternatives, such as LizardByte Virtual HID Driver. ViGEmBus is all you need to play.</string>
+
+    <!-- Wizard, step 5: connect -->
     <string name="ui_onboarding_connect_title">Connect</string>
     <string name="ui_onboarding_connect_subtitle">You will do this on the computer list, right after setup.</string>
     <string-array name="ui_onboarding_connect_points">
@@ -62,13 +84,15 @@
         <item>Your phone shows a PIN. On the PC, open `https://localhost:47990`, go to the PIN tab, and enter the code.</item>
     </string-array>
     <string name="ui_onboarding_connect_note">Don\'t see your PC on the list? You can add it by its IP address.</string>
+    <string name="ui_onboarding_connect_help">These instructions are always at hand: “How to connect a PC” on the home screen and in Settings → Help.</string>
 
     <!-- Links and sharing -->
     <string name="ui_link_no_app">No app can open this. The address was copied to the clipboard.</string>
     <string name="ui_share_chooser_title">Send link</string>
     <string name="ui_share_sunshine_subject">Sunshine download</string>
-    <string name="ui_share_sunshine_hint">Download Sunshine for your PC (Windows: Sunshine-Windows-AMD64-installer.msi):</string>
-    <string name="ui_share_vigembus_hint">Download ViGEmBus, the virtual gamepad for Sunshine (version 1.17 or newer):</string>
+    <string name="ui_share_sunshine_hint">Download Sunshine for your PC. On the page, scroll to the Assets section and click Sunshine-Windows-AMD64-installer.msi:</string>
+    <string name="ui_share_vigembus_subject">ViGEmBus gamepad driver</string>
+    <string name="ui_share_vigembus_hint">Download the ViGEmBus gamepad driver. On the page, in the Assets section, click ViGEmBus_1.22.0_x64_x86_arm64.exe:</string>
     <string name="ui_share_tailscale_hint">Download Tailscale for your PC and sign in with the same account as on your phone:</string>
 
     <!-- Guide: common -->
@@ -92,23 +116,30 @@
     <string name="ui_guide_install_title">Install Sunshine on your PC</string>
     <string name="ui_guide_install_intro">Sunshine is a free program that sends the picture from your PC to your phone.</string>
     <string-array name="ui_guide_install_steps">
-        <item>On the PC, download Sunshine v2026.914 or newer. For a regular Windows PC, pick `Sunshine-Windows-AMD64-installer.msi`.</item>
-        <item>Run the installer. Sunshine adds its Windows service and firewall rules on its own.</item>
+        <item>On the PC, open the download page (buttons below). It is GitHub: free programs are published there, and you don\'t need an account.</item>
+        <item>The page shows the newest Sunshine version. Scroll down to the Assets section (the list of files). If the list is shortened, click “Show all … assets”.</item>
+        <item>Click `Sunshine-Windows-AMD64-installer.msi` to download it. Can\'t see it? Press Ctrl+F and type `installer.msi`.</item>
+        <item>Open the downloaded file (Downloads folder) and keep clicking Next. When Windows asks for permission, choose Yes. Sunshine adds its Windows service and firewall rules on its own.</item>
         <item>On the PC, open `https://localhost:47990` in a browser.</item>
+        <item>The browser warns that the connection is not private. That is normal with Sunshine: click Advanced and continue to localhost.</item>
         <item>Set an admin username and password. Remember them.</item>
     </string-array>
+    <string name="ui_guide_install_note_arm">PC with an ARM processor (such as Snapdragon)? Pick `Sunshine-Windows-ARM64-installer.msi`.</string>
     <string name="ui_guide_install_note">Thumbcast also works with Apollo and Vibepollo (Sunshine variants), but this guide covers Sunshine.</string>
 
-    <!-- Guide, 2: virtual gamepad -->
-    <string name="ui_guide_gamepad_title">Virtual gamepad</string>
-    <string name="ui_guide_gamepad_intro">It lets games on your PC see a gamepad. Without it, only mouse and keyboard work.</string>
+    <!-- Guide, 2: gamepad driver -->
+    <string name="ui_guide_gamepad_title">Gamepad driver (ViGEmBus)</string>
+    <string name="ui_guide_gamepad_intro">The driver you need to play with a gamepad: with it, games on your PC see the gamepad from your phone as a regular Xbox gamepad. Without it, only mouse and keyboard work.</string>
     <string-array name="ui_guide_gamepad_steps">
-        <item>Free: ViGEmBus 1.17 or newer. Install it from Sunshine (`https://localhost:47990` → Troubleshooting) or from the page below.</item>
+        <item>On the PC, open the ViGEmBus download page (buttons below). It is GitHub too.</item>
+        <item>At the top you will see a yellow note that the project is archived. That is normal: the driver is finished and works.</item>
+        <item>In the Assets section, click `ViGEmBus_1.22.0_x64_x86_arm64.exe`.</item>
+        <item>Run the downloaded file and go through the installation. When Windows asks for permission, choose Yes.</item>
         <item>Restart the PC if the installer asks you to.</item>
-        <item>In Sunshine, open Configuration → Input and pick the Xbox 360 gamepad (`gamepad = x360`). Save and restart Sunshine.</item>
-        <item>Paid: LizardByte Virtual HID Driver. It emulates more gamepads (DualSense too); you enter the license in Sunshine.</item>
-        <item>Don\'t want to install a driver? Choose Mouse and keyboard (MMO) controls in Thumbcast.</item>
+        <item>In Sunshine (`https://localhost:47990`), open Configuration → Input and pick the Xbox 360 gamepad (`gamepad = x360`). Save and restart Sunshine.</item>
     </string-array>
+    <string name="ui_guide_gamepad_paid_note">There are also paid alternatives, such as LizardByte Virtual HID Driver (more gamepad types; you enter the license in Sunshine). ViGEmBus is all you need to play.</string>
+    <string name="ui_guide_gamepad_keyboard_note">Without a driver, only Mouse and keyboard (MMO) controls work.</string>
 
     <!-- Guide, 3: pairing -->
     <string name="ui_guide_pair_title">Pair your phone with the PC</string>
@@ -145,7 +176,7 @@
     <string name="ui_guide_troubleshoot_title">Not working?</string>
     <string-array name="ui_guide_troubleshoot_steps">
         <item>PC not on the list: check that your phone and PC are on the same network and that Windows Firewall does not block Sunshine. You can also add the PC by its IP address.</item>
-        <item>Gamepad does not work in the game: install a virtual gamepad (part 2) and restart Sunshine.</item>
+        <item>Gamepad does not work in the game: install the gamepad driver (part 2) and restart Sunshine.</item>
         <item>Video stutters: lower Image quality in Settings. Away from home, choose 720p.</item>
         <item>Can\'t connect away from home: check that Tailscale is on, on both the PC and your phone.</item>
     </string-array>

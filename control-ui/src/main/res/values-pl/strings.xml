@@ -3,6 +3,8 @@
     Teksty :control-ui, polski (język główny). Klucze jak w values/strings.xml. Styl: krótko, w drugiej osobie,
     bez żargonu (docs/ui-audit.md, D7). Fragmenty w znakach ` (adresy, nazwy plików) są rysowane czcionką o stałej
     szerokości. Treść poradnika pochodzi z docs/host-setup.md, docs/host-apps.md i docs/tailscale.md.
+    Każda pozycja string-array ma ikonę w kodzie (OnboardingScreen.kt, SetupGuideScreen.kt), w tej samej kolejności:
+    zmiana liczby pozycji wymaga zmiany listy ikon.
 -->
 <resources>
     <string name="ui_onboarding_title">Konfiguracja</string>
@@ -24,8 +26,11 @@
     <string name="ui_onboarding_benefit_controls_body">Graj dotykiem albo podłącz pad do telefonu.</string>
     <string name="ui_onboarding_benefit_pc_title">Całą pracę robi PC</string>
     <string name="ui_onboarding_benefit_pc_body">Telefon tylko pokazuje obraz i przekazuje Twoje ruchy.</string>
+    <string name="ui_onboarding_benefit_secure_title">Bezpieczne parowanie</string>
+    <string name="ui_onboarding_benefit_secure_body">Telefon i PC łączysz raz, kodem PIN.</string>
     <string name="ui_onboarding_benefit_remote_title">Także poza domem</string>
     <string name="ui_onboarding_benefit_remote_body">Przez Tailscale, bez otwierania portów w routerze.</string>
+    <string name="ui_onboarding_welcome_note">Konfiguracja zajmie kilka minut. Przygotuj PC z Windows.</string>
 
     <!-- Kreator, krok 2: czym grasz -->
     <string name="ui_onboarding_device_title">Czym grasz najczęściej?</string>
@@ -39,21 +44,39 @@
     <string name="ui_choice_pad_playstation">Pad PS4 / PS5</string>
     <string name="ui_choice_pad_body">Gdy podłączysz pad, przyciski na ekranie się schowają.</string>
     <string name="ui_choice_mouse_keyboard">Mysz i klawiatura (MMO)</string>
-    <string name="ui_choice_mouse_keyboard_body">Klawisze i mysz na ekranie. Działa też bez sterownika pada na PC.</string>
+    <string name="ui_choice_mouse_keyboard_body">Klawisze i mysz na ekranie, jak przy komputerze.</string>
 
-    <!-- Kreator, krok 3: przygotuj PC -->
-    <string name="ui_onboarding_prepare_title">Przygotuj PC</string>
-    <string name="ui_onboarding_prepare_subtitle">Na komputerze z Windows potrzebny jest darmowy program Sunshine.</string>
+    <!-- Kreator, krok 3: Sunshine -->
+    <string name="ui_onboarding_prepare_title">Zainstaluj Sunshine na PC</string>
+    <string name="ui_onboarding_prepare_subtitle">Sunshine to darmowy program, który wysyła obraz z PC na telefon. Pobierzesz go ze strony GitHub.</string>
     <string-array name="ui_onboarding_prepare_points">
-        <item>Pobierz i zainstaluj Sunshine (wersja v2026.914 lub nowsza).</item>
-        <item>Na PC otwórz `https://localhost:47990` i ustaw login oraz hasło.</item>
-        <item>Chcesz grać padem? Zainstaluj też wirtualny pad (ViGEmBus, za darmo). Szczegóły są w poradniku.</item>
+        <item>Naciśnij „Wyślij sobie link” (np. na maila) i otwórz ten link na PC.</item>
+        <item>Otworzy się GitHub, strona, z której pobiera się darmowe programy. Konto nie jest potrzebne.</item>
+        <item>Przewiń w dół do sekcji Assets (lista plików). Jeśli lista jest skrócona, kliknij „Show all … assets”.</item>
+        <item>Kliknij plik `Sunshine-Windows-AMD64-installer.msi`. Nie widzisz go? Naciśnij Ctrl+F i wpisz `installer.msi`.</item>
+        <item>Otwórz pobrany plik (folder Pobrane) i klikaj Dalej. Gdy Windows zapyta o zgodę, wybierz Tak.</item>
+        <item>Na PC otwórz w przeglądarce `https://localhost:47990`.</item>
+        <item>Przeglądarka ostrzeże, że połączenie nie jest prywatne. To normalne: kliknij Zaawansowane i przejdź dalej do localhost.</item>
+        <item>Ustaw login i hasło do Sunshine. Zapisz je.</item>
     </string-array>
     <string name="ui_onboarding_send_link">Wyślij sobie link</string>
     <string name="ui_onboarding_show_guide">Pokaż pełny poradnik</string>
     <string name="ui_onboarding_send_link_hint">Wyślij link np. mailem albo komunikatorem i otwórz go na PC.</string>
 
-    <!-- Kreator, krok 4: połącz -->
+    <!-- Kreator, krok 4: sterownik pada (zawsze, niezależnie od wyboru w kroku 2) -->
+    <string name="ui_onboarding_driver_title">Zainstaluj sterownik pada</string>
+    <string name="ui_onboarding_driver_subtitle">ViGEmBus to sterownik wymagany do grania padem. Dzięki niemu gra na PC widzi Twój telefon jak zwykły pad Xbox.</string>
+    <string-array name="ui_onboarding_driver_points">
+        <item>Naciśnij „Wyślij sobie link” i otwórz go na PC. To też strona GitHub.</item>
+        <item>U góry zobaczysz żółtą informację, że projekt jest zarchiwizowany (archived). To normalne: sterownik jest gotowy i działa.</item>
+        <item>W sekcji Assets kliknij plik `ViGEmBus_1.22.0_x64_x86_arm64.exe`.</item>
+        <item>Uruchom pobrany plik i przejdź przez instalację. Gdy Windows zapyta o zgodę, wybierz Tak.</item>
+        <item>Uruchom PC ponownie, jeśli instalator o to poprosi.</item>
+        <item>W Sunshine (`https://localhost:47990`) otwórz Configuration → Input, wybierz pad Xbox 360 (`x360`) i zapisz.</item>
+    </string-array>
+    <string name="ui_onboarding_driver_paid_note">Są też płatne zamienniki, np. LizardByte Virtual HID Driver. Do grania wystarczy ViGEmBus.</string>
+
+    <!-- Kreator, krok 5: połącz -->
     <string name="ui_onboarding_connect_title">Połącz</string>
     <string name="ui_onboarding_connect_subtitle">Zrobisz to na liście komputerów, zaraz po kreatorze.</string>
     <string-array name="ui_onboarding_connect_points">
@@ -62,13 +85,15 @@
         <item>Telefon pokaże PIN. Na PC otwórz `https://localhost:47990`, zakładkę PIN, i wpisz ten kod.</item>
     </string-array>
     <string name="ui_onboarding_connect_note">Nie widzisz PC na liście? Możesz dodać go ręcznie, po adresie IP.</string>
+    <string name="ui_onboarding_connect_help">Ta instrukcja jest zawsze pod ręką: „Jak podłączyć PC” na ekranie startowym i w Ustawieniach → Pomoc.</string>
 
     <!-- Linki i udostępnianie -->
     <string name="ui_link_no_app">Nie ma aplikacji, która to otworzy. Adres skopiowano do schowka.</string>
     <string name="ui_share_chooser_title">Wyślij link</string>
     <string name="ui_share_sunshine_subject">Sunshine – pobieranie</string>
-    <string name="ui_share_sunshine_hint">Pobierz Sunshine na PC (Windows: plik Sunshine-Windows-AMD64-installer.msi):</string>
-    <string name="ui_share_vigembus_hint">Pobierz ViGEmBus, wirtualny pad dla Sunshine (wersja 1.17 lub nowsza):</string>
+    <string name="ui_share_sunshine_hint">Pobierz Sunshine na PC. Na stronie przewiń do sekcji Assets i kliknij plik Sunshine-Windows-AMD64-installer.msi:</string>
+    <string name="ui_share_vigembus_subject">ViGEmBus – sterownik pada</string>
+    <string name="ui_share_vigembus_hint">Pobierz sterownik pada ViGEmBus. Na stronie w sekcji Assets kliknij plik ViGEmBus_1.22.0_x64_x86_arm64.exe:</string>
     <string name="ui_share_tailscale_hint">Pobierz Tailscale na PC i zaloguj się tym samym kontem co na telefonie:</string>
 
     <!-- Poradnik: wspólne -->
@@ -92,23 +117,30 @@
     <string name="ui_guide_install_title">Zainstaluj Sunshine na PC</string>
     <string name="ui_guide_install_intro">Sunshine to darmowy program, który wysyła obraz z PC na telefon.</string>
     <string-array name="ui_guide_install_steps">
-        <item>Na PC pobierz Sunshine w wersji v2026.914 lub nowszej. Na zwykły PC z Windows wybierz plik `Sunshine-Windows-AMD64-installer.msi`.</item>
-        <item>Uruchom instalator. Sunshine sam doda usługę Windows i reguły zapory.</item>
+        <item>Na PC otwórz stronę pobierania (przyciski niżej). To GitHub: stąd pobiera się darmowe programy, konto nie jest potrzebne.</item>
+        <item>Strona pokazuje najnowszą wersję Sunshine. Przewiń w dół do sekcji Assets (lista plików). Jeśli lista jest skrócona, kliknij „Show all … assets”.</item>
+        <item>Kliknij `Sunshine-Windows-AMD64-installer.msi`, żeby go pobrać. Nie widzisz go? Naciśnij Ctrl+F i wpisz `installer.msi`.</item>
+        <item>Otwórz pobrany plik (folder Pobrane) i klikaj Dalej. Gdy Windows zapyta o zgodę, wybierz Tak. Sunshine sam doda usługę Windows i reguły zapory.</item>
         <item>Na PC otwórz w przeglądarce `https://localhost:47990`.</item>
+        <item>Przeglądarka ostrzeże, że połączenie nie jest prywatne. To normalne przy Sunshine: kliknij Zaawansowane i przejdź dalej do localhost.</item>
         <item>Ustaw login i hasło administratora. Zapamiętaj je.</item>
     </string-array>
+    <string name="ui_guide_install_note_arm">PC z procesorem ARM (np. Snapdragon)? Wybierz plik `Sunshine-Windows-ARM64-installer.msi`.</string>
     <string name="ui_guide_install_note">Thumbcast działa też z Apollo i Vibepollo (odmiany Sunshine), ale ten poradnik opisuje Sunshine.</string>
 
-    <!-- Poradnik, 2: wirtualny pad -->
-    <string name="ui_guide_gamepad_title">Wirtualny pad</string>
-    <string name="ui_guide_gamepad_intro">Dzięki niemu gra na PC widzi pad. Bez niego działają tylko mysz i klawiatura.</string>
+    <!-- Poradnik, 2: sterownik pada -->
+    <string name="ui_guide_gamepad_title">Sterownik pada (ViGEmBus)</string>
+    <string name="ui_guide_gamepad_intro">Sterownik wymagany do grania padem: dzięki niemu gra na PC widzi pad z telefonu jak zwykły pad Xbox. Bez niego działają tylko mysz i klawiatura.</string>
     <string-array name="ui_guide_gamepad_steps">
-        <item>Za darmo: ViGEmBus w wersji 1.17 lub nowszej. Zainstalujesz go w Sunshine (`https://localhost:47990` → Troubleshooting) albo ze strony poniżej.</item>
+        <item>Na PC otwórz stronę pobierania ViGEmBus (przyciski niżej). To też GitHub.</item>
+        <item>U góry zobaczysz żółtą informację, że projekt jest zarchiwizowany (archived). To normalne: sterownik jest gotowy i działa.</item>
+        <item>W sekcji Assets kliknij `ViGEmBus_1.22.0_x64_x86_arm64.exe`.</item>
+        <item>Uruchom pobrany plik i przejdź przez instalację. Gdy Windows zapyta o zgodę, wybierz Tak.</item>
         <item>Uruchom PC ponownie, jeśli instalator o to poprosi.</item>
-        <item>W Sunshine otwórz Configuration → Input i wybierz pad Xbox 360 (`gamepad = x360`). Zapisz i uruchom Sunshine ponownie.</item>
-        <item>Płatnie: LizardByte Virtual HID Driver. Udaje więcej padów (także DualSense), a licencję wpisujesz w Sunshine.</item>
-        <item>Nie chcesz instalować sterownika? Wybierz w Thumbcast sterowanie Mysz i klawiatura (MMO).</item>
+        <item>W Sunshine (`https://localhost:47990`) otwórz Configuration → Input i wybierz pad Xbox 360 (`gamepad = x360`). Zapisz i uruchom Sunshine ponownie.</item>
     </string-array>
+    <string name="ui_guide_gamepad_paid_note">Są też płatne zamienniki, np. LizardByte Virtual HID Driver (więcej rodzajów padów, licencję wpisujesz w Sunshine). Do grania wystarczy ViGEmBus.</string>
+    <string name="ui_guide_gamepad_keyboard_note">Bez sterownika działa tylko sterowanie Mysz i klawiatura (MMO).</string>
 
     <!-- Poradnik, 3: parowanie -->
     <string name="ui_guide_pair_title">Sparuj telefon z PC</string>
@@ -145,7 +177,7 @@
     <string name="ui_guide_troubleshoot_title">Nie działa?</string>
     <string-array name="ui_guide_troubleshoot_steps">
         <item>PC nie widać na liście: sprawdź, czy telefon i PC są w tej samej sieci i czy zapora Windows nie blokuje Sunshine. Możesz też dodać PC ręcznie, po adresie IP.</item>
-        <item>Pad nie działa w grze: zainstaluj wirtualny pad (punkt 2) i uruchom Sunshine ponownie.</item>
+        <item>Pad nie działa w grze: zainstaluj sterownik pada (punkt 2) i uruchom Sunshine ponownie.</item>
         <item>Obraz się tnie: w Ustawieniach obniż Jakość obrazu. Poza domem wybierz 720p.</item>
         <item>Poza domem nie łączy: sprawdź, czy Tailscale jest włączony na PC i na telefonie.</item>
     </string-array>
