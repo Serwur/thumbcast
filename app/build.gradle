@@ -12,8 +12,10 @@ android {
         minSdk 26
         targetSdk 36
 
-        versionName "12.2"
-        versionCode = 315
+        // THUMBCAST: własna numeracja (Google Play, 12.11.2026). versionCode = major * 1000000 + minor * 1000 + patch,
+        // więc rośnie razem z versionName i jest większy od przejętego z upstreamu 315.
+        versionName "0.1.0"
+        versionCode = 1000
 
         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
         ndk.debugSymbolLevel = 'FULL'
@@ -53,6 +55,12 @@ android {
     lint {
         disable 'MissingTranslation'
         lintConfig file('lint.xml')
+    }
+
+    // THUMBCAST: tylko angielski i polski (12.11.2026). Pozostałe tłumaczenia upstreamu mają teksty o GeForce
+    // Experience, SHIELD i Moonlight, więc nie trafiają do APK ani AAB (dotyczy też zasobów bibliotek).
+    androidResources {
+        localeFilters += ["en", "pl"]
     }
 
     bundle {

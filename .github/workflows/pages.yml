@@ -1,0 +1,39 @@
+# Strona Thumbcast (site/: opis aplikacji i polityka prywatności, EN i PL) na GitHub Pages.
+#
+# Adres: https://serwur.github.io/thumbcast/ (EN), https://serwur.github.io/thumbcast/pl/ (PL),
+# polityka prywatności: …/thumbcast/#privacy i …/thumbcast/pl/#prywatnosc (adres dla Google Play).
+#
+# Jednorazowo właściciel repo: Settings > Pages > Build and deployment > Source: GitHub Actions
+# (agent nie zmienia ustawień repo). Bez tego krok deploy kończy się błędem.
+
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

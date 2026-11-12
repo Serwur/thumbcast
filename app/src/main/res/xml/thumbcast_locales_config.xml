@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- THUMBCAST: języki aplikacji w ustawieniach systemu (Android 13+). Tylko angielski i polski (12.11.2026), jak
+     localeFilters w app/build.gradle i thumbcast_language_values. Upstreamowy locales_config.xml zostaje bez zmian. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en"/>
+    <locale android:name="pl"/>
+</locale-config>

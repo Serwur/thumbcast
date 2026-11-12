@@ -48,6 +48,7 @@
     <!-- Aplikacja -->
     <string name="thumbcast_set_language_title">Język</string>
     <string name="thumbcast_set_language_summary">Język menu i komunikatów</string>
+    <string name="thumbcast_set_language_system">Język telefonu</string>
     <string name="thumbcast_set_small_icons_title">Małe kafelki gier</string>
     <string name="thumbcast_set_small_icons_summary">Na ekranie mieści się więcej gier</string>
     <string name="thumbcast_set_pip_title">Obraz w obrazie</string>

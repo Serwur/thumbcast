@@ -48,6 +48,7 @@
     <!-- App -->
     <string name="thumbcast_set_language_title">Language</string>
     <string name="thumbcast_set_language_summary">Language of menus and messages</string>
+    <string name="thumbcast_set_language_system">Phone language</string>
     <string name="thumbcast_set_small_icons_title">Small game tiles</string>
     <string name="thumbcast_set_small_icons_summary">More games fit on the screen</string>
     <string name="thumbcast_set_pip_title">Picture-in-picture</string>

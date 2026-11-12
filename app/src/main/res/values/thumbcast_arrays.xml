@@ -26,4 +26,17 @@
         <item>115</item>
         <item>130</item>
     </string-array>
+
+    <!-- Języki aplikacji (od 12.11.2026 tylko angielski i polski, docs/play-release.md). Wartości jak w upstreamowym
+         language_values; ta sama lista jest w xml/thumbcast_locales_config.xml i w localeFilters (app/build.gradle). -->
+    <string-array name="thumbcast_language_names" translatable="false">
+        <item>@string/thumbcast_set_language_system</item>
+        <item>English</item>
+        <item>Polski</item>
+    </string-array>
+    <string-array name="thumbcast_language_values" translatable="false">
+        <item>default</item>
+        <item>en</item>
+        <item>pl</item>
+    </string-array>
 </resources>

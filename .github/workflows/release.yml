@@ -1,4 +1,4 @@
-# Release Thumbcast: podpisany APK, sumy SHA-256, GitHub Release.
+# Release Thumbcast: podpisany APK (GitHub) i AAB (Google Play), sumy SHA-256, GitHub Release.
 #
 # Uruchamiany tagiem v* (np. v0.1.0). Tag musi odpowiadać źródłom (GPLv3, plan sekcja 11).
 #
@@ -15,6 +15,9 @@
 # Sprawdzone lokalnie 11.11.2026 (testowy keystore): :app:assembleNonRootRelease z tymi właściwościami
 # daje app/build/outputs/apk/nonRoot/release/app-nonRoot-release.apk, pasuje do APK_GLOB, apksigner verify OK.
 # Sam workflow nie był uruchomiony na GitHub Actions.
+#
+# AAB (12.11.2026): :app:bundleNonRootRelease, podpisany tym samym kluczem (klucz przesyłania w Google Play).
+# Plik trafia do GitHub Release obok APK; do Play wgrywa się go ręcznie (docs/play-release.md).
 
 name: release
 
@@ -32,7 +35,9 @@ permissions:
 
 env:
   APP_ASSEMBLE_TASK: ":app:assembleNonRootRelease"
+  APP_BUNDLE_TASK: ":app:bundleNonRootRelease"
   APK_GLOB: "app/build/outputs/apk/**/release/*.apk"
+  AAB_GLOB: "app/build/outputs/bundle/**/*.aab"
 
 jobs:
   release:
@@ -67,6 +72,15 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk" > /dev/null
           test -d "$ANDROID_HOME/ndk/$ndk"
 
+      # Tag ma odpowiadać versionName z app/build.gradle (np. v0.1.0 = "0.1.0").
+      - name: Zgodność tagu z versionName
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          ver=$(sed -n 's/^[[:space:]]*versionName[[:space:]]*"\([^"]*\)".*/\1/p' app/build.gradle)
+          if [ "v$ver" != "$TAG" ]; then echo "Tag $TAG nie pasuje do versionName $ver"; exit 1; fi
+
       # Bramka: release nie powstaje bez zielonych testów polityki.
       - name: Testy JVM i testy polityki
         run: >
@@ -88,24 +102,26 @@ jobs:
           echo "THUMBCAST_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
       # :app czyta podpis z właściwości Gradle (signingConfigs.release w app/build.gradle).
-      - name: Budowa podpisanego APK
+      - name: Budowa podpisanego APK i AAB
         env:
           ORG_GRADLE_PROJECT_thumbcastKeystoreFile: ${{ env.THUMBCAST_KEYSTORE_FILE }}
           ORG_GRADLE_PROJECT_thumbcastKeystorePassword: ${{ secrets.THUMBCAST_KEYSTORE_PASSWORD }}
           ORG_GRADLE_PROJECT_thumbcastKeyAlias: ${{ secrets.THUMBCAST_KEY_ALIAS }}
           ORG_GRADLE_PROJECT_thumbcastKeyPassword: ${{ secrets.THUMBCAST_KEY_PASSWORD }}
-        run: ./gradlew --stacktrace "$APP_ASSEMBLE_TASK"
+        run: ./gradlew --stacktrace "$APP_ASSEMBLE_TASK" "$APP_BUNDLE_TASK"
 
-      - name: Zebranie APK i sumy SHA-256
+      - name: Zebranie APK, AAB i sumy SHA-256
         run: |
           set -euo pipefail
           shopt -s globstar nullglob
           mkdir -p dist
           files=( $APK_GLOB )
           if [ ${#files[@]} -eq 0 ]; then echo "Nie znaleziono APK: $APK_GLOB"; exit 1; fi
-          cp "${files[@]}" dist/
+          bundles=( $AAB_GLOB )
+          if [ ${#bundles[@]} -eq 0 ]; then echo "Nie znaleziono AAB: $AAB_GLOB"; exit 1; fi
+          cp "${files[@]}" "${bundles[@]}" dist/
           cd dist
-          sha256sum *.apk > SHA256SUMS.txt
+          sha256sum *.apk *.aab > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
       - name: Weryfikacja podpisu APK
@@ -113,6 +129,8 @@ jobs:
           set -euo pipefail
           apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n1)
           for f in dist/*.apk; do "$apksigner" verify --print-certs "$f"; done
+          # AAB jest podpisany podpisem JAR (v1); jarsigner -verify bez -strict, bo certyfikat jest samopodpisany.
+          for f in dist/*.aab; do jarsigner -verify "$f" | tee /dev/stderr | grep -q "jar verified"; done
 
       - name: Usunięcie keystore
         if: always()
