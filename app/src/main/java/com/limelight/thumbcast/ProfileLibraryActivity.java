@@ -1,12 +1,12 @@
 package com.limelight.thumbcast;
 
-// NOWY PLIK (moduł :app). Biblioteka profili sterowania: presety wbudowane i profile użytkownika,
-// profil domyślny (preferencja list_thumbcast_profile = nazwa pliku; brak = ThumbcastProfiles.DEFAULT_PRESET,
-// „★ Domyślny”, akcja „Ustaw jako domyślny”), przełącznik „Gesty myszy” na profil (ThumbcastSettings),
-// edycja (kontrakt EditorContract),
-// duplikat, zmiana nazwy, eksport (SAF), udostępnianie (ProfileShareProvider), usuwanie, import z pliku,
-// ze schowka i z udostępnionego pliku/tekstu. Logika plików: ProfileRepository (:control-android).
-// Opis formatu i kontraktu edytora: docs/profiles.md.
+// NOWY PLIK (moduł :app). Biblioteka profili sterowania: sekcje „Wbudowane” i „Moje”, profil domyślny
+// (preferencja list_thumbcast_profile = nazwa pliku; brak = ThumbcastProfiles.DEFAULT_PRESET, plakietka „Domyślny”),
+// w wierszu ikona rodzaju profilu (ProfileKind) i akcje „Ustaw jako domyślny” i „Edytuj układ” (kontrakt
+// EditorContract), pod ⋮ przełącznik „Gesty myszy” (ThumbcastSettings), duplikat, zmiana nazwy, udostępnianie
+// (ProfileShareProvider), eksport (SAF) i usuwanie (ostatnie, kolor błędu, z potwierdzeniem). Jedna akcja
+// „Dodaj profil”: import z pliku, ze schowka albo kopia istniejącego; import także z udostępnionego pliku/tekstu.
+// Logika plików: ProfileRepository (:control-android). Opis: docs/profiles.md, układ: docs/ui-audit.md (U14).
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -21,14 +21,21 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.InputType;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.RadioButton;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,6 +54,7 @@ import java.util.concurrent.Executors;
 import app.thumbcast.android.EditorContract;
 import app.thumbcast.android.library.ImportPreview;
 import app.thumbcast.android.library.ProfileEntry;
+import app.thumbcast.android.library.ProfileKind;
 import app.thumbcast.android.library.ProfileLibraryException;
 import app.thumbcast.android.library.ProfileRepository;
 import app.thumbcast.model.ProfileMode;
@@ -118,16 +126,12 @@ public class ProfileLibraryActivity extends Activity {
         ListView list = findViewById(R.id.thumbcast_library_list);
         UiHelper.applyStatusBarPadding(list);
         adapter = new LibraryAdapter();
+        // Przyciski w wierszach dostają fokus (pad, klawiatura); wiersz sam w sobie nie jest klikalny.
+        list.setItemsCanFocus(true);
         list.setAdapter(adapter);
-        list.setOnItemClickListener((parent, view, position, id) -> {
-            Object item = adapter.getItem(position);
-            if (item instanceof ProfileEntry) {
-                showActions((ProfileEntry) item);
-            }
-        });
 
-        findViewById(R.id.thumbcast_library_import_file).setOnClickListener(v -> pickImportFile());
-        findViewById(R.id.thumbcast_library_import_clipboard).setOnClickListener(v -> importFromClipboard());
+        findViewById(R.id.thumbcast_library_back).setOnClickListener(v -> finish());
+        findViewById(R.id.thumbcast_library_add).setOnClickListener(v -> showAddDialog());
 
         if (savedInstanceState != null) {
             pendingEditFile = savedInstanceState.getString(STATE_EDIT_FILE);
@@ -195,44 +199,95 @@ public class ProfileLibraryActivity extends Activity {
 
     // ---------- akcje na profilu ----------
 
-    private void showActions(final ProfileEntry entry) {
-        final List<String> labels = new ArrayList<>();
+    /** Czy ⋮ ma jakąś akcję: poprawny profil (gesty, duplikat, udostępnianie…) albo własny (usuwanie). */
+    private static boolean hasMoreActions(ProfileEntry entry) {
+        return entry.isValid() || !entry.getBuiltIn();
+    }
+
+    /**
+     * Akcje pod ⋮. „Ustaw jako domyślny” i „Edytuj układ” są w wierszu. Kolejność: przełącznik „Gesty myszy”,
+     * Duplikuj, Zmień nazwę (własne), Udostępnij, Eksportuj, a na końcu Usuń (własne, kolor błędu).
+     */
+    private void showMoreMenu(View anchor, final ProfileEntry entry) {
+        final boolean isActive = entry.getFileName().equals(adapter.activeFile);
         final List<Runnable> actions = new ArrayList<>();
-        boolean isActive = entry.getFileName().equals(adapter.activeFile);
+        PopupMenu popup = new PopupMenu(this, anchor);
+        Menu menu = popup.getMenu();
 
         if (entry.isValid()) {
-            if (!isActive) {
-                labels.add(getString(R.string.thumbcast_library_action_select));
-                actions.add(() -> select(entry));
-            }
             final boolean mouse = mouseGesturesOn(entry);
-            labels.add(getString(mouse ? R.string.thumbcast_library_action_mouse_gestures_on
-                    : R.string.thumbcast_library_action_mouse_gestures_off));
+            menu.add(Menu.NONE, actions.size(), actions.size(), R.string.thumbcast_lib_action_mouse_gestures)
+                    .setCheckable(true)
+                    .setChecked(mouse);
             actions.add(() -> toggleMouseGestures(entry, !mouse));
-            labels.add(getString(R.string.thumbcast_library_action_edit));
-            actions.add(() -> edit(entry, isActive));
-            labels.add(getString(R.string.thumbcast_library_action_duplicate));
-            actions.add(() -> duplicate(entry));
+            addMenuAction(menu, actions, getString(R.string.thumbcast_library_action_duplicate), () -> duplicate(entry));
             if (!entry.getBuiltIn()) {
-                labels.add(getString(R.string.thumbcast_library_action_rename));
-                actions.add(() -> rename(entry));
+                addMenuAction(menu, actions, getString(R.string.thumbcast_library_action_rename), () -> rename(entry));
             }
-            labels.add(getString(R.string.thumbcast_library_action_export));
-            actions.add(() -> startExport(entry));
-            labels.add(getString(R.string.thumbcast_library_action_share));
-            actions.add(() -> share(entry));
+            addMenuAction(menu, actions, getString(R.string.thumbcast_library_action_share), () -> share(entry));
+            addMenuAction(menu, actions, getString(R.string.thumbcast_library_action_export), () -> startExport(entry));
         }
         if (!entry.getBuiltIn()) {
-            labels.add(getString(R.string.thumbcast_library_action_delete));
-            actions.add(() -> confirmDelete(entry, isActive));
+            SpannableString delete = new SpannableString(getString(R.string.thumbcast_library_action_delete));
+            delete.setSpan(new ForegroundColorSpan(getColor(R.color.thumbcast_error)), 0, delete.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            addMenuAction(menu, actions, delete, () -> confirmDelete(entry, isActive));
         }
         if (actions.isEmpty()) {
             return;
         }
+        popup.setOnMenuItemClickListener(item -> {
+            actions.get(item.getItemId()).run();
+            return true;
+        });
+        popup.show();
+    }
 
+    private static void addMenuAction(Menu menu, List<Runnable> actions, CharSequence title, Runnable action) {
+        menu.add(Menu.NONE, actions.size(), actions.size(), title);
+        actions.add(action);
+    }
+
+    /** Jedna akcja „Dodaj profil”: import z pliku, ze schowka albo kopia istniejącego profilu. */
+    private void showAddDialog() {
+        String[] items = {
+                getString(R.string.thumbcast_lib_add_file),
+                getString(R.string.thumbcast_lib_add_clipboard),
+                getString(R.string.thumbcast_lib_add_duplicate),
+        };
         new AlertDialog.Builder(this)
-                .setTitle(entry.getName())
-                .setItems(labels.toArray(new String[0]), (dialog, which) -> actions.get(which).run())
+                .setTitle(R.string.thumbcast_lib_add)
+                .setItems(items, (dialog, which) -> {
+                    if (which == 0) {
+                        pickImportFile();
+                    } else if (which == 1) {
+                        importFromClipboard();
+                    } else {
+                        pickProfileToDuplicate();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void pickProfileToDuplicate() {
+        final List<ProfileEntry> valid = new ArrayList<>();
+        for (ProfileEntry e : repo.listAll()) {
+            if (e.isValid()) {
+                valid.add(e);
+            }
+        }
+        if (valid.isEmpty()) {
+            return;
+        }
+        String[] names = new String[valid.size()];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = valid.get(i).getName();
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.thumbcast_lib_duplicate_pick_title)
+                .setItems(names, (dialog, which) -> duplicate(valid.get(which)))
+                .setNegativeButton(android.R.string.cancel, null)
                 .show();
     }
 
@@ -352,7 +407,7 @@ public class ProfileLibraryActivity extends Activity {
     }
 
     private void confirmDelete(final ProfileEntry entry, final boolean wasActive) {
-        new AlertDialog.Builder(this)
+        AlertDialog confirm = new AlertDialog.Builder(this)
                 .setTitle(R.string.thumbcast_library_delete_title)
                 .setMessage(getString(R.string.thumbcast_library_delete_message, entry.getName()))
                 .setPositiveButton(R.string.thumbcast_library_action_delete, (dialog, which) -> {
@@ -378,6 +433,11 @@ public class ProfileLibraryActivity extends Activity {
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+        // Akcja nieodwracalna: przycisk w kolorze błędu (kolor nie jest jedynym sygnałem, tekst mówi „Usuń”).
+        Button positive = confirm.getButton(AlertDialog.BUTTON_POSITIVE);
+        if (positive != null) {
+            positive.setTextColor(getColor(R.color.thumbcast_error));
+        }
     }
 
     // ---------- eksport i udostępnianie ----------
@@ -652,9 +712,39 @@ public class ProfileLibraryActivity extends Activity {
 
     // ---------- lista ----------
 
+    /** Ikona rodzaju profilu (ProfileKind, :control-android); uszkodzony plik = ostrzeżenie. */
+    private static int iconFor(ProfileKind kind) {
+        if (kind == null) {
+            return R.drawable.thumbcast_ic_warning;
+        }
+        switch (kind) {
+            case TOUCH:
+                return R.drawable.thumbcast_ic_touch_app;
+            case DESKTOP:
+                return R.drawable.thumbcast_ic_mouse;
+            case KEYBOARD:
+                return R.drawable.thumbcast_ic_keyboard;
+            case GAMEPAD_PLUS:
+                return R.drawable.thumbcast_ic_gamepad;
+            case GAMEPAD:
+            default:
+                return R.drawable.thumbcast_ic_sports_esports;
+        }
+    }
+
+    /** Akapit w liście (wskazówka nad listą, pusta sekcja „Moje”); nagłówek sekcji to zwykły String. */
+    private static final class Note {
+        final String text;
+
+        Note(String text) {
+            this.text = text;
+        }
+    }
+
     private final class LibraryAdapter extends BaseAdapter {
         private static final int TYPE_HEADER = 0;
         private static final int TYPE_PROFILE = 1;
+        private static final int TYPE_NOTE = 2;
 
         private final List<Object> items = new ArrayList<>();
         String activeFile;
@@ -662,11 +752,12 @@ public class ProfileLibraryActivity extends Activity {
         void setData(List<ProfileEntry> presets, List<ProfileEntry> user, String active) {
             items.clear();
             activeFile = active;
-            items.add(getString(R.string.thumbcast_library_section_builtin));
+            items.add(new Note(getString(R.string.thumbcast_lib_hint)));
+            items.add(getString(R.string.thumbcast_lib_section_builtin));
             items.addAll(presets);
-            items.add(getString(R.string.thumbcast_library_section_user));
+            items.add(getString(R.string.thumbcast_lib_section_user));
             if (user.isEmpty()) {
-                items.add(getString(R.string.thumbcast_library_empty_user));
+                items.add(new Note(getString(R.string.thumbcast_lib_empty_user)));
             } else {
                 items.addAll(user);
             }
@@ -690,12 +781,16 @@ public class ProfileLibraryActivity extends Activity {
 
         @Override
         public int getViewTypeCount() {
-            return 2;
+            return 3;
         }
 
         @Override
         public int getItemViewType(int position) {
-            return items.get(position) instanceof ProfileEntry ? TYPE_PROFILE : TYPE_HEADER;
+            Object item = items.get(position);
+            if (item instanceof ProfileEntry) {
+                return TYPE_PROFILE;
+            }
+            return item instanceof Note ? TYPE_NOTE : TYPE_HEADER;
         }
 
         @Override
@@ -712,6 +807,12 @@ public class ProfileLibraryActivity extends Activity {
         public View getView(int position, View convertView, ViewGroup parent) {
             LayoutInflater inflater = LayoutInflater.from(ProfileLibraryActivity.this);
             Object item = items.get(position);
+            if (item instanceof Note) {
+                TextView note = convertView instanceof TextView ? (TextView) convertView
+                        : (TextView) inflater.inflate(R.layout.thumbcast_profile_note, parent, false);
+                note.setText(((Note) item).text);
+                return note;
+            }
             if (!(item instanceof ProfileEntry)) {
                 TextView header = convertView instanceof TextView ? (TextView) convertView
                         : (TextView) inflater.inflate(R.layout.thumbcast_profile_header, parent, false);
@@ -721,31 +822,59 @@ public class ProfileLibraryActivity extends Activity {
 
             View row = convertView != null ? convertView
                     : inflater.inflate(R.layout.thumbcast_profile_item, parent, false);
-            ProfileEntry entry = (ProfileEntry) item;
-            RadioButton active = row.findViewById(R.id.thumbcast_profile_active);
-            TextView name = row.findViewById(R.id.thumbcast_profile_name);
-            TextView details = row.findViewById(R.id.thumbcast_profile_details);
+            final ProfileEntry entry = (ProfileEntry) item;
+            final boolean isActive = entry.getFileName().equals(activeFile);
+            final boolean valid = entry.isValid();
 
-            boolean isActive = entry.getFileName().equals(activeFile);
-            active.setChecked(isActive);
-            name.setText(isActive ? getString(R.string.thumbcast_library_default_marker, entry.getName())
-                    : entry.getName());
-            if (entry.isValid()) {
+            ImageView icon = row.findViewById(R.id.thumbcast_profile_icon);
+            TextView name = row.findViewById(R.id.thumbcast_profile_name);
+            TextView badge = row.findViewById(R.id.thumbcast_profile_badge);
+            TextView details = row.findViewById(R.id.thumbcast_profile_details);
+            View main = row.findViewById(R.id.thumbcast_profile_main);
+            final ImageButton more = row.findViewById(R.id.thumbcast_profile_more);
+            View actionsRow = row.findViewById(R.id.thumbcast_profile_actions);
+            Button setDefault = row.findViewById(R.id.thumbcast_profile_set_default);
+            Button edit = row.findViewById(R.id.thumbcast_profile_edit);
+
+            icon.setImageResource(iconFor(entry.getKind()));
+            name.setText(entry.getName());
+            badge.setVisibility(isActive ? View.VISIBLE : View.GONE);
+            if (valid) {
                 String kind = getString(entry.getBuiltIn() ? R.string.thumbcast_library_builtin
                         : R.string.thumbcast_library_custom);
-                String controls = getResources().getQuantityString(R.plurals.thumbcast_library_controls,
+                String buttons = getResources().getQuantityString(R.plurals.thumbcast_lib_buttons,
                         entry.getControlCount(), entry.getControlCount());
-                String text = kind + " · " + modeLabel(entry.getMode()) + " · " + controls;
+                String text = kind + " · " + modeLabel(entry.getMode()) + " · " + buttons;
                 if (mouseGesturesOn(entry)) {
                     text += " · " + getString(R.string.thumbcast_library_mouse_gestures_tag);
                 }
                 details.setText(text);
+                details.setTextColor(getColorStateList(R.color.thumbcast_text_secondary_states));
             } else {
                 details.setText(getString(R.string.thumbcast_library_invalid, entry.getError()));
+                details.setTextColor(getColor(R.color.thumbcast_error));
             }
-            row.setContentDescription(isActive
-                    ? getString(R.string.thumbcast_library_active_description, entry.getName())
-                    : entry.getName());
+
+            // Akcje w wierszu: „Ustaw jako domyślny” (nie przy domyślnym) i „Edytuj układ”; reszta pod ⋮.
+            setDefault.setVisibility(valid && !isActive ? View.VISIBLE : View.GONE);
+            edit.setVisibility(valid ? View.VISIBLE : View.GONE);
+            actionsRow.setVisibility(valid ? View.VISIBLE : View.GONE);
+            setDefault.setContentDescription(getString(R.string.thumbcast_lib_set_default_description, entry.getName()));
+            edit.setContentDescription(getString(R.string.thumbcast_lib_edit_description, entry.getName()));
+            setDefault.setOnClickListener(v -> select(entry));
+            edit.setOnClickListener(v -> edit(entry, isActive));
+
+            boolean hasMore = hasMoreActions(entry);
+            more.setVisibility(hasMore ? View.VISIBLE : View.INVISIBLE);
+            more.setContentDescription(getString(R.string.thumbcast_lib_more_description, entry.getName()));
+            more.setOnClickListener(v -> showMoreMenu(more, entry));
+            // Dotknięcie wiersza otwiera te same opcje co ⋮ (jak dawniej lista akcji).
+            main.setClickable(hasMore);
+            main.setFocusable(hasMore);
+            main.setOnClickListener(hasMore ? v -> showMoreMenu(more, entry) : null);
+            main.setContentDescription(isActive
+                    ? getString(R.string.thumbcast_lib_row_default_description, entry.getName()) + ", " + details.getText()
+                    : entry.getName() + ", " + details.getText());
             return row;
         }
     }

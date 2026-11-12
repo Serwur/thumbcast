@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- THUMBCAST: nagłówek sekcji biblioteki profili (Wbudowane / Moje profile). -->
+<!-- THUMBCAST: nagłówek sekcji biblioteki profili (Wbudowane / Moje), wskazówka nad listą albo pusty stan.
+     ProfileLibraryActivity ustawia styl tekstu przez setTextAppearance zależnie od rodzaju wiersza. -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/ThumbcastText.SectionHeader"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingTop="16dp"
-    android:paddingBottom="4dp"
-    android:textAppearance="?android:attr/textAppearanceSmall"
-    android:textColor="?android:attr/colorAccent"
-    android:textStyle="bold" />
+    android:paddingStart="@dimen/thumbcast_space_medium"
+    android:paddingEnd="@dimen/thumbcast_space_medium" />

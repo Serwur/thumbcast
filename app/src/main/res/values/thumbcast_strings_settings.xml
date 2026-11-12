@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Thumbcast settings screen (package P3, xml/thumbcast_preferences.xml, StreamSettings), English. Polish: values-pl. -->
+<resources>
+    <!-- Categories -->
+    <string name="thumbcast_set_cat_controls">Controls</string>
+    <string name="thumbcast_set_cat_picture">Picture</string>
+    <string name="thumbcast_set_cat_sound">Sound</string>
+    <string name="thumbcast_set_cat_app">App</string>
+    <string name="thumbcast_set_cat_help">Help</string>
+    <string name="thumbcast_set_cat_more">More</string>
+    <string name="thumbcast_set_advanced_title">Advanced</string>
+    <string name="thumbcast_set_advanced_summary">Control type, codec, gamepad connected to the phone, mouse</string>
+    <string name="thumbcast_set_cat_adv_picture">Picture and decoding</string>
+    <string name="thumbcast_set_cat_adv_gamepad">Gamepad connected to the phone</string>
+    <string name="thumbcast_set_cat_adv_mouse">Mouse and touchscreen</string>
+
+    <!-- Controls -->
+    <string name="thumbcast_set_profile_title">Control profile</string>
+    <string name="thumbcast_set_hide_on_gamepad_title">Hide buttons when I play with a gamepad</string>
+    <string name="thumbcast_set_hide_on_gamepad_summary">On-screen buttons disappear when you connect a gamepad. Gestures and the menu button stay.</string>
+    <string name="thumbcast_set_button_size_title">Button size</string>
+    <string name="thumbcast_set_vibration_title">Phone vibration</string>
+    <string name="thumbcast_set_vibration_summary">The phone vibrates when the game sends gamepad rumble and no gamepad is connected</string>
+
+    <!-- Picture -->
+    <string name="thumbcast_set_resolution_title">Resolution</string>
+    <string name="thumbcast_set_resolution_summary">Higher looks sharper but puts more load on the network and the phone</string>
+    <string name="thumbcast_set_fps_title">Smoothness (FPS)</string>
+    <string name="thumbcast_set_fps_summary">More frames per second means smoother motion</string>
+    <string name="thumbcast_set_quality_title">Picture quality</string>
+    <string name="thumbcast_set_quality_summary">Higher is sharper but needs faster Wi-Fi. If the picture stutters, lower it (bitrate in Mbps).</string>
+    <string name="thumbcast_set_stretch_title">Stretch picture to fill the screen</string>
+    <string name="thumbcast_set_stretch_summary">No black bars, but the picture may look slightly distorted</string>
+    <string name="thumbcast_set_sops_title">Match the PC game to the phone</string>
+    <string name="thumbcast_set_sops_summary">Sunshine receives the phone\'s resolution and FPS. Without it the PC will not change its screen resolution (optimize game settings, SOPS).</string>
+    <string name="thumbcast_set_stats_title">Statistics</string>
+    <string name="thumbcast_set_stats_summary">Show FPS and latency in a corner of the screen while playing</string>
+    <string name="thumbcast_set_stats_detailed_title">Detailed statistics</string>
+    <string name="thumbcast_set_stats_detailed_summary">Also resolution, decoder, network and frame times. Works when Statistics is on. Both switches are also in the in-game menu.</string>
+
+    <!-- Sound -->
+    <string name="thumbcast_set_audio_channels_title">Audio channels</string>
+    <string name="thumbcast_set_host_audio_title">Also play sound on the PC</string>
+    <string name="thumbcast_set_host_audio_summary">The computer\'s speakers play along with the phone</string>
+    <string name="thumbcast_set_audiofx_title">Sound equalizer</string>
+    <string name="thumbcast_set_audiofx_summary">Equalizer apps can change the game sound. May increase audio latency.</string>
+
+    <!-- App -->
+    <string name="thumbcast_set_language_title">Language</string>
+    <string name="thumbcast_set_language_summary">Language of menus and messages</string>
+    <string name="thumbcast_set_small_icons_title">Small game tiles</string>
+    <string name="thumbcast_set_small_icons_summary">More games fit on the screen</string>
+    <string name="thumbcast_set_pip_title">Picture-in-picture</string>
+    <string name="thumbcast_set_pip_summary">The game keeps running in a small window when you switch to another app</string>
+
+    <!-- Help -->
+    <string name="thumbcast_set_guide_title">How to connect your PC</string>
+    <string name="thumbcast_set_guide_summary">Sunshine, gamepad, pairing and playing away from home</string>
+    <string name="thumbcast_set_troubleshoot_title">Something not working?</string>
+    <string name="thumbcast_set_troubleshoot_summary">Common problems and how to fix them</string>
+    <string name="thumbcast_set_onboarding_title">Run setup again</string>
+    <string name="thumbcast_set_onboarding_summary">Choose again what you usually play with</string>
+    <string name="thumbcast_set_onboarding_saved">Saved. Control profile: %1$s</string>
+    <string name="thumbcast_set_screen_unavailable">This screen is not available in this version of the app.</string>
+
+    <!-- Advanced: controls -->
+    <string name="thumbcast_set_control_type_title">Control type</string>
+    <string name="thumbcast_set_debug_title">Touch diagnostics</string>
+    <string name="thumbcast_set_osc_show_title">Show classic on-screen buttons</string>
+    <string name="thumbcast_set_osc_opacity_title">Classic buttons opacity</string>
+    <string name="thumbcast_set_osc_reset_title">Reset classic buttons layout</string>
+
+    <!-- Advanced: picture -->
+    <string name="thumbcast_set_frame_pacing_title">Frame display</string>
+    <string name="thumbcast_set_codec_title">Video codec</string>
+    <string name="thumbcast_set_unlock_fps_title">Show all FPS values</string>
+    <string name="thumbcast_set_disable_warnings_title">No connection warnings</string>
+    <string name="thumbcast_set_post_stream_title">Latency summary after playing</string>
+
+    <!-- Advanced: gamepad -->
+    <string name="thumbcast_set_deadzone_title">Stick deadzone</string>
+    <string name="thumbcast_set_vibrate_fallback_title">Phone vibration instead of gamepad rumble</string>
+</resources>

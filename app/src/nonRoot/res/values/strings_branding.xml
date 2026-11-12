@@ -8,7 +8,9 @@
      Audyt i decyzje: docs/branding.md. -->
 <resources>
     <string name="nettest_text_waiting">Thumbcast is testing your network connection to determine if any required ports are blocked.\n\nThis may take a few seconds…</string>
-    <string name="nettest_text_success">Your network does not appear to be blocking Thumbcast. If you still have trouble connecting, check your PC\'s firewall settings.\n\nIf you are trying to stream over the Internet, install the Moonlight Internet Hosting Tool on your PC and run the included Internet Streaming Tester to check your PC\'s Internet connection.</string>
+    <!-- THUMBCAST (P3, 12.11.2026, docs/ui-audit.md U6): zamiast narzędzia dla GeForce Experience i przekierowania
+         portów (docs/branding.md, c3) rada o Tailscale, jak w DECISIONS.md. Tylko values i values-pl. -->
+    <string name="nettest_text_success">Your network does not appear to be blocking Thumbcast. If you still have trouble connecting, check your PC\'s firewall settings.\n\nTo play away from home, install Tailscale on the PC and on the phone (Settings → Help → How to connect your PC).</string>
     <!-- THUMBCAST: test łączy się z serwerami projektu Moonlight (ServerHelper.CONNECTION_TEST_SERVER), więc mówimy to wprost. -->
     <string name="nettest_text_inconclusive">The network test could not be performed because none of the Moonlight project\'s connection testing servers were reachable. Check your Internet connection or try again later.</string>
     <string name="nettest_text_failure">Your device\'s current network connection seems to be blocking Thumbcast. Streaming over the Internet may not work while connected to this network.\n\nThe following network ports were blocked:\n</string>

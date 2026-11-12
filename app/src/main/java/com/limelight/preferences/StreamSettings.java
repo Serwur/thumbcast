@@ -32,7 +32,22 @@ import com.limelight.PcView;
 import com.limelight.R;
 import com.limelight.binding.video.MediaCodecHelper;
 // THUMBCAST:
+import android.content.ActivityNotFoundException;
+import android.graphics.Insets;
+import android.widget.ImageButton;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import com.limelight.thumbcast.ProfileLibraryActivity;
+import com.limelight.thumbcast.ThumbcastSettings;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import app.thumbcast.ui.OnboardingResult;
+import app.thumbcast.ui.UiContract;
 // THUMBCAST END
 import com.limelight.utils.Dialog;
 import com.limelight.utils.UiHelper;
@@ -46,6 +61,11 @@ public class StreamSettings extends Activity {
 
     // HACK for Android 9
     static DisplayCutout displayCutoutP;
+
+    // THUMBCAST: ekran „Zaawansowane” był otwarty, gdy reloadSettings() podmienił fragment (np. po zmianie
+    // „Pokaż wszystkie wartości FPS”); nowy fragment otwiera go ponownie.
+    boolean thumbcastReopenAdvanced;
+    // THUMBCAST END
 
     void reloadSettings() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -276,12 +296,144 @@ public class StreamSettings extends Activity {
                         ProfileLibraryActivity.defaultProfileName(getActivity())));
             }
         }
+
+        private static final int THUMBCAST_REQ_ONBOARDING = 0x7c01;
+        private static final String THUMBCAST_ADVANCED_KEY = "screen_thumbcast_advanced";
+
+        /** Wynik kreatora uruchomionego z Pomoc → „Uruchom konfigurację od nowa” (te same zapisy co hak w PcView). */
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+            if (requestCode != THUMBCAST_REQ_ONBOARDING || getActivity() == null) {
+                return;
+            }
+            OnboardingResult result = UiContract.parseOnboardingResult(resultCode, data);
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit()
+                    .putInt(UiContract.PREF_ONBOARDING_VERSION, UiContract.CURRENT_ONBOARDING_VERSION);
+            if (result != null) {
+                editor.putString(ProfileLibraryActivity.PREF_PROFILE, result.getPresetFile());
+            }
+            editor.apply();
+            if (result == null) {
+                return;
+            }
+            new ThumbcastSettings(getActivity()).setHideOnGamepad(result.isHideOnGamepad());
+            Preference hide = findPreference(ThumbcastSettings.KEY_HIDE_ON_GAMEPAD);
+            if (hide instanceof CheckBoxPreference) {
+                ((CheckBoxPreference) hide).setChecked(result.isHideOnGamepad());
+            }
+            Toast.makeText(getActivity(), getString(R.string.thumbcast_set_onboarding_saved,
+                    ProfileLibraryActivity.defaultProfileName(getActivity())), Toast.LENGTH_LONG).show();
+        }
+
+        @Override
+        public void onActivityCreated(Bundle savedInstanceState) {
+            super.onActivityCreated(savedInstanceState);
+            StreamSettings activity = (StreamSettings) getActivity();
+            if (activity != null && activity.thumbcastReopenAdvanced) {
+                activity.thumbcastReopenAdvanced = false;
+                View view = getView();
+                if (view != null) {
+                    view.post(this::thumbcastOpenAdvanced);
+                }
+            }
+        }
+
+        @Override
+        public void onDestroy() {
+            // Przed super.onDestroy(): PreferenceManager zamyka wtedy okna zagnieżdżonych ekranów.
+            Preference advanced = findPreference(THUMBCAST_ADVANCED_KEY);
+            StreamSettings activity = (StreamSettings) getActivity();
+            if (activity != null && !activity.isFinishing() && advanced instanceof PreferenceScreen) {
+                android.app.Dialog dialog = ((PreferenceScreen) advanced).getDialog();
+                activity.thumbcastReopenAdvanced = dialog != null && dialog.isShowing();
+            }
+            super.onDestroy();
+        }
+
+        /** Otwiera „Zaawansowane” tak jak dotknięcie wiersza (PreferenceScreen.onItemClick). */
+        private void thumbcastOpenAdvanced() {
+            PreferenceScreen root = getPreferenceScreen();
+            Preference advanced = findPreference(THUMBCAST_ADVANCED_KEY);
+            if (root == null || advanced == null || getActivity() == null) {
+                return;
+            }
+            ListAdapter adapter = root.getRootAdapter();
+            for (int i = 0; i < adapter.getCount(); i++) {
+                if (adapter.getItem(i) == advanced) {
+                    root.onItemClick(null, null, i, 0);
+                    return;
+                }
+            }
+        }
+
+        /** Pasek z tytułem i strzałką wstecz jako nagłówek listy (bez paska akcji w motywie). */
+        private static void thumbcastAddHeader(ListView list, CharSequence title, View.OnClickListener onBack) {
+            View header = LayoutInflater.from(list.getContext())
+                    .inflate(R.layout.thumbcast_settings_header, list, false);
+            ((TextView) header.findViewById(R.id.thumbcast_settings_header_title)).setText(title);
+            ImageButton back = header.findViewById(R.id.thumbcast_settings_header_back);
+            back.setOnClickListener(onBack);
+            list.addHeaderView(header, null, false);
+        }
+
+        /**
+         * Okno zagnieżdżonego ekranu (PreferenceScreen.showDialog): nagłówek z tytułem i odstępy od pasków
+         * systemowych (od Androida 15 okna rysują się pod nimi).
+         */
+        private static void thumbcastDecorateNestedScreen(PreferenceScreen screen) {
+            final android.app.Dialog dialog = screen.getDialog();
+            if (dialog == null) {
+                return;
+            }
+            ListView list = dialog.findViewById(android.R.id.list);
+            if (list != null && list.getHeaderViewsCount() == 0) {
+                thumbcastAddHeader(list, screen.getTitle(), v -> dialog.dismiss());
+            }
+            View content = dialog.findViewById(android.R.id.content);
+            if (content != null) {
+                content.setOnApplyWindowInsetsListener((v, insets) -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        Insets bars = insets.getInsets(WindowInsets.Type.systemBars()
+                                | WindowInsets.Type.displayCutout());
+                        v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+                    } else {
+                        v.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
+                                insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
+                    }
+                    return insets;
+                });
+                content.requestApplyInsets();
+            }
+        }
+
+        private void thumbcastStart(Intent intent, int requestCode) {
+            try {
+                if (requestCode != 0) {
+                    startActivityForResult(intent, requestCode);
+                } else {
+                    startActivity(intent);
+                }
+            } catch (ActivityNotFoundException e) {
+                Toast.makeText(getActivity(), R.string.thumbcast_set_screen_unavailable, Toast.LENGTH_LONG).show();
+            }
+        }
         // THUMBCAST END
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View view = super.onCreateView(inflater, container, savedInstanceState);
             UiHelper.applyStatusBarPadding(view);
+            // THUMBCAST: tytuł ekranu i strzałka wstecz (ta sama ścieżka co systemowy Back).
+            ListView list = view.findViewById(android.R.id.list);
+            if (list != null) {
+                thumbcastAddHeader(list, getString(R.string.thumbcast_label_settings), v -> {
+                    if (getActivity() != null) {
+                        getActivity().onBackPressed();
+                    }
+                });
+            }
+            // THUMBCAST END
             return view;
         }
 
@@ -289,7 +441,9 @@ public class StreamSettings extends Activity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
-            addPreferencesFromResource(R.xml.preferences);
+            // THUMBCAST: własny układ (docs/ui-audit.md, D3; te same klucze), było R.xml.preferences.
+            addPreferencesFromResource(R.xml.thumbcast_preferences);
+            // THUMBCAST END
             PreferenceScreen screen = getPreferenceScreen();
 
             // hide on-screen controls category on non touch screen devices
@@ -367,24 +521,77 @@ public class StreamSettings extends Activity {
             }
 
             // THUMBCAST: ustawienia OSC legacy mają sens tylko w trybie legacy, profil tylko w trybie thumbcast.
+            // Układ z thumbcast_preferences.xml: stare przyciski ekranowe stoją w category_onscreen_controls
+            // (w „Zaawansowane”) za list_control_layer i checkbox_thumbcast_debug i są widoczne tylko w trybie legacy;
+            // checkbox_vibrate_osc jest w „Sterowanie” (category_thumbcast). Upstreamowe usuwanie powyżej szuka ich
+            // w starych miejscach (screen / kategoria OSC) i tutaj nic nie robi, więc te przypadki obsługujemy sami.
             final ListPreference controlLayer = (ListPreference) findPreference("list_control_layer");
             final Preference thumbcastProfile = findPreference("list_thumbcast_profile");
             final Preference oscPref = findPreference("checkbox_show_onscreen_controls");
-            final Preference vibrateOscPref = findPreference("checkbox_vibrate_osc");
+            Preference vibrateOsc = findPreference("checkbox_vibrate_osc");
+            final PreferenceCategory oscCategory = (PreferenceCategory) findPreference("category_onscreen_controls");
+            final List<Preference> legacyOscPrefs = new ArrayList<>();
+            if (oscCategory != null) {
+                for (int i = 0; i < oscCategory.getPreferenceCount(); i++) {
+                    Preference p = oscCategory.getPreference(i);
+                    if (!"list_control_layer".equals(p.getKey()) && !"checkbox_thumbcast_debug".equals(p.getKey())) {
+                        legacyOscPrefs.add(p);
+                    }
+                }
+            }
+            // Bez ekranu dotykowego (upstream usuwał całą kategorię OSC): stare przyciski znikają na stałe.
+            if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
+                for (int i = legacyOscPrefs.size() - 1; i >= 0; i--) {
+                    oscCategory.removePreference(legacyOscPrefs.get(i));
+                }
+                legacyOscPrefs.clear();
+            }
+            // Bez wibracji (upstream usuwał checkbox_vibrate_osc z kategorii OSC).
+            if (vibrateOsc != null &&
+                    !((Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE)).hasVibrator()) {
+                PreferenceCategory controls = (PreferenceCategory) findPreference("category_thumbcast");
+                vibrateOsc.setDependency(null);
+                if (controls != null) {
+                    controls.removePreference(vibrateOsc);
+                }
+                vibrateOsc = null;
+            }
+            final Preference vibrateOscPref = vibrateOsc;
+            final boolean legacyOscAvailable = !legacyOscPrefs.isEmpty();
+            // Kolejność: dodawanie od początku (najpierw checkbox_show_onscreen_controls, od którego zależą pozostałe),
+            // usuwanie od końca (zależne przed nim), żeby zależności rejestrowały się i wyrejestrowywały poprawnie.
+            final boolean[] legacyOscShown = {true};
+            final java.util.function.Consumer<Boolean> showLegacyOsc = show -> {
+                if (!legacyOscAvailable || legacyOscShown[0] == show) {
+                    return;
+                }
+                if (show) {
+                    for (Preference p : legacyOscPrefs) {
+                        oscCategory.addPreference(p);
+                    }
+                } else {
+                    for (int i = legacyOscPrefs.size() - 1; i >= 0; i--) {
+                        oscCategory.removePreference(legacyOscPrefs.get(i));
+                    }
+                }
+                legacyOscShown[0] = show;
+            };
             if (controlLayer != null) {
                 Preference.OnPreferenceChangeListener layerListener = (pref, value) -> {
                     boolean tc = "thumbcast".equals(value);
+                    if (!tc) showLegacyOsc.accept(true);
                     if (thumbcastProfile != null) thumbcastProfile.setEnabled(tc);
                     if (oscPref != null) oscPref.setEnabled(!tc);
                     // Wibracja telefonu przy rumble (vibrateOsc) działa też w trybie Thumbcast, więc nie może zależeć
                     // od checkbox_show_onscreen_controls (w tym trybie wyszarzonego i zwykle równego false).
                     if (vibrateOscPref != null) {
-                        vibrateOscPref.setDependency(tc ? null : "checkbox_show_onscreen_controls");
+                        vibrateOscPref.setDependency(tc || !legacyOscAvailable ? null : "checkbox_show_onscreen_controls");
                         // setDependency(null) tylko wyrejestrowuje zależność i nie zeruje flagi "zależność niespełniona"
                         // ustawionej chwilę wcześniej przez oscPref.setEnabled(false), więc odblokowujemy ręcznie
                         // (błąd znaleziony w smoke teście na emulatorze 11.11.2026).
-                        if (tc && oscPref != null) vibrateOscPref.onDependencyChanged(oscPref, false);
+                        if ((tc || !legacyOscAvailable) && oscPref != null) vibrateOscPref.onDependencyChanged(oscPref, false);
                     }
+                    if (tc) showLegacyOsc.accept(false);
                     return true;
                 };
                 layerListener.onPreferenceChange(controlLayer, controlLayer.getValue());
@@ -395,6 +602,37 @@ public class StreamSettings extends Activity {
                 thumbcastProfile.setOnPreferenceClickListener(pref -> {
                     startActivity(new Intent(getActivity(), ProfileLibraryActivity.class));
                     return true;
+                });
+            }
+            // Pomoc: poradnik (:control-ui, UiContract) i ponowny kreator (wynik w onActivityResult).
+            Preference guide = findPreference("thumbcast_help_setup_guide");
+            if (guide != null) {
+                guide.setOnPreferenceClickListener(pref -> {
+                    thumbcastStart(UiContract.setupGuideIntent(getActivity(), null), 0);
+                    return true;
+                });
+            }
+            Preference troubleshoot = findPreference("thumbcast_help_troubleshoot");
+            if (troubleshoot != null) {
+                troubleshoot.setOnPreferenceClickListener(pref -> {
+                    thumbcastStart(UiContract.setupGuideIntent(getActivity(), UiContract.SECTION_TROUBLESHOOT), 0);
+                    return true;
+                });
+            }
+            Preference onboarding = findPreference("thumbcast_help_onboarding");
+            if (onboarding != null) {
+                onboarding.setOnPreferenceClickListener(pref -> {
+                    thumbcastStart(UiContract.onboardingIntent(getActivity()), THUMBCAST_REQ_ONBOARDING);
+                    return true;
+                });
+            }
+            // „Zaawansowane”: okno zagnieżdżonego ekranu dostaje nagłówek i odstępy od pasków systemowych.
+            // PreferenceScreen najpierw pokazuje okno (onClick), potem woła ten listener; false = dalej domyślnie.
+            Preference advanced = findPreference(THUMBCAST_ADVANCED_KEY);
+            if (advanced instanceof PreferenceScreen) {
+                advanced.setOnPreferenceClickListener(pref -> {
+                    thumbcastDecorateNestedScreen((PreferenceScreen) pref);
+                    return false;
                 });
             }
             // THUMBCAST END
