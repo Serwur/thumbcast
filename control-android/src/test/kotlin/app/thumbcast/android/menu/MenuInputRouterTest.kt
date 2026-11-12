@@ -160,14 +160,53 @@ class MenuInputRouterTest {
     }
 
     @Test
-    fun focusMovesWithinRange() {
+    fun focusMovesAndWrapsAround() {
         assertEquals(-1, MenuFocus.move(-1, 1, 0, 0))
+        // Pierwsze polecenie: wiersz domyślny bez ruchu.
         assertEquals(5, MenuFocus.move(-1, 1, 7, 5))
         assertEquals(5, MenuFocus.move(-1, -1, 7, 5))
         assertEquals(6, MenuFocus.move(5, 1, 7, 5))
-        assertEquals(6, MenuFocus.move(6, 1, 7, 5))
-        assertEquals(0, MenuFocus.move(0, -1, 7, 5))
+        assertEquals(4, MenuFocus.move(5, -1, 7, 5))
+        // Zawijanie: z ostatniego w dół na pierwszy, z pierwszego w górę na ostatni.
+        assertEquals(0, MenuFocus.move(6, 1, 7, 5))
+        assertEquals(6, MenuFocus.move(0, -1, 7, 5))
+        // Jeden wiersz: zostaje na miejscu.
+        assertEquals(0, MenuFocus.move(0, 1, 1, 0))
+        assertEquals(0, MenuFocus.move(0, -1, 1, 0))
+        // Indeks spoza listy (lista się skróciła) i domyślny spoza zakresu.
         assertEquals(2, MenuFocus.move(9, 1, 3, 2))
         assertTrue(MenuFocus.move(-1, 1, 3, 9) == 2)
+    }
+
+    @Test
+    fun stepClampsWithoutWrapping() {
+        assertEquals(-1, MenuFocus.step(0, 1, 0))
+        assertEquals(1, MenuFocus.step(0, 1, 3))
+        assertEquals(2, MenuFocus.step(2, 1, 3))
+        assertEquals(0, MenuFocus.step(0, -1, 3))
+        assertEquals(1, MenuFocus.step(2, -1, 3))
+    }
+
+    @Test
+    fun heldVerticalFollowsLatchedAxes() {
+        val r = MenuInputRouter()
+        assertEquals(MenuCommand.NONE, r.heldVertical())
+        r.onAxes(pad, 0f, 1f, 0f, 0f)
+        assertEquals(MenuCommand.DOWN, r.heldVertical())
+        r.onAxes(pad, 0f, 0f, 0f, 0f)
+        assertEquals(MenuCommand.NONE, r.heldVertical())
+        // Gałka z histerezą: trzymana powyżej progu wyjścia nadal daje kierunek.
+        r.onAxes(pad, 0f, 0f, 0f, -0.9f)
+        assertEquals(MenuCommand.UP, r.heldVertical())
+        r.onAxes(pad, 0f, 0f, 0f, -0.4f)
+        assertEquals(MenuCommand.UP, r.heldVertical())
+        r.onAxes(pad, 0f, 0f, 0f, -0.1f)
+        assertEquals(MenuCommand.NONE, r.heldVertical())
+        // Sam kierunek poziomy nie przewija listy.
+        r.onAxes(pad, 1f, 0f, 0f, 0f)
+        assertEquals(MenuCommand.NONE, r.heldVertical())
+        r.onAxes(pad, 0f, 1f, 0f, 0f)
+        r.resetAxes()
+        assertEquals(MenuCommand.NONE, r.heldVertical())
     }
 }

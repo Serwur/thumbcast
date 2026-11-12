@@ -3,9 +3,10 @@ package app.thumbcast.android.menu
 /**
  * Strony menu w grze (`ThumbcastSession` w `:app`). Czysty JVM: testy w `MenuPageTest`.
  *
- * - [MAIN]: strona główna (Rozłącz, Zakończ sesję, przełączniki, rozmiar, Wróć do gry).
- * - [PROFILES]: lista profili do zmiany w trakcie gry.
- * - [END_SESSION]: potwierdzenie „Zakończ sesję” (zamknięcie aplikacji na PC, niezapisane postępy przepadają).
+ * - [MAIN]: strona główna (od 12.11.2026: „Wróć do gry”, szybkie akcje, sekcje Sterowanie i Obraz, na dole Wyjście).
+ * - [PROFILES]: lista profili do zmiany w trakcie gry (sekcje „Wbudowane” i „Moje”).
+ * - [END_SESSION]: potwierdzenie „Zamknij grę na PC” (dawniej „Zakończ sesję”: zamknięcie aplikacji na PC,
+ *   niezapisane postępy przepadają).
  */
 enum class MenuPage {
     MAIN,

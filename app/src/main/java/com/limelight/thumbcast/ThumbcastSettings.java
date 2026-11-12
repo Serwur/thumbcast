@@ -134,4 +134,19 @@ public final class ThumbcastSettings {
     public void copyMouseGestures(String fromFile, String toFile) {
         setMouseGestures(toFile, getMouseGestures(fromFile));
     }
+
+    // ---------- Podpowiedź „jak otworzyć menu” (12.11.2026, G6): pokazywana raz ----------
+
+    /** true = podpowiedź przy starcie strumienia była już pokazana (albo menu otwarto wcześniej). */
+    static final String KEY_MENU_HINT_SHOWN = "thumbcast_menu_hint_shown";
+
+    public boolean isMenuHintShown() {
+        return prefs.getBoolean(KEY_MENU_HINT_SHOWN, false);
+    }
+
+    public void setMenuHintShown() {
+        if (!isMenuHintShown()) {
+            prefs.edit().putBoolean(KEY_MENU_HINT_SHOWN, true).apply();
+        }
+    }
 }

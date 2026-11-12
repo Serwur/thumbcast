@@ -51,7 +51,8 @@ data class MenuKeyResult(val route: MenuKeyRoute, val command: MenuCommand) {
  * - Puszczenie klawisza wciśniętego przed otwarciem menu idzie zwykłą ścieżką do hosta: klawisz klawiatury nie
  *   zostaje trzymany na hoście (stan pada sesja i tak zeruje przy otwarciu menu).
  * - Ruch osi pada przy otwartym menu ([onAxes]) jest zjadany przez wołającego; krzyżak (hat) i lewa gałka dają
- *   kierunek z histerezą: jedno polecenie na wychylenie, bez powtarzania w czasie (żadnych timerów).
+ *   kierunek z histerezą: jedno polecenie na wychylenie. Router nie ma timerów; trzymany kierunek pionowy
+ *   ([heldVertical]) sesja powtarza sama, tylko w menu (nic nie idzie do hosta).
  * - Pady, które zgłaszają krzyżak naraz jako hat i jako klawisze D-pad (upstream `ControllerHandler` tłumi wtedy
  *   klawisze), dają jedno polecenie: dla danego urządzenia wygrywa źródło, które pierwsze dało kierunek.
  */
@@ -143,6 +144,20 @@ class MenuInputRouter {
         return out
     }
 
+    /**
+     * Kierunek pionowy trzymany teraz na osiach dowolnego pada (krzyżak albo lewa gałka po histerezie): UP, DOWN
+     * albo NONE. Sesja powtarza nim przesuwanie zaznaczenia, dopóki kierunek jest trzymany (przewijanie długiej
+     * listy). To tylko nawigacja w menu: do hosta nic nie trafia (FAIR_PLAY). Klawisze mają powtórzenia systemowe
+     * (`repeatCount > 0`), więc ich to nie dotyczy.
+     */
+    fun heldVertical(): MenuCommand {
+        for (latch in axes.values) {
+            if (latch.y < 0) return MenuCommand.UP
+            if (latch.y > 0) return MenuCommand.DOWN
+        }
+        return MenuCommand.NONE
+    }
+
     /** Menu zamknięte albo otwarte od nowa: kierunki osi od zera (puszczenia klawiszy zostają śledzone). */
     fun resetAxes() {
         axes.clear()
@@ -214,12 +229,23 @@ class MenuInputRouter {
 object MenuFocus {
     /**
      * Następny wiersz: [current] < 0 (jeszcze nic nie zaznaczono) daje [defaultIndex] bez ruchu, inaczej przesunięcie
-     * o [delta] obcięte do zakresu (bez zawijania). Pusta lista: -1.
+     * o [delta] z zawijaniem (od 12.11.2026: w dół z ostatniego na pierwszy, w górę z pierwszego na ostatni).
+     * Pusta lista: -1.
      */
     @JvmStatic
     fun move(current: Int, delta: Int, count: Int, defaultIndex: Int): Int {
         if (count <= 0) return -1
         if (current < 0 || current >= count) return defaultIndex.coerceIn(0, count - 1)
+        return Math.floorMod(current + delta, count)
+    }
+
+    /**
+     * Wartość wiersza z listą opcji (segmenty) po LEFT/RIGHT: [current] + [delta] obcięte do zakresu, bez zawijania
+     * (koniec skali jest wyczuwalny). Pusta lista: -1.
+     */
+    @JvmStatic
+    fun step(current: Int, delta: Int, count: Int): Int {
+        if (count <= 0) return -1
         return (current + delta).coerceIn(0, count - 1)
     }
 }

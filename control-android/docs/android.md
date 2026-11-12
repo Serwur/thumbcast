@@ -30,7 +30,17 @@ MotionEvent ──► ThumbcastOverlay.onTouchEvent
 - **Jeden View.** `ThumbcastOverlay` rysuje wszystkie kontrolki na Canvas: joystick (pływający:
   podstawa pojawia się tam, gdzie wylądował kciuk; stały: w środku strefy), przyciski okrągłe,
   zaokrąglone i prostokątne (`shape`), modyfikatory (z wizualnym stanem LATCH), przyciski systemowe.
-  Etykieta to `label` z profilu albo skrót wyjścia (`A`, `LT`, `M`, `☰`). Przezroczystość: `global.opacity`.
+  Etykieta to `label` z profilu albo skrót wyjścia (`A`, `LT`, `M`). Przezroczystość: `global.opacity`.
+- **Przyciski systemowe** (od 12.11.2026, G15). Kontrolka `system` z akcją `menu`, `soft_keyboard` albo
+  `toggle_overlay` jest rysowana jako pigułka (kolor `thumbcast_menu_surface`, po wciśnięciu akcent) z ikoną
+  z linii (`OverlayRenderer.SystemIcon`: trzy kreski, klawiatura, oko), a nie glifem czcionki; etykieta z profilu
+  (`☰`, `⌨`) zostaje w pliku, ale nie jest rysowana. Inna akcja: zwykły przycisk z etykietą. Obszar dotyku:
+  `SystemTouchTargets` powiększa `rect` kontrolek `system` do min. 48 dp w każdej osi (wokół środka, w granicach
+  ekranu, do sąsiedniej kontrolki najwyżej połowa odstępu, więc nic nie nachodzi na wejście gry). Krok jest
+  ostatni w profilu efektywnym i zależy od rozmiaru widoku, więc silnik (hit test, strefa aktywacji) i rysowanie
+  mają ten sam prostokąt; zmiana rozmiaru widoku podaje silnikowi nowy profil tylko, gdy prostokąty się zmieniły.
+  Format profilu i pliki bez zmian. Gdy sąsiad jest blisko (Big Picture: ☰ i ⌨ prawie stykają się, pod
+  spodem LT), obszar zostaje mniejszy niż 48 dp (ok. 46 × 43 dp na telefonie 20:9); pozostałe presety mają pełne 48 dp.
 - **Stan wizualny = stan silnika** (od 11.11.2026). Overlay nie robi własnego hit testu. „Wciśnięcie”,
   LATCH, palec → kontrolka (także w strefie aktywacji i po slide-to-press), środek, promień i wychylenie
   gałki bierze z `InputEngine.visualState()`. Haptyka wynika z przejść tego stanu przed i po zdarzeniu
@@ -40,7 +50,8 @@ MotionEvent ──► ThumbcastOverlay.onTouchEvent
   wykluczenia gestów). Rysowanie: `OverlaySnapshotBuilder` (czysta migawka z układu i stanu silnika) →
   `OverlayRenderer` (Canvas, bez znajomości silnika; do ponownego użycia w edytorze układu).
   `VideoGeometry` (czysta): prostokąt wideo i odniesienie → `Viewport`. `EffectiveProfile` (czysta):
-  profil bazowy → przekształcenia (`ProfileStep`, np. skalowanie, `setProfileTransforms`) → ukrycie kontrolek.
+  profil bazowy → przekształcenia (`ProfileStep`, np. skalowanie, `setProfileTransforms`) → ukrycie kontrolek;
+  na końcu `SystemTouchTargets` (obszar dotyku przycisków systemowych, zależny od rozmiaru widoku).
   `GamepadPresenceMonitor`: wykrywanie pada fizycznego, publiczne i używalne poza overlayem.
 - **Multitouch.** Do 10 wskaźników (`MotionTranslator.MAX_POINTERS`); 11. palec jest ignorowany w całości.
   `ACTION_POINTER_DOWN/UP` dają osobne `DOWN/UP` dla właściwego `pointerId`. `MOVE` niesie wszystkie
@@ -103,12 +114,23 @@ Wszystko na wątku UI.
 
 `MenuInputRouter` decyduje, co zrobić z klawiszem przy menu w grze (`PASS` = zwykła ścieżka `Game` do hosta,
 `CONSUME` = zjedzone, `SYSTEM` = głośność i zasilanie do systemu) i tłumaczy klawisze oraz osie pada na
-`MenuCommand` (UP/DOWN/LEFT/RIGHT/ACTIVATE/BACK). `MenuFocus.move` liczy zaznaczenie wiersza. Używa go
-`ThumbcastSession` w `:app`; widok menu (`ThumbcastMenuView`) dostaje tylko polecenia. Bez timerów: krzyżak
-i gałka dają jeden krok na wychylenie.
+`MenuCommand` (UP/DOWN/LEFT/RIGHT/ACTIVATE/BACK). `MenuFocus.move` liczy zaznaczenie wiersza (od 12.11.2026
+z zawijaniem: z ostatniego w dół na pierwszy i odwrotnie), `MenuFocus.step` wartość segmentów (bez zawijania).
+Używa go `ThumbcastSession` w `:app`; widok menu (`ThumbcastMenuView`) dostaje tylko polecenia. Router nie ma
+timerów: krzyżak i gałka dają jeden krok na wychylenie. `heldVertical()` mówi, czy kierunek pionowy jest nadal
+trzymany; sesja powtarza wtedy krok (400 ms, potem co 120 ms), żeby przewinąć długą listę. To tylko nawigacja
+w menu: przy otwartym menu nic nie idzie do hosta (FAIR_PLAY). Klawisze mają powtórzenia systemowe.
 
 Strony menu: `menu/MenuPage` (MAIN, PROFILES, END_SESSION; `back()` = z podstrony na główną, z głównej
-zamknięcie). END_SESSION to potwierdzenie „Zakończ sesję” (od 12.11.2026, `MenuPageTest`).
+zamknięcie). END_SESSION to potwierdzenie „Zamknij grę na PC” (dawniej „Zakończ sesję”, `MenuPageTest`).
+
+Wygląd menu (przebudowa UI 12.11.2026, `docs/ui-audit.md` G1–G17, opis w `patches/ui-p4.patch.md`): panel przy
+krawędzi END z rogami 28 dp od strony wideo, wjazd 150 ms, kolory z `thumbcast_colors.xml`; nagłówek (nazwa gry
+i zamknięcie, na podstronie strzałka wstecz), „Wróć do gry” jako wypełniony przycisk z domyślnym zaznaczeniem,
+kafle Klawiatura i Ukryj/Pokaż przyciski, sekcje Sterowanie (Profil sterowania, Gesty myszy, Rozmiar przycisków,
+Chowaj przyciski, gdy gram padem), Obraz (Statystyki: Wył. / Podstawowe / Szczegółowe) i na dole Wyjście
+(Wstrzymaj i wyjdź, Zamknij grę na PC → potwierdzenie). Stopka „A Wybierz · B Wstecz” po pierwszym poleceniu
+z pada lub klawiatury. Lewo/prawo zmienia wartość (stepper, segmenty, przełącznik) albo przechodzi między kaflami.
 
 ## Nakładka statystyk (`stats/`, 12.11.2026)
 
@@ -122,21 +144,23 @@ bez własnych pomiarów. Blok THUMBCAST w rendererze co ok. 1 s (przy zmianie ok
   czas hosta: przechwycenie → zakodowana klatka, podawany przez Sunshine (brak = 0);
   czas telefonu: pierwszy pakiet klatki odebrany → klatka zdekodowana (upstreamowy „end-to-end client latency”,
   zawiera dekodowanie). Nie wlicza renderowania gry, czekania na przechwycenie, kolejki wyświetlania, odświeżania
-  ekranu i próbkowania dotyku, więc prawdziwe opóźnienie jest większe. Etykieta: „opóźnienie ~X ms”.
+  ekranu i próbkowania dotyku, więc prawdziwe opóźnienie jest większe. Etykieta (od 12.11.2026): „X ms”.
   `null` (wyświetlane „–”), gdy RTT albo czas telefonu nieznany.
-- `StatsFormatter` + `StatsLabels` (wzorce z zasobów EN/PL): `basic` = „60 FPS · opóźnienie ~24 ms”
-  (FPS = klatki wyświetlone), `advanced` = ta linia i: rozdzielczość, kodek, FPS strumienia; dekoder; odebrane
+- `StatsFormatter` + `StatsLabels` (wzorce z zasobów EN/PL): `basic` = „60 FPS · 24 ms”, bez opóźnienia „60 FPS”
+  (FPS = klatki wyświetlone; od 12.11.2026, G14), `advanced` = ta linia i: rozdzielczość, kodek, FPS strumienia; dekoder; odebrane
   i wyświetlone FPS; utrata klatek w sieci; RTT i wariancja; czas hosta min/maks/śr.; dekodowanie i czas telefonu;
   rozbicie opóźnienia na składniki.
-- `StatsToggles`/`StatsMode`: „Statystyki” (klucz upstreamu `checkbox_enable_perf_overlay`, ten sam co pole w
-  ustawieniach) i „Szczegółowe statystyki” (`checkbox_thumbcast_perf_advanced`, domyślnie wył.). Szczegóły
-  włączone przy wyłączonych statystykach włączają też statystyki; wyłączenie statystyk pamięta szczegóły.
+- `StatsToggles`/`StatsMode`: zapis to dwie flagi, „Statystyki” (klucz upstreamu `checkbox_enable_perf_overlay`,
+  ten sam co pole w ustawieniach) i „Szczegółowe statystyki” (`checkbox_thumbcast_perf_advanced`, domyślnie wył.).
+  Menu w grze ma od 12.11.2026 jeden wiersz z segmentami Wył. / Podstawowe / Szczegółowe: `withMode(mode)`
+  (Wył. zostawia flagę szczegółów, więc ponowne włączenie w ustawieniach wraca do poprzedniego trybu).
+  `toggleEnabled`/`toggleAdvanced` zostały dla zgodności.
 - `StatsPlacement`: prawy górny róg obszaru bezpiecznego (wycięcie, paski). Kandydaci: x przy prawej krawędzi
   albo tuż na lewo od kontrolki, y przy górze albo tuż pod kontrolką; wygrywa wolny kandydat najbliżej rogu
   (przesunięcie w dół liczy się podwójnie). Nic wolnego: róg mimo kolizji. Kontrolki z
   `ThumbcastOverlay.controlBounds()` (profil efektywny: skala, ukrycie przy padzie).
 - Widok i podpięcie są w `:app` (`ThumbcastStatsView`, `ThumbcastSession`): widok pod overlayem kontrolek, bez dotyku
-  i fokusu, 11 sp, tło `#99000000`. Testy: `StreamStatsTest`, `StatsTogglesTest`, `StatsPlacementTest`.
+  i fokusu, 12 sp, tło `thumbcast_scrim`. Testy: `StreamStatsTest`, `StatsTogglesTest`, `StatsPlacementTest`.
 
 ## Fasady (dlaczego nie wołamy upstreamu wprost)
 
@@ -167,8 +191,10 @@ powtarza ten sam stan po 25/50/75 ms, tak jak upstreamowy `VirtualController.sen
   (reguła „fizyczny pad”, callback tylko przy zmianie), `OverlaySnapshotTest` (migawka z prawdziwym silnikiem:
   wciśnięcie w strefie aktywacji, slide-to-press, LATCH, promień i gałka z silnika, haptyka z przejść),
   `MenuInputRouterTest` (menu w grze: które klawisze menu zjada, które idą do systemu albo do hosta, puszczenia
-  po zamknięciu menu, krzyżak i gałka z histerezą, duplikaty hat + D-pad, zaznaczenie wiersza), `MenuPageTest`,
-  `StreamStatsTest`, `StatsTogglesTest`, `StatsPlacementTest` (nakładka statystyk). Testy nie dotykają klas Androida w czasie wykonania (stałe
+  po zamknięciu menu, krzyżak i gałka z histerezą, duplikaty hat + D-pad, zaznaczenie wiersza z zawijaniem,
+  segmenty bez zawijania, trzymany kierunek), `MenuPageTest`, `SystemTouchTargetsTest` (obszar dotyku przycisków
+  systemowych: min. 48 dp, bez nachodzenia, presety), `StreamStatsTest`, `StatsTogglesTest` (także segmenty
+  `withMode`), `StatsPlacementTest` (nakładka statystyk). Testy nie dotykają klas Androida w czasie wykonania (stałe
   `KeyEvent.KEYCODE_*` są wklejane przez kompilator), więc Robolectric nie jest potrzebny. Jeśli kompilator
   jednak nie wklei stałych (np. zmiana w android.jar), `unitTests.isReturnDefaultValues` nie wystarczy:
   wtedy dodać Robolectric (`libs.robolectric`) do `SinksTest`.

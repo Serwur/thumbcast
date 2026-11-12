@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Menu w grze, nakładka statystyk i komunikaty strumienia (docs/ui-audit.md, D5, pakiet P4). Słownik D7. -->
+<resources>
+    <!-- Nagłówek i stopka panelu -->
+    <string name="thumbcast_game_menu_title">Menu</string>
+    <string name="thumbcast_game_menu_close">Zamknij menu</string>
+    <string name="thumbcast_game_hint_select">Wybierz</string>
+    <string name="thumbcast_game_hint_back">Wstecz</string>
+
+    <!-- Strona główna -->
+    <string name="thumbcast_game_resume">Wróć do gry</string>
+    <string name="thumbcast_game_keyboard">Klawiatura</string>
+    <string name="thumbcast_game_hide_buttons">Ukryj przyciski</string>
+    <string name="thumbcast_game_show_buttons">Pokaż przyciski</string>
+    <string name="thumbcast_game_section_controls">Sterowanie</string>
+    <string name="thumbcast_game_section_display">Obraz</string>
+    <string name="thumbcast_game_section_exit">Wyjście</string>
+    <string name="thumbcast_game_profile">Profil sterowania</string>
+    <string name="thumbcast_game_mouse_gestures">Gesty myszy</string>
+    <string name="thumbcast_game_mouse_direct_on">Dotknij = klik, dwa palce = prawy klik, przeciągnij = przewijanie</string>
+    <string name="thumbcast_game_mouse_touchpad_on">Pusty ekran działa jak gładzik</string>
+    <string name="thumbcast_game_mouse_camera_on">Dotknij = klik, szczypanie = kółko myszy</string>
+    <string name="thumbcast_game_mouse_off">Dotyk w pustym miejscu nic nie wysyła</string>
+    <string name="thumbcast_game_mouse_camera_off">Przeciąganie obraca kamerę, bez klików</string>
+    <string name="thumbcast_game_button_size">Rozmiar przycisków</string>
+    <string name="thumbcast_game_button_size_value">%1$d%%</string>
+    <string name="thumbcast_game_button_smaller">Mniejsze przyciski</string>
+    <string name="thumbcast_game_button_larger">Większe przyciski</string>
+    <string name="thumbcast_game_hide_on_gamepad">Chowaj przyciski, gdy gram padem</string>
+    <string name="thumbcast_game_stats">Statystyki</string>
+    <string name="thumbcast_game_stats_off">Wył.</string>
+    <string name="thumbcast_game_stats_basic">Podstawowe</string>
+    <string name="thumbcast_game_stats_detailed">Szczegółowe</string>
+    <string name="thumbcast_game_pause_exit">Wstrzymaj i wyjdź</string>
+    <string name="thumbcast_game_pause_exit_subtitle">Gra działa dalej na PC</string>
+    <string name="thumbcast_game_quit">Zamknij grę na PC</string>
+    <string name="thumbcast_game_quit_subtitle">Niezapisane postępy przepadną</string>
+
+    <!-- Opisy stanu dla TalkBack -->
+    <string name="thumbcast_game_state_on">%1$s, włączone</string>
+    <string name="thumbcast_game_state_off">%1$s, wyłączone</string>
+    <string name="thumbcast_game_state_value">%1$s: %2$s</string>
+    <string name="thumbcast_game_state_selected">%1$s: %2$s, wybrane</string>
+
+    <!-- Potwierdzenie zamknięcia gry na PC -->
+    <string name="thumbcast_game_quit_title">Zamknąć grę na PC?</string>
+    <string name="thumbcast_game_quit_body">Gra się zamknie, a niezapisane postępy przepadną. Ekran PC wróci do zwykłej rozdzielczości.</string>
+    <string name="thumbcast_game_quit_cancel">Anuluj</string>
+    <string name="thumbcast_game_quit_confirm">Zamknij grę</string>
+    <string name="thumbcast_game_quit_progress">Zamykam grę na PC…</string>
+    <string name="thumbcast_game_quit_done">Gra na PC zamknięta</string>
+    <string name="thumbcast_game_quit_failed">Nie udało się zamknąć gry na PC. Spróbuj z listy gier: przytrzymaj grę.</string>
+    <string name="thumbcast_game_quit_not_owner">Grę uruchomiono z innego urządzenia. Zamknij ją tam albo na PC.</string>
+
+    <!-- Profile -->
+    <string name="thumbcast_game_profiles_title">Profil sterowania</string>
+    <string name="thumbcast_game_profiles_title_session">Profil w tej sesji</string>
+    <string name="thumbcast_game_profiles_builtin">Wbudowane</string>
+    <string name="thumbcast_game_profiles_mine">Moje</string>
+    <string name="thumbcast_game_profile_in_use">Używany teraz</string>
+    <string name="thumbcast_game_profile_default">Domyślny</string>
+    <string name="thumbcast_game_profile_in_use_default">Używany teraz · domyślny</string>
+    <string name="thumbcast_game_profile_switched">Profil: %1$s</string>
+    <string name="thumbcast_game_profile_switched_session">Profil w tej sesji: %1$s (ustawienie gry bez zmian)</string>
+    <string name="thumbcast_game_profile_switch_error">Nie udało się wczytać tego profilu. Wybierz inny.</string>
+    <string name="thumbcast_game_profile_error">Nie udało się wczytać profilu sterowania, więc pokazuję klasyczne przyciski. Wybierz inny profil w Ustawieniach.</string>
+
+    <!-- Podpowiedź przy starcie strumienia (raz) -->
+    <string name="thumbcast_game_menu_hint">Menu: przycisk w rogu albo przeciągnij od góry</string>
+
+    <!-- Nakładka statystyk: linia podstawowa -->
+    <string name="thumbcast_game_stats_line">%1$d FPS · %2$d ms</string>
+    <string name="thumbcast_game_stats_line_no_delay">%1$d FPS</string>
+    <string name="thumbcast_game_stats_waiting">– FPS</string>
+</resources>

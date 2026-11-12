@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Menu w grze, nakładka statystyk i komunikaty strumienia (docs/ui-audit.md, D5, pakiet P4).
+    Polski: values-pl/thumbcast_strings_game.xml. Słownik D7: „przyciski”, nie „kontrolki”.
+-->
+<resources>
+    <!-- Nagłówek i stopka panelu -->
+    <string name="thumbcast_game_menu_title">Menu</string>
+    <string name="thumbcast_game_menu_close">Close menu</string>
+    <string name="thumbcast_game_hint_select">Select</string>
+    <string name="thumbcast_game_hint_back">Back</string>
+    <string name="thumbcast_game_hint_key_a" translatable="false">A</string>
+    <string name="thumbcast_game_hint_key_b" translatable="false">B</string>
+
+    <!-- Strona główna -->
+    <string name="thumbcast_game_resume">Back to game</string>
+    <string name="thumbcast_game_keyboard">Keyboard</string>
+    <string name="thumbcast_game_hide_buttons">Hide buttons</string>
+    <string name="thumbcast_game_show_buttons">Show buttons</string>
+    <string name="thumbcast_game_section_controls">Controls</string>
+    <string name="thumbcast_game_section_display">Display</string>
+    <string name="thumbcast_game_section_exit">Exit</string>
+    <string name="thumbcast_game_profile">Control profile</string>
+    <string name="thumbcast_game_mouse_gestures">Mouse gestures</string>
+    <string name="thumbcast_game_mouse_direct_on">Tap = click, two fingers = right click, drag = scroll</string>
+    <string name="thumbcast_game_mouse_touchpad_on">The empty screen works like a touchpad</string>
+    <string name="thumbcast_game_mouse_camera_on">Tap = click, pinch = mouse wheel</string>
+    <string name="thumbcast_game_mouse_off">Touching empty space sends nothing</string>
+    <string name="thumbcast_game_mouse_camera_off">Dragging turns the camera, no clicks</string>
+    <string name="thumbcast_game_button_size">Button size</string>
+    <string name="thumbcast_game_button_size_value">%1$d%%</string>
+    <string name="thumbcast_game_button_smaller">Smaller buttons</string>
+    <string name="thumbcast_game_button_larger">Larger buttons</string>
+    <string name="thumbcast_game_hide_on_gamepad">Hide buttons when I play with a gamepad</string>
+    <string name="thumbcast_game_stats">Stats</string>
+    <string name="thumbcast_game_stats_off">Off</string>
+    <string name="thumbcast_game_stats_basic">Basic</string>
+    <string name="thumbcast_game_stats_detailed">Detailed</string>
+    <string name="thumbcast_game_pause_exit">Pause and exit</string>
+    <string name="thumbcast_game_pause_exit_subtitle">The game keeps running on the PC</string>
+    <string name="thumbcast_game_quit">Close the game on the PC</string>
+    <string name="thumbcast_game_quit_subtitle">Unsaved progress will be lost</string>
+
+    <!-- Opisy stanu dla TalkBack -->
+    <string name="thumbcast_game_state_on">%1$s, on</string>
+    <string name="thumbcast_game_state_off">%1$s, off</string>
+    <string name="thumbcast_game_state_value">%1$s: %2$s</string>
+    <string name="thumbcast_game_state_selected">%1$s: %2$s, selected</string>
+
+    <!-- Potwierdzenie zamknięcia gry na PC -->
+    <string name="thumbcast_game_quit_title">Close the game on the PC?</string>
+    <string name="thumbcast_game_quit_body">The game will close and unsaved progress will be lost. The PC screen goes back to its usual resolution.</string>
+    <string name="thumbcast_game_quit_cancel">Cancel</string>
+    <string name="thumbcast_game_quit_confirm">Close game</string>
+    <string name="thumbcast_game_quit_progress">Closing the game on the PC…</string>
+    <string name="thumbcast_game_quit_done">Game closed on the PC</string>
+    <string name="thumbcast_game_quit_failed">Couldn\'t close the game on the PC. Try from the game list: press and hold the game.</string>
+    <string name="thumbcast_game_quit_not_owner">This game was started from another device. Close it there or on the PC.</string>
+
+    <!-- Profile -->
+    <string name="thumbcast_game_profiles_title">Control profile</string>
+    <string name="thumbcast_game_profiles_title_session">Profile for this session</string>
+    <string name="thumbcast_game_profiles_builtin">Built-in</string>
+    <string name="thumbcast_game_profiles_mine">My profiles</string>
+    <string name="thumbcast_game_profile_in_use">In use</string>
+    <string name="thumbcast_game_profile_default">Default</string>
+    <string name="thumbcast_game_profile_in_use_default">In use · default</string>
+    <string name="thumbcast_game_profile_switched">Profile: %1$s</string>
+    <string name="thumbcast_game_profile_switched_session">Profile for this session: %1$s (game setting unchanged)</string>
+    <string name="thumbcast_game_profile_switch_error">Couldn\'t load this profile. Pick another one.</string>
+    <string name="thumbcast_game_profile_error">Couldn\'t load the control profile, so the classic on-screen buttons are shown. Pick another profile in Settings.</string>
+
+    <!-- Podpowiedź przy starcie strumienia (raz) -->
+    <string name="thumbcast_game_menu_hint">Menu: the button in the corner, or swipe down from the top</string>
+
+    <!-- Nakładka statystyk: linia podstawowa -->
+    <string name="thumbcast_game_stats_line">%1$d FPS · %2$d ms</string>
+    <string name="thumbcast_game_stats_line_no_delay">%1$d FPS</string>
+    <string name="thumbcast_game_stats_waiting">– FPS</string>
+</resources>

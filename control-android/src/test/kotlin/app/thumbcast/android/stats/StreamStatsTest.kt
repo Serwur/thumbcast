@@ -22,8 +22,8 @@ class StreamStatsTest {
         )
 
     private val labels = StatsLabels(
-        basic = "%1\$d FPS · delay ~%2\$d ms",
-        basicNoDelay = "%1\$d FPS · delay –",
+        basic = "%1\$d FPS · %2\$d ms",
+        basicNoDelay = "%1\$d FPS",
         video = "%1\$dx%2\$d %3\$s · %4\$.1f FPS",
         decoder = "Decoder: %1\$s",
         frames = "Received %1\$.1f / shown %2\$.1f FPS",
@@ -92,19 +92,21 @@ class StreamStatsTest {
         assertEquals(0f, s.receivedFps)
         assertEquals(0f, s.renderedFps)
         assertEquals(0f, s.networkDropPercent)
-        assertEquals("0 FPS · delay –", formatter.basic(s))
+        assertEquals("0 FPS", formatter.basic(s))
     }
 
     @Test
     fun basicLineIsOneCompactLine() {
-        assertEquals("60 FPS · delay ~24 ms", formatter.basic(sample()))
-        assertEquals("60 FPS · delay –", formatter.basic(sample(rttInfo = -1L)))
+        // Kompaktowa linia (12.11.2026, G14): „60 FPS · 24 ms”, bez opóźnienia sama liczba klatek.
+        assertEquals("60 FPS · 24 ms", formatter.basic(sample()))
+        assertEquals("60 FPS", formatter.basic(sample(rttInfo = -1L)))
+        assertEquals(1, formatter.basic(sample()).lines().size)
     }
 
     @Test
     fun advancedListsDetailsAndBreakdown() {
         val expected = listOf(
-            "60 FPS · delay ~24 ms",
+            "60 FPS · 24 ms",
             "1920x1080 HEVC · 60.9 FPS",
             "Decoder: c2.qti.hevc.decoder",
             "Received 59.9 / shown 59.6 FPS",

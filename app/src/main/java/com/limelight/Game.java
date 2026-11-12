@@ -2498,6 +2498,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 UiHelper.notifyStreamConnected(Game.this);
 
                 hideSystemUi(1000);
+
+                // THUMBCAST: jednorazowa podpowiedź, jak otworzyć menu w grze (tylko UI, nic do hosta).
+                if (thumbcast != null) thumbcast.onConnectionStarted();
+                // THUMBCAST END
             }
         });
 
