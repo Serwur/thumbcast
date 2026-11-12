@@ -34,7 +34,8 @@ data class StatsLabels(
 )
 
 /**
- * Tekst nakładki statystyk: [basic] = jedna krótka linia („60 FPS · opóźnienie ~23 ms”), [advanced] = ta sama
+ * Tekst nakładki statystyk: [basic] = jedna krótka linia („60 FPS · 23 ms”, od 12.11.2026; bez opóźnienia
+ * „60 FPS”), [advanced] = ta sama
  * linia i szczegóły w kolejnych liniach (dane upstreamowej nakładki wydajności, w krótszej formie).
  */
 class StatsFormatter(private val labels: StatsLabels, private val locale: Locale) {

@@ -57,6 +57,8 @@ class ThumbcastOverlay(
     private var baseProfile: Profile = initialProfile
     private var profileTransforms: List<ProfileStep> = emptyList()
     private var engine: InputEngine? = null
+    /** Profil ostatnio podany silnikowi (zależy też od rozmiaru widoku: [SystemTouchTargets]). */
+    private var engineProfile: Profile? = null
     private var controlLayout: ControlLayout = ControlLayout(emptyList())
     private var video: VideoGeometry = VideoGeometry()
     private var controlsHiddenByUser: Boolean = false
@@ -238,7 +240,17 @@ class ThumbcastOverlay(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (w <= 0 || h <= 0) return
-        if (engine == null) engine = engineFactory.create(effectiveProfile(), sink, video.viewport(w, h))
+        val p: Profile = effectiveProfile()
+        val e: InputEngine? = engine
+        if (e == null) {
+            engine = engineFactory.create(p, sink, video.viewport(w, h))
+            engineProfile = p
+        } else if (p != engineProfile) {
+            // Obszar dotyku przycisków systemowych zależy od rozmiaru w px (obrót, okno): nowy profil silnika.
+            releaseAll()
+            e.setProfile(p)
+            engineProfile = p
+        }
         relayout()
         updateViewport()
     }
@@ -269,11 +281,23 @@ class ThumbcastOverlay(
     // Profil efektywny, układ, viewport, wykluczenia gestów, rysowanie
     // =====================================================================================
 
-    private fun effectiveProfile(): Profile = EffectiveProfile.build(baseProfile, controlsHidden, profileTransforms)
+    /**
+     * Profil dla silnika i rysowania: [EffectiveProfile] i na końcu minimalny obszar dotyku przycisków systemowych
+     * ([SystemTouchTargets], 48 dp; tylko przy znanym rozmiarze).
+     */
+    private fun effectiveProfile(): Profile = SystemTouchTargets.apply(
+        EffectiveProfile.build(baseProfile, controlsHidden, profileTransforms),
+        width, height, SystemTouchTargets.MIN_TOUCH_DP * density,
+    )
 
     private fun applyEffectiveProfile() {
         releaseAll()
-        engine?.setProfile(effectiveProfile())
+        val e: InputEngine? = engine
+        if (e != null) {
+            val p: Profile = effectiveProfile()
+            e.setProfile(p)
+            engineProfile = p
+        }
         relayout()
     }
 

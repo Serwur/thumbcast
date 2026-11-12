@@ -1,6 +1,7 @@
 package com.limelight.thumbcast;
 
-// NOWY PLIK (moduł :app). Nakładka statystyk strumienia w trybie Thumbcast (12.11.2026): mały tekst na półprzezroczystym
+// NOWY PLIK (moduł :app). Nakładka statystyk strumienia w trybie Thumbcast (12.11.2026; od przebudowy UI 12 sp, kolory
+// z palety thumbcast_colors.xml, linia podstawowa „60 FPS · 23 ms”): mały tekst na półprzezroczystym
 // czarnym tle w prawym górnym rogu obszaru bezpiecznego (bez wycięcia ekranu i pasków), przesuwana tak, żeby nie
 // zasłaniała kontrolek (StatsPlacement z :control-android). Tekst i tryb (podstawowy / szczegółowy) ustawia
 // ThumbcastSession. Widok nie bierze dotyku ani fokusu i leży pod overlayem kontrolek w kolejności rysowania.
@@ -18,6 +19,8 @@ import android.view.WindowInsets;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import com.limelight.R;
+
 import java.util.List;
 
 import app.thumbcast.android.overlay.PxRect;
@@ -26,12 +29,11 @@ import app.thumbcast.android.stats.StatsPlacement;
 @SuppressLint({"ViewConstructor", "AppCompatCustomView"})
 final class ThumbcastStatsView extends TextView {
 
-    private static final int BACKGROUND_COLOR = 0x99000000;
-    private static final int TEXT_COLOR = 0xFFFFFFFF;
-    private static final float TEXT_SP = 11f;
-    private static final int PADDING_H_DP = 6;
-    private static final int PADDING_V_DP = 3;
-    private static final int CORNER_DP = 4;
+    /** 12 sp (G14, 12.11.2026; wcześniej 11 sp). */
+    private static final float TEXT_SP = 12f;
+    private static final int PADDING_H_DP = 8;
+    private static final int PADDING_V_DP = 4;
+    private static final int CORNER_DP = 8;
     /** Odstęp od krawędzi obszaru bezpiecznego i od kontrolek. */
     private static final int MARGIN_DP = 6;
 
@@ -40,7 +42,7 @@ final class ThumbcastStatsView extends TextView {
     ThumbcastStatsView(Context context) {
         super(context);
         density = getResources().getDisplayMetrics().density;
-        setTextColor(TEXT_COLOR);
+        setTextColor(context.getColor(R.color.thumbcast_text));
         setTextSize(TypedValue.COMPLEX_UNIT_SP, TEXT_SP);
         setTypeface(Typeface.DEFAULT);
         // Cyfry o stałej szerokości: zmieniające się liczby nie przesuwają ramki co sekundę.
@@ -49,7 +51,7 @@ final class ThumbcastStatsView extends TextView {
         setGravity(Gravity.START);
         setPadding(dp(PADDING_H_DP), dp(PADDING_V_DP), dp(PADDING_H_DP), dp(PADDING_V_DP));
         GradientDrawable bg = new GradientDrawable();
-        bg.setColor(BACKGROUND_COLOR);
+        bg.setColor(context.getColor(R.color.thumbcast_scrim));
         bg.setCornerRadius(dp(CORNER_DP));
         setBackground(bg);
         setClickable(false);

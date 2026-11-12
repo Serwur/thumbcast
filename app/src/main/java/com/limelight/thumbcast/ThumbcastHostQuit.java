@@ -1,10 +1,12 @@
 package com.limelight.thumbcast;
 
-// NOWY PLIK (moduł :app). „Zakończ sesję” z menu w grze (12.11.2026): zamknięcie aplikacji na hoście tym samym
+// NOWY PLIK (moduł :app). „Zamknij grę na PC” (dawniej „Zakończ sesję”) z menu w grze (12.11.2026): zamknięcie
+// aplikacji na hoście tym samym
 // żądaniem co upstreamowe „Zakończenie sesji” z listy PC i aplikacji (ServerHelper.doQuit → NvHTTP.quitApp,
 // czyli /cancel). Sunshine po /cancel kończy sesje strumienia, zamyka aplikację i przywraca konfigurację ekranu
 // (rozdzielczość sprzed startu, src/nvhttp.cpp `cancel`). Dane hosta z intencji Game (te same, z których Game
 // buduje NvConnection). Wołane po zatrzymaniu strumienia (Game.stopConnection, wątek po conn.stop()).
+// Komunikaty (G16, 12.11.2026): jedno krótkie zdanie ze wskazówką; szczegóły błędu (wyjątek, kod HTTP) tylko w logu.
 
 import android.content.Context;
 import android.content.Intent;
@@ -51,6 +53,7 @@ final class ThumbcastHostQuit implements Runnable {
     @Override
     public void run() {
         String message;
+        String detail;
         try {
             X509Certificate cert = null;
             if (serverCert != null) {
@@ -59,19 +62,20 @@ final class ThumbcastHostQuit implements Runnable {
             }
             NvHTTP http = new NvHTTP(new ComputerDetails.AddressTuple(host, port), httpsPort, uniqueId, cert,
                     PlatformBinding.getCryptoProvider(appContext));
-            message = http.quitApp()
-                    ? appContext.getString(R.string.thumbcast_end_session_done, appName)
-                    : appContext.getString(R.string.thumbcast_end_session_failed, appName);
+            boolean ok = http.quitApp();
+            message = appContext.getString(ok ? R.string.thumbcast_game_quit_done : R.string.thumbcast_game_quit_failed);
+            detail = ok ? "ok" : "quitApp returned false";
         } catch (HostHttpResponseException e) {
             // 599: aplikację uruchomił inny klient (NvHTTP.quitApp), tak jak w ServerHelper.doQuit.
-            message = e.getErrorCode() == 599
-                    ? appContext.getString(R.string.thumbcast_end_session_not_owner)
-                    : appContext.getString(R.string.thumbcast_end_session_error, String.valueOf(e.getMessage()));
+            message = appContext.getString(e.getErrorCode() == 599
+                    ? R.string.thumbcast_game_quit_not_owner : R.string.thumbcast_game_quit_failed);
+            detail = "HTTP " + e.getErrorCode() + ": " + e.getMessage();
         } catch (CertificateException | java.io.IOException | org.xmlpull.v1.XmlPullParserException
                  | RuntimeException e) {
-            message = appContext.getString(R.string.thumbcast_end_session_error, String.valueOf(e.getMessage()));
+            message = appContext.getString(R.string.thumbcast_game_quit_failed);
+            detail = String.valueOf(e);
         }
-        LimeLog.info("Thumbcast: end session: " + message);
+        LimeLog.info("Thumbcast: end session (" + appName + "): " + detail);
         final String toast = message;
         new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(appContext, toast, Toast.LENGTH_LONG).show());
     }

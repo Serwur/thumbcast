@@ -61,4 +61,25 @@ class StatsTogglesTest {
             }
         }
     }
+
+    @Test
+    fun segmentedChoiceMapsToTwoStoredFlags() {
+        val off = StatsToggles(enabled = false, advanced = false)
+        assertEquals(StatsToggles(true, false), off.withMode(StatsMode.BASIC))
+        assertEquals(StatsToggles(true, true), off.withMode(StatsMode.ADVANCED))
+        assertEquals(StatsToggles(true, false), StatsToggles(true, true).withMode(StatsMode.BASIC))
+        // Wył. zostawia flagę szczegółów (ponowne włączenie w ustawieniach wraca do Szczegółowych).
+        assertEquals(StatsToggles(false, true), StatsToggles(true, true).withMode(StatsMode.OFF))
+        assertEquals(StatsToggles(false, false), StatsToggles(true, false).withMode(StatsMode.OFF))
+    }
+
+    @Test
+    fun withModeRoundTripsEveryMode() {
+        for (start in listOf(StatsToggles(false, false), StatsToggles(false, true), StatsToggles(true, false),
+            StatsToggles(true, true))) {
+            for (mode in StatsMode.values()) {
+                assertEquals(mode, start.withMode(mode).mode)
+            }
+        }
+    }
 }

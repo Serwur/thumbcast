@@ -27,14 +27,19 @@ package com.limelight.thumbcast;
 // profilu), profil efektywny = MouseGesturesTransform(profil z pliku), potem ScaleTransform. Zmiana na żywo.
 // Profil domyślny (list_thumbcast_profile) usunięty poza biblioteką: profil dostarczany z aplikacją i komunikat.
 //
-// Nakładka statystyk (12.11.2026): przełączniki „Statystyki” i „Szczegółowe statystyki” w menu w grze (StatsToggles,
-// zapis globalny w ThumbcastSettings; „Statystyki” = upstreamowy checkbox_enable_perf_overlay). Dane liczbowe
+// Nakładka statystyk (12.11.2026): wiersz „Statystyki: Wył. / Podstawowe / Szczegółowe” w menu w grze (StatsToggles,
+// zapis globalny w ThumbcastSettings jako dwie flagi; „Statystyki” = upstreamowy checkbox_enable_perf_overlay). Dane liczbowe
 // z MediaCodecDecoderRenderer (setThumbcastStatsListener), tekst StatsFormatter, widok ThumbcastStatsView w prawym
 // górnym rogu, z dala od kontrolek. Upstreamowy TextView performanceOverlay w trybie Thumbcast jest ukryty.
 //
-// Wyjście (12.11.2026): „Rozłącz (gra działa dalej)” = jak dotąd (finish, aplikacja na PC zostaje) i „Zakończ sesję…”
-// (strona potwierdzenia): finish, a po zatrzymaniu strumienia /cancel (ThumbcastHostQuit, jak „Zakończenie sesji”
-// z listy PC), więc Sunshine zamyka aplikację i przywraca rozdzielczość ekranu.
+// Wyjście (12.11.2026): „Wstrzymaj i wyjdź” (dawniej „Rozłącz”) = jak dotąd (finish, aplikacja na PC zostaje) i „Zamknij
+// grę na PC” (dawniej „Zakończ sesję”, strona potwierdzenia): finish, a po zatrzymaniu strumienia /cancel
+// (ThumbcastHostQuit, jak „Zakończenie sesji” z listy PC), więc Sunshine zamyka aplikację i przywraca rozdzielczość.
+//
+// Przebudowa menu (12.11.2026, pakiet P4, docs/ui-audit.md G1–G17): strony z ThumbcastMenuModel.Page (sekcje, ikony,
+// przełączniki), tytuł = nazwa gry, wjazd panelu, trzymany kierunek pada przewija listę (updateHeldRepeat: tylko
+// nawigacja w menu, do hosta nic nie idzie), jednorazowa podpowiedź przy starcie strumienia (ThumbcastMenuHintView,
+// onConnectionStarted), krótkie komunikaty (szczegóły błędów w logu), bez toastu po przełączeniu „Gesty myszy”.
 
 import android.app.Activity;
 import android.content.Context;
@@ -52,6 +57,7 @@ import android.widget.Toast;
 
 import java.util.Locale;
 
+import com.limelight.Game;
 import com.limelight.LimeLog;
 import com.limelight.R;
 import com.limelight.binding.input.ControllerHandler;
@@ -152,8 +158,18 @@ public final class ThumbcastSession {
     /** Ostatnia próbka (przełączenie trybu pokazuje ją od razu, bez czekania sekundy). */
     private StreamStats lastStats;
     private boolean inPip;
-    /** „Zakończ sesję”: po zatrzymaniu strumienia zamknąć aplikację na hoście (takeAfterStopTask / onDestroy). */
+    /** „Zamknij grę na PC”: po zatrzymaniu strumienia zamknąć aplikację na hoście (takeAfterStopTask / onDestroy). */
     private ThumbcastHostQuit pendingHostQuit;
+    /** Podpowiedź „jak otworzyć menu” (raz, przy starcie strumienia); null = nie pokazana. */
+    private ThumbcastMenuHintView menuHint;
+    /** Kierunek pada powtarzany przy trzymaniu (UP/DOWN), NONE = brak. */
+    private MenuCommand repeatCommand = MenuCommand.NONE;
+
+    /** Opóźnienie pierwszego powtórzenia i odstęp kolejnych przy trzymanym kierunku pada (ms). */
+    private static final long REPEAT_FIRST_MS = 400L;
+    private static final long REPEAT_NEXT_MS = 120L;
+    /** Jak długo widać podpowiedź menu (ms). */
+    private static final long MENU_HINT_MS = 4000L;
 
     private final InputManager.InputDeviceListener deviceListener = new InputManager.InputDeviceListener() {
         @Override
@@ -200,8 +216,8 @@ public final class ThumbcastSession {
         }
         Profile profile = selection.getValue();
         if (profile == null) {
-            Toast.makeText(activity, activity.getString(R.string.thumbcast_profile_error,
-                    String.valueOf(ThumbcastProfiles.getLastError())), Toast.LENGTH_LONG).show();
+            LimeLog.warning("Thumbcast: profile failed: " + ThumbcastProfiles.getLastError());
+            Toast.makeText(activity, R.string.thumbcast_game_profile_error, Toast.LENGTH_LONG).show();
             return null;
         }
         return new ThumbcastSession(activity, host, prefConfig, conn, controllerHandler, keyboardTranslator,
@@ -329,6 +345,7 @@ public final class ThumbcastSession {
             for (MenuCommand command : commands) {
                 onMenuCommand(command);
             }
+            updateHeldRepeat();
         }
         return true;
     }
@@ -338,6 +355,7 @@ public final class ThumbcastSession {
         if (inPip) {
             overlay.releaseAll();
             hideMenu();
+            hideMenuHint();
             overlay.setVisibility(View.GONE);
         } else {
             overlay.setVisibility(View.VISIBLE);
@@ -361,6 +379,34 @@ public final class ThumbcastSession {
             upstreamPerfView.setVisibility(View.GONE);
         }
         applyStats();
+    }
+
+    /**
+     * Game.connectionStarted (strumień ruszył, okno postępu zniknęło): jednorazowa podpowiedź, jak otworzyć menu
+     * (G6). Tylko UI: napis znika po {@link #MENU_HINT_MS} albo przy pierwszym otwarciu menu, nic nie idzie do hosta.
+     */
+    public void onConnectionStarted() {
+        if (destroyed || inPip || menuHint != null || isMenuShown() || settings.isMenuHintShown()) {
+            return;
+        }
+        settings.setMenuHintShown();
+        menuHint = new ThumbcastMenuHintView(activity);
+        // Nad overlayem (widoczna nad przyciskami), pod menu; dotyk i tak przechodzi dalej.
+        overlayParent.addView(menuHint, overlayParent.indexOfChild(overlay) + 1, ThumbcastMenuHintView.layoutParams());
+        menuHint.post(() -> {
+            if (menuHint != null) {
+                menuHint.place(overlay.controlBounds());
+                menuHint.fadeIn();
+            }
+        });
+        mainHandler.postDelayed(this::hideMenuHint, MENU_HINT_MS);
+    }
+
+    private void hideMenuHint() {
+        if (menuHint != null) {
+            overlayParent.removeView(menuHint);
+            menuHint = null;
+        }
     }
 
     /**
@@ -497,11 +543,10 @@ public final class ThumbcastSession {
         mouseGestures = MouseGesturesTransform.toStore(baseProfile, enabled);
         settings.setMouseGestures(activeProfileFile, mouseGestures);
         overlay.setProfile(effectiveProfile());
-        Toast.makeText(activity, mouseGesturesHint(activity, enabled, MouseGesturesTransform.style(baseProfile)),
-                Toast.LENGTH_LONG).show();
+        // Bez toastu (G7): menu pokazuje krótki podpis pod przełącznikiem (ThumbcastMenuModel.mouseGesturesSubtitle).
     }
 
-    /** Krótki opis, co robi przełącznik w danym profilu (menu w grze i biblioteka). */
+    /** Długi opis, co robi przełącznik w danym profilu (biblioteka profili; menu w grze ma krótki podpis). */
     static String mouseGesturesHint(Context context, boolean enabled, MouseGesturesTransform.Style style) {
         switch (style) {
             case AT_POINT:
@@ -547,7 +592,7 @@ public final class ThumbcastSession {
         }
         releaseHostInput();
         pendingHostQuit = new ThumbcastHostQuit(activity, activity.getIntent());
-        Toast.makeText(activity, R.string.thumbcast_end_session_progress, Toast.LENGTH_SHORT).show();
+        Toast.makeText(activity, R.string.thumbcast_game_quit_progress, Toast.LENGTH_SHORT).show();
         host.disconnect();
     }
 
@@ -617,7 +662,7 @@ public final class ThumbcastSession {
         }
         StatsMode mode = currentStatsToggles().getMode();
         String text = lastStats != null ? statsFormatter.format(mode, lastStats)
-                : activity.getString(R.string.thumbcast_stats_waiting);
+                : activity.getString(R.string.thumbcast_game_stats_waiting);
         // Overlay leży na całym rodzicu (MATCH_PARENT, bez marginesów), więc jego px = px rodzica.
         List<PxRect> obstacles = new ArrayList<>(overlay.controlBounds());
         View notification = activity.findViewById(R.id.notificationOverlay);
@@ -630,8 +675,8 @@ public final class ThumbcastSession {
 
     private StatsLabels statsLabels() {
         return new StatsLabels(
-                activity.getString(R.string.thumbcast_stats_basic),
-                activity.getString(R.string.thumbcast_stats_basic_no_delay),
+                activity.getString(R.string.thumbcast_game_stats_line),
+                activity.getString(R.string.thumbcast_game_stats_line_no_delay),
                 activity.getString(R.string.thumbcast_stats_video),
                 activity.getString(R.string.thumbcast_stats_decoder),
                 activity.getString(R.string.thumbcast_stats_frames),
@@ -660,9 +705,13 @@ public final class ThumbcastSession {
         // Nic nie może zostać wciśnięte na hoście. Palce, które jeszcze leżą na overlayu, po releaseAll
         // nie są śledzone (translator ignoruje ich MOVE), a nowe trafiają w menu, które konsumuje każdy dotyk.
         releaseHostInput();
+        // Użytkownik zna już drogę do menu: podpowiedź znika i nie wraca.
+        hideMenuHint();
+        settings.setMenuHintShown();
         if (menuView == null) {
             menuView = new ThumbcastMenuView(activity, menuListener);
         }
+        boolean added = false;
         if (menuView.getParent() == null) {
             menuInput.resetAxes();
             setPhysicalInputBlocked(true);
@@ -670,9 +719,13 @@ public final class ThumbcastSession {
             overlayParent.addView(menuView, new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
             menuView.clearSelection();
-            menuView.scrollToTop();
+            added = true;
         }
         refreshMenu();
+        if (added) {
+            menuView.scrollToTop();
+            menuView.animateIn();
+        }
     }
 
     /**
@@ -694,8 +747,10 @@ public final class ThumbcastSession {
     /** Zamknięcie bez akcji (Wróć do gry, tap w tło, Back, PiP, onDestroy). */
     private void hideMenu() {
         if (isMenuShown()) {
+            menuView.cancelAnimation();
             overlayParent.removeView(menuView);
         }
+        stopHeldRepeat();
         menuPage = MenuPage.MAIN;
         menuInput.resetAxes();
         setPhysicalInputBlocked(false);
@@ -730,7 +785,8 @@ public final class ThumbcastSession {
             for (ProfileEntry e : ProfileRepository.create(activity).listAll()) {
                 if (e.isValid()) {
                     out.add(new ThumbcastMenuModel.ProfileChoice(e.getFileName(), e.getName(),
-                            e.getFileName().equals(activeProfileFile), e.getFileName().equals(defaultFile)));
+                            e.getFileName().equals(activeProfileFile), e.getFileName().equals(defaultFile),
+                            e.getBuiltIn()));
                 }
             }
         } catch (RuntimeException e) {
@@ -754,8 +810,8 @@ public final class ThumbcastSession {
         }
         Profile loaded = ThumbcastProfiles.loadOrNull(activity, fileName);
         if (loaded == null) {
-            Toast.makeText(activity, activity.getString(R.string.thumbcast_menu_profile_switch_error,
-                    String.valueOf(ThumbcastProfiles.getLastError())), Toast.LENGTH_LONG).show();
+            LimeLog.warning("Thumbcast: profile switch to " + fileName + " failed: " + ThumbcastProfiles.getLastError());
+            Toast.makeText(activity, R.string.thumbcast_game_profile_switch_error, Toast.LENGTH_LONG).show();
             return;
         }
         releaseHostInput();
@@ -770,7 +826,7 @@ public final class ThumbcastSession {
         overlay.setProfile(effectiveProfile());
         applyControlsHidden();
         Toast.makeText(activity, activity.getString(sessionOnlyProfile
-                ? R.string.thumbcast_menu_profile_session_only : R.string.thumbcast_library_default_set,
+                ? R.string.thumbcast_game_profile_switched_session : R.string.thumbcast_game_profile_switched,
                 loaded.getName()), Toast.LENGTH_SHORT).show();
     }
 
@@ -786,22 +842,61 @@ public final class ThumbcastSession {
         }
     }
 
+    /**
+     * Trzymany kierunek pionowy na osiach pada (krzyżak, gałka) przesuwa zaznaczenie co {@link #REPEAT_NEXT_MS}
+     * po {@link #REPEAT_FIRST_MS}, dopóki jest trzymany i menu jest otwarte. Tylko nawigacja w menu: przy otwartym
+     * menu nic nie trafia do hosta (FAIR_PLAY). Klawisze mają własne powtórzenia systemowe.
+     */
+    private void updateHeldRepeat() {
+        MenuCommand held = menuInput.heldVertical();
+        if (held == repeatCommand) {
+            return;
+        }
+        stopHeldRepeat();
+        if (held != MenuCommand.NONE) {
+            repeatCommand = held;
+            mainHandler.postDelayed(heldRepeat, REPEAT_FIRST_MS);
+        }
+    }
+
+    private void stopHeldRepeat() {
+        repeatCommand = MenuCommand.NONE;
+        mainHandler.removeCallbacks(heldRepeat);
+    }
+
+    private final Runnable heldRepeat = new Runnable() {
+        @Override
+        public void run() {
+            if (destroyed || !isMenuShown() || repeatCommand == MenuCommand.NONE
+                    || menuInput.heldVertical() != repeatCommand) {
+                stopHeldRepeat();
+                return;
+            }
+            onMenuCommand(repeatCommand);
+            mainHandler.postDelayed(this, REPEAT_NEXT_MS);
+        }
+    };
+
     private void refreshMenu() {
         if (!isMenuShown()) {
             return;
         }
         if (menuPage == MenuPage.PROFILES) {
             // Wybór w grze zmienia profil domyślny, chyba że sesja ma profil przypisany do aplikacji.
-            menuView.setTitle(menuString(sessionOnlyProfile ? R.string.thumbcast_menu_profiles_title_session
-                    : R.string.thumbcast_menu_profiles_title));
-            menuView.bind(ThumbcastMenuModel.buildProfiles(this::menuString, profileChoices, menuTarget));
+            menuView.bind(ThumbcastMenuModel.buildProfiles(this::menuString, menuString(sessionOnlyProfile
+                    ? R.string.thumbcast_game_profiles_title_session : R.string.thumbcast_game_profiles_title),
+                    profileChoices, menuTarget));
         } else if (menuPage == MenuPage.END_SESSION) {
-            menuView.setTitle(menuString(R.string.thumbcast_menu_end_session_title));
             menuView.bind(ThumbcastMenuModel.buildEndSession(this::menuString, menuTarget));
         } else {
-            menuView.setTitle(menuString(R.string.thumbcast_menu_title));
-            menuView.bind(ThumbcastMenuModel.build(this::menuString, menuTarget));
+            menuView.bind(ThumbcastMenuModel.build(this::menuString, menuTitle(), menuTarget));
         }
+    }
+
+    /** Tytuł strony głównej: nazwa uruchomionej gry (aplikacji hosta), bez niej „Menu”. */
+    private String menuTitle() {
+        String name = activity.getIntent().getStringExtra(Game.EXTRA_APP_NAME);
+        return name != null && !name.trim().isEmpty() ? name.trim() : menuString(R.string.thumbcast_game_menu_title);
     }
 
     private String menuString(int resId, Object... args) {
@@ -824,6 +919,13 @@ public final class ThumbcastSession {
         @Override
         public void onDismissRequested() {
             hideMenu();
+        }
+
+        @Override
+        public void onBackRequested() {
+            if (!destroyed && isMenuShown()) {
+                onMenuBack();
+            }
         }
     };
 
@@ -917,6 +1019,11 @@ public final class ThumbcastSession {
         @Override
         public boolean isMouseGestures() {
             return ThumbcastSession.this.isMouseGestures();
+        }
+
+        @Override
+        public MouseGesturesTransform.Style getMouseGesturesStyle() {
+            return MouseGesturesTransform.style(baseProfile);
         }
 
         @Override
