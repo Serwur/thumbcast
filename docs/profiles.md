@@ -36,9 +36,12 @@ Ustawienia → Sterowanie dotykowe → Profile sterowania otwiera bibliotekę (p
 
   | Wolna strefa profilu | Domyślnie | Wł. | Wył. |
   |---|---|---|---|
-  | `none` (Pad – Xbox, Pad – PlayStation) | wył. | jak touchpad: przeciągnięcie = kursor, tap = LPM, tap dwoma palcami = PPM, przeciągnięcie dwoma palcami = przewijanie, przytrzymanie i ruch = przeciąganie z LPM | tylko menu z górnej krawędzi |
-  | `touchpad` (Big Picture, Pulpit – Touchpad) | wł. | bez zmian | jak `none`: tylko menu z górnej krawędzi |
-  | `camera` (MMO – Pad+, MMO – Klawiatura) | wł., gdy profil ma tap, long-press albo pinch | tap = LPM w punkcie, przytrzymanie = PPM w punkcie, szczypanie = kółko | tap, long-press i pinch wyłączone |
+  | `none` (Pad – Xbox, Pad – PlayStation) | wył. | mysz bezpośrednia (`direct`): tap = kursor w punkcie dotyku i LPM, tap dwoma palcami = PPM w punkcie pierwszego palca, przeciągnięcie jednym palcem = przewijanie w punkcie dotyku (góra/dół i na boki, treść idzie za palcem) | tylko menu z górnej krawędzi |
+  | `direct` (Big Picture) | wł. | bez zmian | jak `none`: tylko menu z górnej krawędzi |
+  | `touchpad` (Pulpit – Touchpad) | wł. | bez zmian (gładzik: przeciągnięcie = kursor, tap = LPM, dwa palce = PPM i przewijanie, przytrzymanie i ruch = przeciąganie) | jak `none`: tylko menu z górnej krawędzi |
+  | `camera` (MMO – Pad+, MMO – Klawiatura) | wł., gdy profil ma tap, long-press albo pinch | tap = LPM w punkcie, tap dwoma palcami albo przytrzymanie = PPM w punkcie, szczypanie = kółko | tap (także dwoma palcami), long-press i pinch wyłączone |
+
+  Do pierwszej wersji (12.11.2026) pady po włączeniu dostawały gładzik (`touchpad`); właściciel wybrał mysz bezpośrednią, a „Big Picture” przeszedł z `touchpad` na `direct` (w Steam Big Picture tap w kafelek i przewijanie jednym palcem są prostsze niż kursor względny).
 
   Kamera przeciąganiem w profilach MMO zostaje w obu stanach, a gest menu z górnej krawędzi zawsze. Kontrolki, ich wyjścia i tryb profilu się nie zmieniają.
 - **Akcje**: Ustaw jako domyślny, Gesty myszy, Edytuj układ, Duplikuj (nowe id UUID, nazwa z dopiskiem „(kopia)”, unikalna), Zmień nazwę, Eksportuj do pliku (SAF `ACTION_CREATE_DOCUMENT`), Udostępnij (`ACTION_SEND`, `application/json`, plik przez `ProfileShareProvider`), Usuń (z potwierdzeniem; usunięcie profilu domyślnego wraca do profilu z aplikacji, „Pad – PlayStation”).

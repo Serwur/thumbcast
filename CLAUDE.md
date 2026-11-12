@@ -3,7 +3,7 @@
 Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Sunshine + fork Moonlight). Dokumenty po polsku, identyfikatory kodu po angielsku.
 
 ## Moduły
-- `control-model` (JVM): profil JSON, walidacja, migracje. Zakazane typy: sequence, macro, repeat, turbo, delay, toggle_auto. Wolna strefa `gestures.freeZone`: `camera` | `touchpad` | `none` (od 12.11.2026, tylko gest menu; presety Pad – Xbox/PlayStation).
+- `control-model` (JVM): profil JSON, walidacja, migracje. Zakazane typy: sequence, macro, repeat, turbo, delay, toggle_auto. Wolna strefa `gestures.freeZone`: `camera` | `touchpad` | `none` (od 12.11.2026, tylko gest menu; presety Pad – Xbox/PlayStation) | `direct` (od 12.11.2026, mysz bezpośrednia: tap = klik w punkcie, 2 palce = PPM, przeciągnięcie = przewijanie; Big Picture i „Gesty myszy” na padach).
 - `control-engine` (JVM): `InputEngine`, rozpoznawanie gestów, `ActionPolicy`. Wszystkie wyjścia idą przez politykę. Szczegóły: `control-engine/docs/engine.md`.
 - `control-android`: `ThumbcastOverlay` i adaptery. Retransmisja stanu pada (25/50/75 ms) jest tylko w `HostPadReporterImpl`, silnik jej nie robi.
   Biblioteka profili (`library/ProfileRepository`, import/eksport) i `EditorContract`; opis `docs/profiles.md`.

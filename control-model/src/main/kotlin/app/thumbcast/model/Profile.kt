@@ -79,8 +79,8 @@ data class EdgeSwipe(
 )
 
 /**
- * Ustawienia touchpada w wolnej strefie (używane tylko przy `GesturesConfig.freeZone = TOUCHPAD`).
- * sensitivity: piksele myszy na piksel palca; scrollPxPerNotch: droga dwóch palców (px) na 1 ząbek kółka.
+ * Ustawienia myszy w wolnej strefie. sensitivity: piksele myszy na piksel palca (tylko `freeZone = TOUCHPAD`);
+ * scrollPxPerNotch: droga palców (px) na 1 ząbek kółka: środka dwóch palców przy TOUCHPAD, jednego palca przy DIRECT.
  */
 @Serializable
 data class Touchpad(
@@ -100,6 +100,9 @@ data class GesturesConfig(
      * Przy TOUCHPAD pola cameraDrag i pinchZoom są ignorowane, a tap i long-press dają klik w miejscu kursora.
      * Przy NONE (12.11.2026) wolna strefa ignoruje dotyk: cameraDrag, tapTarget, longPress, pinchZoom i touchpad
      * nie działają, zostaje tylko edgeSwipeTop (menu), jeśli jest włączony.
+     * Przy DIRECT (12.11.2026) tap daje kursor w punkcie i LPM, tap dwoma palcami PPM w punkcie, przeciągnięcie
+     * przewijanie w punkcie (`touchpad.scrollPxPerNotch`); cameraDrag, longPress, pinchZoom i
+     * touchpad.sensitivity są ignorowane. Z tapTarget liczą się enabled, maxMovePx i maxMs.
      */
     val freeZone: FreeZoneMode = FreeZoneMode.CAMERA,
     val touchpad: Touchpad = Touchpad(),

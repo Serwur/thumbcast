@@ -139,7 +139,9 @@
     <string name="thumbcast_menu_mouse_gestures_off">Gesty myszy: wył.</string>
     <string name="thumbcast_mouse_gestures_on_touchpad">Gesty myszy wł.: przeciągnij w pustym miejscu = kursor, dotknij = lewy klik, dotknij dwoma palcami = prawy klik, przeciągnij dwoma palcami = przewijanie, przytrzymaj i przeciągnij = przeciąganie.</string>
     <string name="thumbcast_mouse_gestures_off_touchpad">Gesty myszy wył.: dotyk w pustym miejscu nic nie wysyła. Przeciągnięcie w dół od górnej krawędzi nadal otwiera menu.</string>
-    <string name="thumbcast_mouse_gestures_on_camera">Gesty myszy wł.: dotknij = lewy klik w tym miejscu, przytrzymaj = prawy klik, szczypanie = kółko myszy. Przeciąganie nadal obraca kamerę.</string>
+    <string name="thumbcast_mouse_gestures_on_direct">Gesty myszy wł.: dotknij pustego miejsca = kursor skacze tam i klika lewym, dotknij dwoma palcami = prawy klik w tym miejscu, przeciągnij jednym palcem = przewijanie w tym miejscu (góra/dół i na boki).</string>
+    <string name="thumbcast_mouse_gestures_off_direct">Gesty myszy wył.: dotyk w pustym miejscu nic nie wysyła. Przeciągnięcie w dół od górnej krawędzi nadal otwiera menu.</string>
+    <string name="thumbcast_mouse_gestures_on_camera">Gesty myszy wł.: dotknij = lewy klik w tym miejscu, dotknij dwoma palcami albo przytrzymaj = prawy klik, szczypanie = kółko myszy. Przeciąganie nadal obraca kamerę.</string>
     <string name="thumbcast_mouse_gestures_off_camera">Gesty myszy wył.: dotknięcia i szczypanie nic nie wysyłają. Przeciąganie nadal obraca kamerę.</string>
     <!-- Nakładka statystyk i wyjście z sesji (12.11.2026). -->
     <string name="thumbcast_menu_end_session">Zakończ sesję…</string>

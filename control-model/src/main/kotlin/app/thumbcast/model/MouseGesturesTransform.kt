@@ -9,9 +9,14 @@ package app.thumbcast.model
  *
  * | freeZone bazowy | domyślnie | wł.                                                               | wył.                                       |
  * |-----------------|-----------|-------------------------------------------------------------------|--------------------------------------------|
- * | `none` (pady)   | wył.      | `touchpad`: kursor, tap = LPM, 2 palce = PPM i przewijanie, przytrzymanie + ruch = przeciąganie | bez zmian (tylko menu z górnej krawędzi)   |
- * | `touchpad`      | wł.       | bez zmian                                                         | `none` (tylko menu z górnej krawędzi)      |
- * | `camera` (MMO)  | wł., gdy profil ma tap, long-press albo pinch | tap = LPM w punkcie, przytrzymanie = PPM w punkcie, szczypanie = kółko | tap, long-press i pinch wyłączone |
+ * | `none` (pady)   | wył.      | `direct`: tap = kursor w punkcie + LPM, tap 2 palcami = PPM w punkcie, przeciągnięcie = przewijanie w punkcie | bez zmian (tylko menu z górnej krawędzi)   |
+ * | `direct`        | wł.       | bez zmian                                                         | `none` (tylko menu z górnej krawędzi)      |
+ * | `touchpad`      | wł.       | bez zmian (gładzik: kursor, kliki w miejscu kursora)              | `none` (tylko menu z górnej krawędzi)      |
+ * | `camera` (MMO)  | wł., gdy profil ma tap, long-press albo pinch | tap = LPM w punkcie, tap 2 palcami i przytrzymanie = PPM w punkcie, szczypanie = kółko | tap, long-press i pinch wyłączone |
+ *
+ * Do 12.11.2026 (pierwsza wersja) pady po włączeniu dostawały `touchpad`; właściciel wybrał mysz bezpośrednią
+ * (`direct`), bo tap w punkcie i przewijanie jednym palcem są bardziej intuicyjne niż kursor względny.
+ * W `camera` tap dwoma palcami (PPM) zależy od `tapTarget.enabled`, więc wł./wył. obejmuje go bez nowego pola.
  *
  * Kamera przeciąganiem (`camera`) zostaje w obu stanach: to rdzeń profili MMO i nie jest „myszą” w sensie kliku.
  * Edge swipe (menu) zostaje zawsze. Brak zapisanej wartości (`null`) albo wartość równa domyślnej zwraca
@@ -26,8 +31,11 @@ object MouseGesturesTransform {
 
     /** Jak wyglądają gesty myszy w danym profilu po włączeniu (do opisu w UI). */
     enum class Style {
-        /** Gładzik: przeciągnięcie rusza kursorem, kliki w miejscu kursora (bazowo `none` albo `touchpad`). */
+        /** Gładzik: przeciągnięcie rusza kursorem, kliki w miejscu kursora (bazowo `touchpad`). */
         TOUCHPAD,
+
+        /** Mysz bezpośrednia: kliki w punkcie dotyku, przeciągnięcie = przewijanie (bazowo `none` albo `direct`). */
+        DIRECT,
 
         /** Kliki w punkcie dotyku, szczypanie = kółko, przeciągnięcie = kamera (bazowo `camera`). */
         AT_POINT,
@@ -38,15 +46,18 @@ object MouseGesturesTransform {
     fun isEnabled(p: Profile): Boolean {
         val g = p.gestures
         return when (g.freeZone) {
-            FreeZoneMode.TOUCHPAD -> true
+            FreeZoneMode.TOUCHPAD, FreeZoneMode.DIRECT -> true
             FreeZoneMode.CAMERA -> g.tapTarget.enabled || g.longPress.enabled || g.pinchZoom.enabled
             FreeZoneMode.NONE -> false
         }
     }
 
     @JvmStatic
-    fun style(p: Profile): Style =
-        if (p.gestures.freeZone == FreeZoneMode.CAMERA) Style.AT_POINT else Style.TOUCHPAD
+    fun style(p: Profile): Style = when (p.gestures.freeZone) {
+        FreeZoneMode.CAMERA -> Style.AT_POINT
+        FreeZoneMode.TOUCHPAD -> Style.TOUCHPAD
+        FreeZoneMode.NONE, FreeZoneMode.DIRECT -> Style.DIRECT
+    }
 
     /** Stan przełącznika: zapisany wybór albo domyślny z profilu. */
     @JvmStatic
@@ -72,18 +83,29 @@ object MouseGesturesTransform {
         val tap = g.tapTarget.copy(enabled = true)
         val longPress = g.longPress.copy(enabled = true, minMs = longPressMinMs(g.longPress.minMs, tap.maxMs))
         return when (g.freeZone) {
-            FreeZoneMode.NONE -> p.copy(gestures = g.copy(freeZone = FreeZoneMode.TOUCHPAD, tapTarget = tap, longPress = longPress))
+            // `direct` nie używa long-pressu; `enabled` zostaje jak w pliku, a próg tylko spełnia regułę walidatora.
+            FreeZoneMode.NONE -> p.copy(
+                gestures = g.copy(
+                    freeZone = FreeZoneMode.DIRECT,
+                    tapTarget = tap,
+                    longPress = if (g.longPress.enabled) {
+                        g.longPress.copy(minMs = longPressMinMs(g.longPress.minMs, tap.maxMs))
+                    } else {
+                        g.longPress
+                    },
+                ),
+            )
             FreeZoneMode.CAMERA -> p.copy(
                 gestures = g.copy(tapTarget = tap, longPress = longPress, pinchZoom = g.pinchZoom.copy(enabled = true)),
             )
-            FreeZoneMode.TOUCHPAD -> p
+            FreeZoneMode.TOUCHPAD, FreeZoneMode.DIRECT -> p
         }
     }
 
     private fun disable(p: Profile): Profile {
         val g = p.gestures
         return when (g.freeZone) {
-            FreeZoneMode.TOUCHPAD -> p.copy(gestures = g.copy(freeZone = FreeZoneMode.NONE))
+            FreeZoneMode.TOUCHPAD, FreeZoneMode.DIRECT -> p.copy(gestures = g.copy(freeZone = FreeZoneMode.NONE))
             FreeZoneMode.CAMERA -> p.copy(
                 gestures = g.copy(
                     tapTarget = g.tapTarget.copy(enabled = false),

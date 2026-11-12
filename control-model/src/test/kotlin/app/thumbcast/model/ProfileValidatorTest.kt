@@ -179,6 +179,21 @@ class ProfileValidatorTest {
     @Test fun noneFreeZoneStillRejectsTwoRightSticks() =
         assertInvalid(noFreeZone(padWith(lookStick, lookStick.copy(id = "look2", rect = Rect(0.4f, 0.1f, 0.2f, 0.2f)))), axisFragment)
     @Test fun noneFreeZoneInKbmGood() = assertValid(noFreeZone(f.kbmProfile()))
+    // --- wolna strefa: direct (12.11.2026) ---
+    private fun direct(p: Profile): Profile = p.copy(gestures = p.gestures.copy(freeZone = FreeZoneMode.DIRECT))
+    @Test fun directFreeZoneFreesRightStickForControl() {
+        val p = direct(padWith(lookStick))
+        assertTrue(p.gestures.cameraDrag.output == CameraOutput.PAD_RIGHT_STICK)
+        assertValid(p)
+    }
+    @Test fun directFreeZoneStillRejectsTwoRightSticks() =
+        assertInvalid(direct(padWith(lookStick, lookStick.copy(id = "look2", rect = Rect(0.4f, 0.1f, 0.2f, 0.2f)))), axisFragment)
+    @Test fun directFreeZoneInKbmGood() = assertValid(direct(f.kbmProfile()))
+    @Test fun directScrollPxBad() {
+        val p = direct(f.padProfile())
+        assertInvalid(p.copy(gestures = p.gestures.copy(touchpad = Touchpad(scrollPxPerNotch = 1f))), "scrollPxPerNotch")
+        assertValid(p.copy(gestures = p.gestures.copy(touchpad = Touchpad(scrollPxPerNotch = 30f))))
+    }
     @Test fun touchpadLongPressMustNotOverlapTap() =
         assertInvalid(touchpad(f.padProfile()).copy(gestures = GesturesConfig(freeZone = FreeZoneMode.TOUCHPAD, longPress = LongPress(minMs = 200))), "longPress")
 

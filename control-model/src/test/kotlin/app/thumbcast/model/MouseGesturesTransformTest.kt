@@ -41,31 +41,64 @@ class MouseGesturesTransformTest {
     }
 
     @Test
-    fun padPresetOnBecomesTouchpadWithClicks() {
-        val ps = preset("gamepad-playstation.thumbcast.json")
-        val on = MouseGesturesTransform.apply(ps, true)
-        assertEquals(FreeZoneMode.TOUCHPAD, on.gestures.freeZone)
-        assertTrue(on.gestures.tapTarget.enabled)
-        assertTrue(on.gestures.longPress.enabled)
-        assertTrue(on.gestures.edgeSwipeTop.enabled, "menu z górnej krawędzi zostaje")
-        assertEquals(ps.controls, on.controls)
-        assertEquals(ps.mode, on.mode)
-        assertEquals(MouseGesturesTransform.Style.TOUCHPAD, MouseGesturesTransform.style(ps))
-        // Prawa gałka jest kontrolką, a kamery nie ma, więc walidator nie widzi dwóch źródeł gałki.
-        assertEquals(emptyList(), ProfileValidator.validate(on))
+    fun padPresetOnBecomesDirectMouseWithClicks() {
+        for (name in listOf("gamepad-playstation.thumbcast.json", "gamepad-xbox.thumbcast.json")) {
+            val ps = preset(name)
+            val on = MouseGesturesTransform.apply(ps, true)
+            assertEquals(FreeZoneMode.DIRECT, on.gestures.freeZone, name)
+            assertTrue(on.gestures.tapTarget.enabled, name)
+            assertTrue(on.gestures.edgeSwipeTop.enabled, "menu z górnej krawędzi zostaje")
+            assertEquals(ps.controls, on.controls)
+            assertEquals(ps.mode, on.mode)
+            assertEquals(MouseGesturesTransform.Style.DIRECT, MouseGesturesTransform.style(ps))
+            assertEquals(MouseGesturesTransform.Style.DIRECT, MouseGesturesTransform.style(on))
+            // Prawa gałka jest kontrolką, a kamery nie ma, więc walidator nie widzi dwóch źródeł gałki.
+            assertEquals(emptyList(), ProfileValidator.validate(on), name)
+            // Wył. (zapisany wybór = brak wpisu) daje plik bez zmian; wyłączenie samego `direct` wraca do none.
+            assertSame(ps, MouseGesturesTransform.apply(ps, false), name)
+            assertEquals(FreeZoneMode.NONE, MouseGesturesTransform.apply(on, false).gestures.freeZone, name)
+        }
     }
 
     @Test
-    fun touchpadPresetOffBecomesNone() {
+    fun bigPictureIsDirectAndDesktopStaysTouchpad() {
         val bp = preset("big-picture.thumbcast.json")
-        val off = MouseGesturesTransform.apply(bp, false)
-        assertEquals(FreeZoneMode.NONE, off.gestures.freeZone)
-        assertTrue(off.gestures.edgeSwipeTop.enabled)
-        assertEquals(bp.controls, off.controls)
-        assertEquals(emptyList(), ProfileValidator.validate(off))
-        val desktop = MouseGesturesTransform.apply(preset("desktop-touchpad.thumbcast.json"), false)
-        assertEquals(FreeZoneMode.NONE, desktop.gestures.freeZone)
-        assertEquals(emptyList(), ProfileValidator.validate(desktop))
+        assertEquals(FreeZoneMode.DIRECT, bp.gestures.freeZone)
+        assertEquals(MouseGesturesTransform.Style.DIRECT, MouseGesturesTransform.style(bp))
+        assertSame(bp, MouseGesturesTransform.apply(bp, true))
+        val desktop = preset("desktop-touchpad.thumbcast.json")
+        assertEquals(FreeZoneMode.TOUCHPAD, desktop.gestures.freeZone)
+        assertEquals(MouseGesturesTransform.Style.TOUCHPAD, MouseGesturesTransform.style(desktop))
+        assertSame(desktop, MouseGesturesTransform.apply(desktop, true), "Pulpit – Touchpad zostaje gładzikiem")
+    }
+
+    @Test
+    fun touchpadAndDirectPresetsOffBecomeNone() {
+        for (name in listOf("big-picture.thumbcast.json", "desktop-touchpad.thumbcast.json")) {
+            val p = preset(name)
+            val off = MouseGesturesTransform.apply(p, false)
+            assertEquals(FreeZoneMode.NONE, off.gestures.freeZone, name)
+            assertTrue(off.gestures.edgeSwipeTop.enabled, name)
+            assertEquals(p.controls, off.controls, name)
+            assertEquals(emptyList(), ProfileValidator.validate(off), name)
+        }
+    }
+
+    @Test
+    fun directProfileWithClashingDisabledLongPressStaysUntouched() {
+        // Pad (none) z wyłączonym long-pressem i progiem niższym niż tap: włączenie nie musi go ruszać.
+        val base = TestFixtures.padProfile().let {
+            it.copy(gestures = it.gestures.copy(
+                freeZone = FreeZoneMode.NONE,
+                tapTarget = TapTarget(enabled = false, maxMs = 300),
+                longPress = LongPress(enabled = false, minMs = 100),
+            ))
+        }
+        val on = MouseGesturesTransform.apply(base, true)
+        assertEquals(FreeZoneMode.DIRECT, on.gestures.freeZone)
+        assertTrue(on.gestures.tapTarget.enabled)
+        assertEquals(base.gestures.longPress, on.gestures.longPress)
+        assertEquals(emptyList(), ProfileValidator.validate(on))
     }
 
     @Test
@@ -133,13 +166,23 @@ class MouseGesturesTransformTest {
                 if (p.gestures.freeZone != FreeZoneMode.CAMERA) {
                     assertTrue(r.gestures.freeZone != FreeZoneMode.CAMERA, "seed=$seed: nie dokładamy kamery")
                 }
+                // Wł.: none i direct dają direct, touchpad zostaje touchpadem; wył.: none (poza kamerą).
+                val expectedZone = when (p.gestures.freeZone) {
+                    FreeZoneMode.CAMERA -> FreeZoneMode.CAMERA
+                    FreeZoneMode.TOUCHPAD -> if (want) FreeZoneMode.TOUCHPAD else FreeZoneMode.NONE
+                    FreeZoneMode.NONE, FreeZoneMode.DIRECT -> if (want) FreeZoneMode.DIRECT else FreeZoneMode.NONE
+                }
+                assertEquals(expectedZone, r.gestures.freeZone, "seed=$seed want=$want")
+                if (want && r.gestures.freeZone == FreeZoneMode.DIRECT && p.gestures.freeZone == FreeZoneMode.NONE) {
+                    assertTrue(r.gestures.tapTarget.enabled, "seed=$seed: direct z tapem")
+                }
             }
         }
     }
 
     private fun randomProfile(r: Random): Profile {
         val kbm = r.nextInt(3) == 0
-        val zone = FreeZoneMode.values()[r.nextInt(3)]
+        val zone = FreeZoneMode.values()[r.nextInt(FreeZoneMode.values().size)]
         val base = if (kbm) TestFixtures.kbmProfile() else TestFixtures.padProfile()
         val rightStick = !kbm && zone != FreeZoneMode.CAMERA && r.nextBoolean()
         val controls = if (rightStick) {
