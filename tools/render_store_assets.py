@@ -58,9 +58,19 @@ def feature_graphic(title, tagline, path):
     draw_mark(img, 250 * SS, h / 2, 5.0 * SS)
     d = ImageDraw.Draw(img)
     fonts = "C:/Windows/Fonts"
-    f_title = ImageFont.truetype(os.path.join(fonts, "segoeuib.ttf"), 92 * SS)
-    f_tag = ImageFont.truetype(os.path.join(fonts, "segoeui.ttf"), 38 * SS)
-    x = 440 * SS
+    x = 430 * SS
+    max_w = (1024 - 48) * SS - x  # prawy margines 48 px
+
+    def fit(font_file, size):
+        # Największy rozmiar do `size`, przy którym tekst mieści się w max_w (dłuższe teksty, np. angielski).
+        while True:
+            f = ImageFont.truetype(os.path.join(fonts, font_file), size * SS)
+            if size <= 20 or d.textlength(title if font_file == "segoeuib.ttf" else tagline, font=f) <= max_w:
+                return f
+            size -= 1
+
+    f_title = fit("segoeuib.ttf", 92)
+    f_tag = fit("segoeui.ttf", 38)
     d.text((x, 175 * SS), title, font=f_title, fill=WHITE)
     d.text((x, 295 * SS), tagline, font=f_tag, fill=(0xC9, 0xD1, 0xDE))
     # Play: grafika bez przezroczystości (JPEG albo 24-bitowy PNG).
