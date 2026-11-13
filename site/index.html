@@ -31,29 +31,136 @@
     <li>Fair play: one touch is one input. No macros, turbo or timed presses.</li>
   </ul>
 
-  <h2>What you need</h2>
-  <div class="card">
-    <h3>On your PC (Windows)</h3>
-    <ul>
-      <li><strong>Sunshine</strong>: a free, open-source program that streams the picture from your PC. <a href="https://github.com/SunshineStream/Sunshine/releases/latest">Download</a></li>
-      <li><strong>ViGEmBus</strong>: the gamepad driver you need to play with a gamepad. With it, games see your phone as a regular Xbox gamepad. <a href="https://github.com/nefarius/ViGEmBus/releases/latest">Download</a>. Paid alternatives exist (for example LizardByte Virtual HID Driver), but ViGEmBus is all you need.</li>
-      <li><strong>Tailscale</strong> (optional): to play away from home. <a href="https://tailscale.com/download">Download</a></li>
-    </ul>
-    <h3>On your phone</h3>
-    <ul>
-      <li>Android 8.0 or newer.</li>
-      <li>The same Wi-Fi network as your PC (or Tailscale when away from home).</li>
-    </ul>
-  </div>
-
-  <h2>Setup</h2>
-  <ol>
-    <li>Install Sunshine on your PC. Open <code>https://localhost:47990</code> in a browser and set a username and password. The browser warns that the connection is not private; that is normal for Sunshine.</li>
-    <li>Install the ViGEmBus driver and restart the PC if asked. In Sunshine, open Configuration → Input and pick the Xbox 360 gamepad.</li>
-    <li>Install Thumbcast on your phone. The setup wizard walks you through the same steps.</li>
-    <li>Pick your PC in Thumbcast. Your phone shows a PIN; enter it in Sunshine on the PIN tab.</li>
-    <li>Add games in Sunshine (Applications → Add New), then pick a game in Thumbcast and play.</li>
+  <h2 id="quick-start">Quick start</h2>
+  <p>About 20 minutes, once. You need a <strong>Windows PC</strong> with your game, an <strong>Android phone</strong> (8.0 or newer) and both on the <strong>same Wi-Fi</strong>.</p>
+  <p class="note">Thumbcast is in early access. The app file (APK) is on the <a href="https://github.com/Serwur/thumbcast/releases/latest">Releases page</a>. A Google Play version is being prepared.</p>
+  <h3>Part 1. On your PC (once)</h3>
+  <ol class="steps" start="1">
+    <li><strong>Install Sunshine</strong>
+      <p>Sunshine is the free program that sends your game's picture to the phone.</p>
+      <ul>
+        <li><a href="https://github.com/SunshineStream/Sunshine/releases/latest">Download Sunshine</a> and open the file named <code>Sunshine-Windows-AMD64-installer.msi</code> (under <em>Assets</em>).</li>
+        <li>Click through the installer. If Windows asks about the firewall, choose <strong>Allow</strong>.</li>
+      </ul>
+    </li>
+    <li><strong>Set a Sunshine password</strong>
+      <ul>
+        <li>Open <code>https://localhost:47990</code> in your browser.</li>
+        <li>The browser says the connection is not private. That is normal. Click <em>Advanced</em>, then <em>Continue</em>.</li>
+        <li>Choose a username and a password and write them down.</li>
+      </ul>
+    </li>
+    <li><strong>Install the gamepad driver</strong>
+      <p>It lets games see your phone as a normal Xbox gamepad.</p>
+      <ul>
+        <li><a href="https://github.com/nefarius/ViGEmBus/releases/latest">Download ViGEmBus</a>, run the <code>.exe</code> installer and restart the PC if it asks.</li>
+      </ul>
+    </li>
+    <li><strong>Choose the gamepad in Sunshine</strong>
+      <ul>
+        <li>In the Sunshine page open <strong>Configuration → Input</strong>.</li>
+        <li>Set the emulated gamepad type to <strong>Xbox 360</strong> (<code>gamepad = x360</code>), then save and restart Sunshine when asked.</li>
+        <li>No gamepad driver? You can still play with the mouse and keyboard controls.</li>
+      </ul>
+    </li>
   </ol>
+  <h3>Part 2. On your phone</h3>
+  <ol class="steps" start="5">
+    <li><strong>Install Thumbcast</strong>
+      <ul>
+        <li>Download the APK from the <a href="https://github.com/Serwur/thumbcast/releases/latest">Releases page</a> on your phone and open it.</li>
+        <li>Android asks to allow installs from your browser. Allow it for this one install.</li>
+      </ul>
+    </li>
+    <li><strong>Find your PC</strong>
+      <ul>
+        <li>Open Thumbcast. The setup wizard walks you through the same steps.</li>
+        <li>Your PC appears on the home screen. If not, check that both devices are on the same Wi-Fi and Sunshine is running, or tap <strong>Add PC</strong> and type the PC's IP address.</li>
+      </ul>
+    </li>
+    <li><strong>Pair (once)</strong>
+      <ul>
+        <li>Tap your PC. The phone shows a <strong>PIN</strong>.</li>
+        <li>On the PC open the Sunshine page, go to the <strong>PIN</strong> tab, type the PIN, give the phone any name and press <strong>Send</strong>.</li>
+      </ul>
+    </li>
+    <li><strong>Play</strong>
+      <ul>
+        <li>Tap <strong>Desktop</strong> or <strong>Steam Big Picture</strong>, then start your game.</li>
+        <li>The default controls are a PlayStation-style gamepad on the screen. The <strong>☰</strong> menu in the game changes the profile, quality and more.</li>
+        <li>In the game's own settings, choose borderless (windowed fullscreen) and turn on gamepad support if the game has such an option.</li>
+      </ul>
+    </li>
+  </ol>
+  <h3>Part 3. Play away from home with Tailscale (optional)</h3>
+  <ol class="steps" start="9">
+    <li><strong>Do the first two parts at home first</strong>
+      <p>Pair the phone with the PC on your home Wi-Fi. You do it only once.</p>
+    </li>
+    <li><strong>Install Tailscale on the PC</strong>
+      <p>Tailscale is a free private network between your own devices. You don't need to open anything on your router.</p>
+      <ul>
+        <li><a href="https://tailscale.com/download">Download Tailscale</a> for Windows, install it and <strong>sign in</strong> (a Google, Microsoft or Apple account is enough).</li>
+        <li>Leave it running. It starts with Windows.</li>
+      </ul>
+    </li>
+    <li><strong>Install Tailscale on the phone</strong>
+      <ul>
+        <li>Install <a href="https://play.google.com/store/apps/details?id=com.tailscale.ipn">Tailscale from Google Play</a> and sign in with the <strong>same account</strong> as on the PC.</li>
+        <li>Turn it on (the switch at the top).</li>
+      </ul>
+    </li>
+    <li><strong>Copy the PC&#x27;s Tailscale address</strong>
+      <ul>
+        <li>In the Tailscale app on the phone tap your PC. Copy its address: it looks like <code>100.x.y.z</code>.</li>
+      </ul>
+    </li>
+    <li><strong>Add the address in Thumbcast</strong>
+      <ul>
+        <li>On the PC list, <strong>long-press your PC → Connection addresses → Add address</strong>, then paste it.</li>
+        <li>You don't pair again. At home Thumbcast uses Wi-Fi; away from home it uses Tailscale.</li>
+      </ul>
+    </li>
+    <li><strong>Tips</strong>
+      <ul>
+        <li>Keep Tailscale on in both devices.</li>
+        <li>On mobile data use 720p or 1080p at 60 FPS and a bitrate of 10–20 Mbps (Thumbcast settings).</li>
+        <li>Do not forward ports on your router.</li>
+      </ul>
+    </li>
+  </ol>
+  <h2 id="own-games">Add your own games</h2>
+  <p>Every item in Sunshine's <strong>Applications</strong> tab shows up as a game in Thumbcast. To add one: open the Sunshine page (<code>https://localhost:47990</code>) → <strong>Applications → Add New</strong>, fill in the fields below, <strong>Save</strong>, and reopen your PC in Thumbcast.</p>
+  <div class="card">
+    <h3>Steam game</h3>
+    <ul>
+      <li><strong>Application Name</strong>: the game's name.</li>
+      <li><strong>Detached Commands</strong>: <code>steam://rungameid/&lt;game id&gt;</code>. The game id is the number in the game's Steam store page address.</li>
+    </ul>
+    <h3>Battle.net game</h3>
+    <ul>
+      <li><strong>Detached Commands</strong>: <code>"C:\Program Files (x86)\Battle.net\Battle.net.exe" --exec="launch &lt;code&gt;"</code>.</li>
+      <li>Game codes: <code>WoW</code> for World of Warcraft; <code>WoWF</code> for WoW: Forever (not verified yet). Battle.net must be signed in.</li>
+    </ul>
+    <h3>Any other game (an .exe file)</h3>
+    <ul>
+      <li><strong>Command</strong>: the full path to the game's <code>.exe</code> file.</li>
+    </ul>
+    <h3>Settings for one game</h3>
+    <ul>
+      <li>In Thumbcast <strong>long-press the game → Thumbcast settings for the app</strong>. You can choose the control profile, resolution and FPS just for that game.</li>
+    </ul>
+    <h3>Make the game close from the phone</h3>
+    <p>Games started through Steam or Battle.net do not close by themselves. In the Sunshine app, open <strong>Command Preparations → Add</strong> and put <code>taskkill /IM &lt;game file&gt;.exe</code> in the <strong>Undo</strong> field. Find the file name in Task Manager → Details.</p>
+    <p>Then <strong>Close game on PC</strong> in the Thumbcast menu closes the game too.</p>
+  </div>
+  <h2 id="help">Something doesn't work?</h2>
+  <ul>
+    <li><strong>PC not on the list</strong>: same Wi-Fi? Is Sunshine running (icon near the clock)? Try <strong>Add PC</strong> with the PC's IP address.</li>
+    <li><strong>The game doesn't see a gamepad</strong>: install ViGEmBus, set the gamepad to Xbox 360 in Sunshine and restart the PC. Or switch to the mouse and keyboard profile.</li>
+    <li><strong>Not working away from home</strong>: check that Tailscale is on, on the PC and on the phone, and that the address is added.</li>
+    <li>Details for advanced users: <a href="https://github.com/Serwur/thumbcast/blob/main/docs/host-setup.md">host-setup.md</a>, <a href="https://github.com/Serwur/thumbcast/blob/main/docs/host-apps.md">host-apps.md</a>, <a href="https://github.com/Serwur/thumbcast/blob/main/docs/tailscale.md">tailscale.md</a> (in Polish). Bugs: <a href="https://github.com/Serwur/thumbcast/issues">GitHub issues</a>.</li>
+  </ul>
   <p class="muted">The full guide is always in the app: “How to connect a PC” on the home screen and in Settings → Help.</p>
 
   <h2 id="privacy">Privacy policy</h2>

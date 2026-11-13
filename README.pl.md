@@ -28,16 +28,111 @@ Thumbcast bazuje na [Moonlight dla Androida](https://github.com/moonlight-stream
 
 Każda kontrolka wysyła dokładnie jedno wejście. Nie ma makr, sekwencji, turbo, timerów ani analizy obrazu. Zasady są egzekwowane w kodzie i w CI. Szczegóły i uczciwy opis ryzyka: [FAIR_PLAY.pl.md](FAIR_PLAY.pl.md).
 
-## Co jest potrzebne
+## Szybki start
 
-**Na PC (Windows):**
-- [Sunshine](https://github.com/SunshineStream/Sunshine/releases/latest), darmowy program open source do streamingu (działają też forki Apollo i Vibepollo).
-- [ViGEmBus](https://github.com/nefarius/ViGEmBus/releases/latest), sterownik wymagany do grania padem. Są płatne zamienniki (LizardByte Virtual HID Driver), ale ViGEmBus wystarczy. Bez sterownika pada używaj sterowania myszą i klawiaturą.
-- Opcjonalnie: [Tailscale](https://tailscale.com/download), żeby grać poza domem.
+Około 20 minut, jednorazowo. Potrzebujesz **PC z Windows** z grą, **telefonu z Androidem** (8.0 lub nowszy) i obu urządzeń w **tym samym Wi-Fi**.
 
-**Na telefonie:** Android 8.0 lub nowszy, w tym samym Wi-Fi co PC (albo Tailscale).
+> Thumbcast jest we wczesnym dostępie. Plik aplikacji (APK) jest na [stronie wydań](https://github.com/Serwur/thumbcast/releases/latest). Wersja w Google Play jest w przygotowaniu.
 
-Kreator w aplikacji przeprowadzi Cię przez instalację i parowanie. Te same kroki są na [stronie](https://serwur.github.io/thumbcast/pl/).
+### Część 1. Na PC (raz)
+
+1. **Zainstaluj Sunshine**
+   Sunshine to darmowy program, który wysyła obraz gry na telefon.
+   - [Pobierz Sunshine](https://github.com/SunshineStream/Sunshine/releases/latest) i uruchom plik `Sunshine-Windows-AMD64-installer.msi` (w sekcji *Assets*).
+   - Przeklikaj instalator. Jeśli Windows zapyta o zaporę, wybierz **Zezwól**.
+
+2. **Ustaw hasło w Sunshine**
+   - Otwórz w przeglądarce `https://localhost:47990`.
+   - Przeglądarka pokaże, że połączenie nie jest prywatne. To normalne. Kliknij *Zaawansowane*, potem *Przejdź dalej*.
+   - Wybierz nazwę użytkownika i hasło i zapisz je sobie.
+
+3. **Zainstaluj sterownik pada**
+   Dzięki niemu gry widzą telefon jako zwykły pad Xbox.
+   - [Pobierz ViGEmBus](https://github.com/nefarius/ViGEmBus/releases/latest), uruchom instalator `.exe` i zrestartuj PC, jeśli o to poprosi.
+
+4. **Wybierz pada w Sunshine**
+   - Na stronie Sunshine otwórz **Configuration → Input**.
+   - Ustaw emulowany typ pada na **Xbox 360** (`gamepad = x360`), zapisz i zrestartuj Sunshine, gdy o to poprosi.
+   - Brak sterownika pada? Nadal możesz grać sterowaniem myszą i klawiaturą.
+
+### Część 2. Na telefonie
+
+5. **Zainstaluj Thumbcast**
+   - Pobierz APK ze [strony wydań](https://github.com/Serwur/thumbcast/releases/latest) na telefonie i otwórz go.
+   - Android poprosi o zgodę na instalację z przeglądarki. Zezwól na tę jedną instalację.
+
+6. **Znajdź swój PC**
+   - Otwórz Thumbcast. Kreator przeprowadzi Cię przez te same kroki.
+   - PC pojawi się na ekranie głównym. Jeśli nie, sprawdź, czy oba urządzenia są w tym samym Wi-Fi i czy Sunshine działa, albo dotknij **Dodaj PC** i wpisz adres IP komputera.
+
+7. **Sparuj (raz)**
+   - Dotknij swojego PC. Telefon pokaże **PIN**.
+   - Na PC otwórz stronę Sunshine, wejdź w zakładkę **PIN**, wpisz PIN, nadaj telefonowi dowolną nazwę i naciśnij **Send**.
+
+8. **Graj**
+   - Dotknij **Desktop** albo **Steam Big Picture** i uruchom grę.
+   - Domyślne sterowanie to pad w stylu PlayStation na ekranie. Menu **☰** w grze zmienia profil, jakość i inne ustawienia.
+   - W ustawieniach samej gry wybierz okno pełnoekranowe (bez ramki) i włącz obsługę pada, jeśli gra ma taką opcję.
+
+### Część 3. Gra poza domem przez Tailscale (opcjonalnie)
+
+9. **Najpierw zrób części 1 i 2 w domu**
+   Sparuj telefon z PC w domowym Wi-Fi. Robisz to tylko raz.
+
+10. **Zainstaluj Tailscale na PC**
+   Tailscale to darmowa prywatna sieć między Twoimi urządzeniami. Nie trzeba nic otwierać w routerze.
+   - [Pobierz Tailscale](https://tailscale.com/download) dla Windows, zainstaluj i **zaloguj się** (wystarczy konto Google, Microsoft lub Apple).
+   - Zostaw go włączonego. Startuje razem z Windows.
+
+11. **Zainstaluj Tailscale na telefonie**
+   - Zainstaluj [Tailscale z Google Play](https://play.google.com/store/apps/details?id=com.tailscale.ipn) i zaloguj się **tym samym kontem** co na PC.
+   - Włącz go (przełącznik u góry).
+
+12. **Skopiuj adres PC w Tailscale**
+   - W aplikacji Tailscale na telefonie dotknij swojego PC. Skopiuj jego adres, wygląda jak `100.x.y.z`.
+
+13. **Dodaj adres w Thumbcast**
+   - Na liście PC **przytrzymaj swój PC → Adresy połączenia → Dodaj adres** i wklej adres.
+   - Nie parujesz od nowa. W domu Thumbcast użyje Wi-Fi, a poza domem Tailscale.
+
+14. **Wskazówki**
+   - Tailscale musi być włączony na obu urządzeniach.
+   - Na danych komórkowych ustaw 720p lub 1080p przy 60 kl./s i bitrate 10–20 Mb/s (ustawienia Thumbcast).
+   - Nie przekierowuj portów w routerze.
+
+## Dodawanie własnych gier
+
+Każda pozycja z zakładki **Applications** w Sunshine pojawia się w Thumbcast jako gra. Żeby dodać grę: otwórz stronę Sunshine (`https://localhost:47990`) → **Applications → Add New**, uzupełnij pola z poniższej listy, naciśnij **Save** i otwórz PC w Thumbcast od nowa.
+
+**Gra ze Steam**
+
+- **Application Name**: nazwa gry.
+- **Detached Commands**: `steam://rungameid/<id gry>`. Id gry to liczba w adresie jej strony w sklepie Steam.
+
+**Gra z Battle.net**
+
+- **Detached Commands**: `"C:\Program Files (x86)\Battle.net\Battle.net.exe" --exec="launch <kod>"`.
+- Kody gier: `WoW` dla World of Warcraft; `WoWF` dla WoW: Forever (jeszcze niesprawdzone). Battle.net musi być zalogowany.
+
+**Dowolna inna gra (plik .exe)**
+
+- **Command**: pełna ścieżka do pliku `.exe` gry.
+
+**Ustawienia dla jednej gry**
+
+- W Thumbcast **przytrzymaj grę → Ustawienia Thumbcast dla aplikacji**. Możesz wybrać profil sterowania, rozdzielczość i liczbę klatek tylko dla tej gry.
+
+**Zamykanie gry z telefonu**
+
+Gry uruchamiane przez Steam albo Battle.net nie zamykają się same. W aplikacji w Sunshine otwórz **Command Preparations → Add** i wpisz `taskkill /IM <plik gry>.exe` w polu **Undo**. Nazwę pliku znajdziesz w Menedżerze zadań → Szczegóły.
+Wtedy **Zamknij grę na PC** w menu Thumbcast zamknie też grę.
+
+## Coś nie działa?
+
+- **PC nie ma na liście**: to samo Wi-Fi? Czy Sunshine działa (ikona przy zegarze)? Spróbuj **Dodaj PC** z adresem IP komputera.
+- **Gra nie widzi pada**: zainstaluj ViGEmBus, ustaw pada Xbox 360 w Sunshine i zrestartuj PC. Albo przełącz się na profil myszy i klawiatury.
+- **Nie działa poza domem**: sprawdź, czy Tailscale jest włączony na PC i na telefonie oraz czy adres jest dodany.
+- Szczegóły dla zaawansowanych: [host-setup.md](docs/host-setup.md), [host-apps.md](docs/host-apps.md), [tailscale.md](docs/tailscale.md). Błędy: [GitHub issues](https://github.com/Serwur/thumbcast/issues).
 
 ## Jak to działa
 

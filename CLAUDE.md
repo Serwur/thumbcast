@@ -43,3 +43,8 @@ Projekt Thumbcast: dotykowe sterowanie do streamingu gier z PC na Androida (Suns
 - Patche to opisy kroków z kotwicami z v12.2, nie gotowe pliki `.patch`. Po nałożeniu zrób własny `git diff v12.2`.
 - Patche nałożone i skompilowane 11.11.2026 (debug i release); nie testowane na urządzeniu ani z hostem.
 - Zatwierdzone 10.11.2026 (DECISIONS.md pkt i): wymuszamy `onscreenController=true`, usuwamy flavor `root` i sufiks `.unofficial` po zmianie `applicationId`.
+
+## Instrukcja „Szybki start” (13.11.2026)
+- Ta sama instrukcja krok po kroku (PC, telefon, Tailscale, własne gry, pomoc) jest w czterech miejscach: `README.md`, `README.pl.md`, `site/index.html`, `site/pl/index.html` (GitHub Pages). Zmieniając ją, zmień wszystkie cztery i oba języki.
+- Język prosty, dla laików. Nazwy opcji w aplikacji i Sunshine muszą zgadzać się z `strings.xml` i `docs/host-apps.md`.
+- Niesprawdzone: kod gry WoW: Forever w Battle.net (`WoWF`), dokładne nazwy pól w UI Sunshine (`Emulated gamepad type`), czy APK jest już w wydaniach na GitHubie.
