@@ -37,3 +37,8 @@ code { background: var(--surface); padding: 0.1em 0.35em; border-radius: 4px; fo
 li { margin: 0.3em 0; }
 .muted { color: var(--muted); }
 footer { margin-top: 3em; color: var(--muted); font-size: 0.9rem; }
+.note { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 8px; padding: 10px 14px; }
+.steps { padding-left: 1.4em; }
+.steps > li { margin: 1em 0; }
+.steps > li > p, .steps > li > ul { margin: 0.3em 0; }
+.card h3 { margin-top: 1em; }
